@@ -45,7 +45,7 @@ mod_spatial <- rma.mv(yi, vi,
 summary(mod_spatial)
 
 ## OU model
-alpha <- 0.0182
+alpha <- 1/0.0182　# alpha = 1/rho - rho = 0.0182
 Tmat <- cophenetic(tree) #computes the pairwise distances between the pairs of tips from a phylogenetic tree using its branch lengths.
 format_back <- function(x) {
   x <- tolower(x)
