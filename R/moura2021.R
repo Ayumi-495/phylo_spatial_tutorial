@@ -14,6 +14,7 @@ tree <- compute.brlen(tree, method="Grafen", power=1)
 A_BM <- vcv(tree, corr=TRUE)
 dat$phy <- dat$species.id
 summary(dat)
+
 ### fit BM model
 mod_BM <- rma.mv(yi, vi,
                  random = list(~ 1 | study.id, 
