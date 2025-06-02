@@ -89,14 +89,29 @@ system.time(mod_linear <- rma.mv(yi, vi,
                                     ~ phy|const),
                       dist=list(D),
                       struct = "SPLIN",
-                      control=list(rho.init=1 
-                                   # optimizer = "optim"
+                      control=list(rho.init=1 ,
+                                   optimizer = "optim"
                                    ), # Optimizer (nlminb) did not achieve convergence (convergence = 1).
                       data = dat)
 )
 summary(mod_linear)
 
 # gaussian process model in brms ----
+dat <- dat.moura2021$dat
+dat <- escalc(measure="ZCOR", ri=ri, ni=ni, data=dat)
+tree <- dat.moura2021$tree
+tree <- compute.brlen(tree, method="Grafen", power=1)
+
+A_BM <- vcv(tree, corr=TRUE)
+dat$phy <- dat$species.id
+summary(dat)
+
+A_BM[1:5, 1:5]
+I <- matrix(1, nrow = 341, ncol = 341)
+
+D <- I - A_BM # make distance matrix
+
+
 formula_1 <- bf(yi | se(vi) ~ 1 + gp(D, cov = "exp_quad", gr = TRUE))
 
 prior_ma1 <- get_prior(
