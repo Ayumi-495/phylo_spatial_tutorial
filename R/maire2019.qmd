@@ -9,7 +9,7 @@ pacman::p_load(brms, MCMCglmm, metafor, metadat, tidyverse, dplyr, tidyr, purrr,
 
 dat <- dat.maire2019$dat
 dmat <- dat.maire2019$dmat
-dat[10]
+dat
 dmat[1:5,1:5]
 ```
 ```{r}
@@ -22,6 +22,7 @@ res1 <- rma.mv(s1, vars1, random = ~ site_station | const, struct="SPGAU",
 res1
 
 ## brms ----
+hist(dmat)
 rho <- 15 # Set the spatial scale parameter rho, based on the value estimated from the metafor model
 
 # Create a spatial correlation matrix using a Gaussian kernel:
@@ -41,7 +42,7 @@ rownames(cor_mat) <- colnames(cor_mat) <- dat$site_station
 
 dat$yi <- dat$s1
 dat$sei <- sqrt(dat$vars1)
-
+hist()
 formula_1 <- bf(yi | se(sei) ~ 1 + (1 | gr(site_station, cov = A)))
 
 prior_ma1 <- get_prior(

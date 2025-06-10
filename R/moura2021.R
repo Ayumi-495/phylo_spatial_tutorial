@@ -96,6 +96,17 @@ system.time(mod_linear <- rma.mv(yi, vi,
 )
 summary(mod_linear)
 
+system.time(mod_BM2 <- rma.mv(yi, vi,
+                 random = list(~ 1 | study.id, 
+                               ~ 1 | effect.size.id, 
+                               ~ 1 | species.id, 
+                               ~ 1 | phy),
+                 R = list(phy = A_BM), 
+                 control = list(optimizer = "optim"), 
+                 data = dat)
+)
+summary(mod_BM2)
+
 # gaussian process model in brms ----
 dat <- dat.moura2021$dat
 dat <- escalc(measure="ZCOR", ri=ri, ni=ni, data=dat)
@@ -110,7 +121,7 @@ A_BM[1:5, 1:5]
 I <- matrix(1, nrow = 341, ncol = 341)
 
 D <- I - A_BM # make distance matrix
-
+D[1:20, 1:20]
 
 formula_1 <- bf(yi | se(vi) ~ 1 + gp(D, cov = "exp_quad", gr = TRUE))
 
