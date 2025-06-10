@@ -3,3 +3,20 @@
 .Rproj.user
 .RData
 .Rhistory
+data/Yefeng_2024/ALAN_MEL.Rproj
+data/Yefeng_2024/data/MEL_data_merge.xlsx
+data/Yefeng_2024/figures/Figure 1 (alluvil plot).png
+data/Yefeng_2024/figures/Figure S10 (duration).png
+data/Yefeng_2024/figures/Figure S11 (funnel).png
+data/Yefeng_2024/figures/Figure S12 (pub test).png
+data/Yefeng_2024/figures/Figure S13 (leave1out).png
+data/Yefeng_2024/figures/Figure S4 (mean-sd).png
+data/Yefeng_2024/figures/Figure S5 (missness plot).png
+data/Yefeng_2024/figures/Figure S6 (Ballon plot).png
+data/Yefeng_2024/figures/Figure S7 (Phy est).png
+data/Yefeng_2024/figures/Figure S8 (color).png
+data/Yefeng_2024/figures/Figure S9 (phase).png
+data/Yefeng_2024/function/custom_function.R
+data/Yefeng_2024/pilot_ALAN_MEL3.2.Rmd
+data/Yefeng_2024/README.md
+my.tr.tre
