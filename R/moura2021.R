@@ -81,6 +81,7 @@ mod_gau <- rma.mv(yi, vi,
                   data = dat)
 summary(mod_gau)
 max(D)
+
 # linear model
 system.time(mod_linear <- rma.mv(yi, vi,
                       random = list(~ 1 | study.id, 

@@ -21,8 +21,6 @@ setdiff(HubDen_tree_pruned$tip.label, Huberty_Denno_2004$Herbivore)
 
 # make variance covariance matrix
 HubDen_vcv <- vcv.phylo(HubDen_tree_pruned, corr = TRUE)
-Huberty_Denno_2004_pruned <- Huberty_Denno_2004 %>%
-  filter(Herbivore %in% rownames(HubDen_vcv))
 
 length(unique(Huberty_Denno_2004_pruned$Herbivore)) 
 length(HubDen_tree_pruned$tip.label)

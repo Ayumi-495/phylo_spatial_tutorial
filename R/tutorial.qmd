@@ -1,0 +1,361 @@
+---
+title: "Model 2 (count data)"
+date: "`r Sys.Date()`"
+# author: " "
+format: 
+  html:
+    toc: true
+    toc-location: left
+    toc-depth: 3
+    toc-float: true
+    toc-title: "**CONTENTS**"
+    output-file: "AM_worked_example.html"
+    embed-resources: true
+    # code-fold: true
+    code-tools: 
+      source: false
+    number-sections: false
+    # bibliography: ./bib/ref.bib
+    fontsize: "12"
+    mainfont: "Roboto"
+    monofont: "Roboto"
+    # fontcolor: ""
+    page-layout: article
+    code-overflow: wrap
+    df_print: paged
+    theme: united
+    code-line-numbers: false
+    grid:
+      margin-width: 180px
+crossref: 
+  fig-title: Figure     # (default is "Figure")
+  tbl-title: Table     # (default is "Table")
+  title-delim: "—"     # (default is ":")
+  fig-prefix: Fig.     # (default is "Figure")
+  tbl-prefix: Table.   # (default is "Table")
+editor_options: 
+  chunk_output_type: console
+execute:
+  warning: false
+  message: false
+  tidy: true
+  # cache: true
+---
+
+# setup
+```{r}
+#| label: setup
+# Load required packages
+
+pacman::p_load(brms, MCMCglmm, metafor, metadat, tidyverse, dplyr, tidyr, purrr, stringr, readr, readxl, lubridate, magrittr, janitor, flextable, kableExtra, geosphere, rtol, here)
+
+
+```
+
+# phylogenetic meta-analysis
+
+```{r}
+#| label: load_data - phylo
+
+Huberty_Denno_2004 <- read_csv(here("data", "Huberty_Denno_2004", "Huberty_Denno_2004_cleaned.csv"))
+HubDen_tree <- read.tree(here("data", "Huberty_Denno_2004", "Huberty_Denno_2004_tree.txt"))
+
+tip_labels <- HubDen_tree$tip.label
+print(tip_labels)
+unique(Huberty_Denno_2004$Herbivore)
+
+setdiff(tip_labels, Huberty_Denno_2004$Herbivore)
+# [1] "Semiothesia_sp."     "Cameraria_sp."       "Multireoides_sp."    "Phytocoris_nigrinus" "Parthenicus_sp."    
+# [6] "Aphalara_sp."  
+
+Huberty_Denno_2004$Herbivore <- gsub("(?<=_sp)$", ".", Huberty_Denno_2004$Herbivore, perl = TRUE)
+tips_to_keep <- intersect(Huberty_Denno_2004$Herbivore, tip_labels)
+HubDen_tree_pruned <- drop.tip(HubDen_tree, setdiff(tip_labels, tips_to_keep))
+
+setdiff(HubDen_tree_pruned$tip.label, Huberty_Denno_2004$Herbivore)
+
+# make variance covariance matrix
+HubDen_vcv <- vcv.phylo(HubDen_tree_pruned, corr = TRUE)
+
+# make sure the herbivore names in the data match the tree
+HubDen_2004 <- Huberty_Denno_2004 %>%
+  filter(Herbivore %in% rownames(HubDen_vcv)) %>%
+  mutate(Herbivore = factor(Herbivore)) 
+HubDen_2004$Phylo <- HubDen_2004$Herbivore
+
+HubDen_2004$effect_id <- seq_len(nrow(HubDen_2004))
+
+```
+
+## model fitting
+
+::: panel-tabset
+## Brownian motion model
+
+```{r}
+#| label: phylo_brownian - metafor
+
+HD_BM <- rma.mv(d, var,
+                 random = list(~ 1 | Reference, 
+                               ~ 1 | effect_id, 
+                               ~ 1 | Herbivore, 
+                               ~ 1 | Phylo),
+                 R = list(Phylo = HubDen_vcv), 
+                 data = HubDen_2004)
+
+summary(HD_BM)
+```
+
+## Ornstein-Uhlenbeck model
+To fit an Ornstein-Uhlenbeck model, we need to calculate the  
+
+### spatial exponential model
+```{r}
+#| label: phylo_spatialEXP - metafor
+HubDen_2004$Const <- 1
+I <- matrix(1, nrow = 54, ncol = 54)
+
+D_HD <- I - HubDen_vcv # make distance matrix
+
+HD_spatial <- rma.mv(d, var,
+                     random = list(~ 1 | Reference, 
+                                   ~ 1 | effect_id, 
+                                   ~ 1 | Herbivore, 
+                                   ~ Phylo | Const),
+                     dist=list(D_HD), 
+                     struct = "SPEXP",
+                     control=list(rho.init=1), 
+                     data = HubDen_2004)
+
+summary(HD_spatial)
+
+```
+
+### Ornstein-Uhlenbeck model
+
+Using the rho parameter from the spatial exponential model, we can fit an Ornstein-Uhlenbeck model.
+```{r}
+#| label: phylo_ornstein - metafor
+
+rho <- HD_spatial$rho
+alpha <- 1/rho
+HD_OU <- exp(-alpha * D_HD)
+
+HD_OU <- rma.mv(d, var,
+                random = list(~ 1 | Reference, 
+                              ~ 1 | effect_id, 
+                              ~ 1 | Herbivore, 
+                              ~ 1 | Phylo),
+                  R = list(Phylo = HD_OU), 
+                  data = HubDen_2004
+                )
+
+summary(HD_OU)
+
+```
+You can see that the estimate of the Ornstein-Uhlenbeck model is the same to the spatial exponential model, but the AIC is lower for the Ornstein-Uhlenbeck model.
+
+
+## Gaussian phylogenetic process model
+Actually, we can fit the Gaussian phylogenetic process model using spatial Gaussian process model.
+
+```{r}
+#| label: phylo_gaussian - metafor
+
+HD_GP <- rma.mv(d, var,
+                random = list(~ 1 | Reference, 
+                              ~ 1 | effect_id, 
+                              ~ 1 | Herbivore, 
+                          ~ Phylo | Const),
+                     dist=list(D_HD), 
+                     struct = "SPGAU",
+                     control=list(rho.init=1), 
+                     data = HubDen_2004)
+
+summary(HD_GP)
+
+```
+
+:::
+
+# spatial meta-analysis
+
+```{r}
+#| label: load_data - spatial
+
+dat_coetzee <- read.xlsx(here("data", "examples", "Coetzee_2014.xlsx"), sheet = 2)
+dat_coetzee$const <- 1 # add constant for spatial models
+
+# make distance matrix
+coords <- cbind(dat_coetzee$long, dat_coetzee$lat)
+dist_matrix <- distm(coords, fun = distHaversine)
+dist_matrix[1:5,1:5]
+
+rownames(dist_matrix) <- dat_coetzee$datapt_id
+colnames(dist_matrix) <- dat_coetzee$datapt_id
+
+```
+
+::: panel-tabset
+
+## spatial exponential model
+```{r}
+#| label: spatial_exp - metafor
+
+EXP_mod1 <- rma.mv(yi, vi, 
+                  random = list(
+                        ~ 1|datapt_id,
+                        ~ 1|study_id, 
+                        ~ datapt_id | const
+                      ), 
+                    struct="SPEXP", 
+                    data = dat_coetzee, 
+                    dist=list(dist_matrix),
+                    control=list(rho.init = 10))
+
+summary(EXP_mod1)
+```
+
+## spatial Gaussian process model
+
+```{r}
+#| label: spatial_gaussian - metafor
+
+EXP_mod2 <- rma.mv(yi, vi, 
+                      random = list(
+                        ~ 1|datapt_id,
+                        ~ 1|study_id, 
+                        ~ datapt_id | const
+                      ), 
+                      struct="SPGAU", 
+                      data = dat_coetzee, 
+                      dist=list(dist_matrix),
+                      control=list(rho.init=10))
+
+summary(EXP_mod2)
+```
+
+## spatial linear model
+
+```{r}
+#| label: spatial_linear - metafor
+
+EXP_mod3 <- rma.mv(yi, vi, 
+                      random = list(
+                        ~ 1|datapt_id,
+                        ~ 1|study_id, 
+                        ~ datapt_id | const
+                      ), 
+                      struct="SPLIN", 
+                      data = dat_coetzee, 
+                      dist=list(dist_matrix),
+                      control=list(rho.init = 10))
+
+summary(EXP_mod3)
+```
+:::
+
+# phylo-spatial meta-analysis
+Current version, the model estimated no the phylogenetic effect and spatial effect - I need to find ideal dataset (I can detect such effects) to test this model.
+```{r}
+#| label: phylo_spatial - metafor
+
+library(rotl)
+library(readxl)
+library(here)
+
+data <- read_excel(here("data", "examples", "Coetzee_2014.xlsx"), sheet = 2)
+data$spp_name[data$spp_name == "NA"] <- NA
+
+df$species <- tolower(gsub(" ", "_", df$spp_name))
+species_list <- unique(df$species)
+
+taxa <- tnrs_match_names(species_list)
+
+taxon_map <- structure(taxa$search_string, names = taxa$unique_name)
+
+tr <- tol_induced_subtree(ott_id(taxa)[is_in_tree(ott_id(taxa))])
+
+otl_tips <- strip_ott_ids(tr$tip.label, remove_underscores = TRUE)
+tr$tip.label <- taxon_map[otl_tips]
+
+tr$node.label <- NULL
+tr <- compute.brlen(tr)
+cor <- vcv(tr, corr = TRUE)
+
+tr_corrected <- tr
+tr_corrected$tip.label <- str_replace(str_to_title(taxon_map[otl_tips]), "_", " ")
+
+df <- df[df$species %in% rownames(cor), ]
+cor <- cor[df$species, df$species]
+
+df$const <- 1 
+
+coords <- as.matrix(df[, c("long", "lat")])
+D_geo <- distm(coords, fun = distHaversine)
+rownames(D_geo) <- colnames(D_geo) <- as.character(df$datapt_id)
+names(df)
+
+spatial_phylo_mod1 <- rma.mv(
+  yi = yi,
+  V = vi,
+  random = list(
+    ~ 1|datapt_id,
+    ~ 1|study_id, 
+    ~ datapt_id | const,
+    ~ 1 | species
+  ),
+  R = list(species = cor),
+  struct="SPEXP", 
+  data = df, 
+  dist = list(D_geo),
+  # control = list(rho.init = 10)
+)
+
+summary(spatial_phylo_mod1)
+
+spatial_phylo_mod0 <- rma.mv(
+  yi = yi,
+  V = vi,
+  random = list(
+    ~ 1|datapt_id,
+    ~ 1|study_id
+  ),
+  data = df
+)
+summary(spatial_phylo_mod0)
+
+# spatial
+spatial_mod <- rma.mv(
+  yi = yi,
+  V = vi,
+  random = list(
+    ~ 1|datapt_id,
+    ~ 1|study_id, 
+    ~ datapt_id|const
+  ),
+  struct="SPEXP", 
+  data = df, 
+  dist = list(D_geo)
+)
+
+summary(spatial_mod)
+
+# phylo
+phylo_mod <- rma.mv(
+  yi = yi,
+  V = vi,
+  random = list(
+    ~ 1|datapt_id,
+    ~ 1|study_id, 
+    ~ 1|species
+  ),
+  R = list(species = cor),
+  data = df
+)
+
+summary(phylo_mod)
+
+AIC(spatial_phylo_mod0, spatial_phylo_mod1, spatial_mod, phylo_mod)
+
+```
