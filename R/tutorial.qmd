@@ -46,14 +46,16 @@ execute:
 ```{r}
 #| label: setup
 # Load required packages
+rm(list = ls())
 
-pacman::p_load(brms, MCMCglmm, metafor, metadat, tidyverse, dplyr, tidyr, purrr, stringr, readr, readxl, lubridate, magrittr, janitor, flextable, kableExtra, geosphere, rtol, here)
-
+pacman::p_load(brms, MCMCglmm, metafor, metadat, tidyverse, data.table, crayon, 
+               dplyr, tidyr, purrr, stringr, readr, readxl, lubridate, magrittr, janitor, 
+               flextable, kableExtra, geosphere, rotl, here)
 
 ```
 
 # phylogenetic meta-analysis
-
+## example 1
 ```{r}
 #| label: load_data - phylo
 
@@ -65,8 +67,7 @@ print(tip_labels)
 unique(Huberty_Denno_2004$Herbivore)
 
 setdiff(tip_labels, Huberty_Denno_2004$Herbivore)
-# [1] "Semiothesia_sp."     "Cameraria_sp."       "Multireoides_sp."    "Phytocoris_nigrinus" "Parthenicus_sp."    
-# [6] "Aphalara_sp."  
+# [1] "Semiothesia_sp."     "Cameraria_sp."       "Multireoides_sp."    "Phytocoris_nigrinus" "Parthenicus_sp."  "Aphalara_sp."  
 
 Huberty_Denno_2004$Herbivore <- gsub("(?<=_sp)$", ".", Huberty_Denno_2004$Herbivore, perl = TRUE)
 tips_to_keep <- intersect(Huberty_Denno_2004$Herbivore, tip_labels)
@@ -87,7 +88,7 @@ HubDen_2004$effect_id <- seq_len(nrow(HubDen_2004))
 
 ```
 
-## model fitting
+### model fitting
 
 ::: panel-tabset
 ## Brownian motion model
@@ -107,11 +108,11 @@ summary(HD_BM)
 ```
 
 ## Ornstein-Uhlenbeck model
-To fit an Ornstein-Uhlenbeck model, we need to calculate the  
 
 ### spatial exponential model
 ```{r}
 #| label: phylo_spatialEXP - metafor
+
 HubDen_2004$Const <- 1
 I <- matrix(1, nrow = 54, ncol = 54)
 
@@ -173,6 +174,200 @@ HD_GP <- rma.mv(d, var,
                      data = HubDen_2004)
 
 summary(HD_GP)
+
+```
+
+:::
+
+## example 2
+```{r}
+#| label: load_data - example 2
+
+dat2 <- read_csv(here("data", "Hoeksema_etal_2010", "HoeksemaEtal2010EcoLett.csv"))
+tree_dat2 <- read.tree(here("data", "Hoeksema_etal_2010", "HoeksemaEtal2010EcoLett_tree.txt"))
+
+# make species column merge using "PlantGenus" and "PlantSpecificEpithet" columns (i.e., "PlantGenus_PlantSpecificEpithet") - but all characters should be lower case
+dat2$species <- paste0(tolower(dat2$PlantGenus), "_", tolower(dat2$PlantSpecificEpithet))
+
+# check whether the the tip labels and species name of data2 match
+
+setdiff(tree_dat2$tip.label, dat2$species)
+setdiff(dat2$species, tree_dat2$tip.label)
+
+# it looks like the unmatched cases in tip labels and species names can be fixed?
+tree_dat2$tip.label[grep("fragaria_", tree_dat2$tip.label)]
+tree_dat2$tip.label[grep("_cacao", tree_dat2$tip.label)]
+dat2$species[grep("fragaria_", dat2$species)] <- "fragaria_sp"
+dat2$species[grep("theobrama_cacao", dat2$species)] <- "theobroma_cacao" # typo - raw data has "theobrama cacao" but the tree has "theobroma_cacao"
+
+# remove the species "NA_NA" rows
+dat2 <- dat2 %>% 
+  filter(!species %in% c("NA_NA"))
+
+```
+
+Then, we need to create the correlation matrix from the phylogenetic tree for phylogenetic meta-analysis. 
+```{r}
+# make variance covariance matrix
+
+dat2_vcv <- vcv.phylo(tree_dat2, corr = TRUE) # make sure the `corr = TRUE`
+dat2_vcv[1:5, 1:5] # check the first few rows and columns
+
+```
+
+### model fitting
+
+::: panel-tabset
+
+## Brownian motion model
+
+Let's fit the Brownian motion model using the `rma.mv` function from the `metafor`and `brms` packages.
+First, we run the metafor model, then we run the brms model.
+```{r}
+#| label: dat2 - phylo_brownian - metafor
+
+# check variable names
+names(dat2)
+
+# change the variable names, and also add effect_id/phylo column
+dat2 <- dat2 %>%
+  rename(
+    lnRR = `Effect_size (natural log response ratio of mean inoculated plant mass over mean non-inoculated plant mass)`,
+    var = `Estimated_variance (inverse of summed replicates of inoculated and non-inoculated plants)`,
+    study_id = Pub_1st_author
+  )
+dat2$effect_id <- seq_len(nrow(dat2))
+dat2$phylo <- dat2$species
+
+dat2_BM_metafor <- rma.mv(lnRR, var,
+                 random = list(~ 1 | study_id, 
+                               ~ 1 | effect_id, 
+                               ~ 1 | species, 
+                               ~ 1 | phylo),
+                 R = list(phylo = dat2_vcv), 
+                 data = dat2)
+
+summary(dat2_BM_metafor)
+
+```
+
+In `brms`, variance is specified using the `se()` function, and we need to specify the phylogenetic covariance matrix using the `data2` argument. The `gr()` function is used to specify the phylogenetic random effect. Do not forget to specify `|a|`- it means that correlation is allowed between the phylogenetic random effects.
+
+```{r}
+#| label: dat2 - phylo_brownian - brms
+
+formula_dat2_BM <- bf(lnRR | se(sqrt(var)) ~ 1 + 
+                        (1 | study_id) + 
+                        (1 | effect_id) + 
+                        (1 | species) +  # non-phylogenetic random effect
+                        (1 |a| gr(phylo, cov = dat2_vcv))
+                      )
+
+prior_dat2_BM <- get_prior(
+  formula = formula_dat2_BM,
+  data = dat2,
+  data2 = list(dat2_vcv = dat2_vcv),
+  family = gaussian()
+)
+
+dat2_BM_brms <- brm(
+  formula = formula_dat2_BM,
+  family = gaussian(),
+  data = dat2,
+  data2 = list(dat2_vcv = dat2_vcv),
+  prior = prior_dat2_BM,
+  iter = 6000, 
+  warmup = 4000,  
+  thin = 1,
+  chains = 2, 
+  control = list(adapt_delta = 0.95)
+  
+)
+summary(dat2_BM_brms)
+
+```
+
+## Ornstein-Uhlenbeck model
+It is a bit tricky when we fit the OU model - we need to calculate the $\alpha$ parameter from the rho parameter, and then create the correlation matrix using the `exp(-alpha * D)` formula, where `D` is the distance matrix. To do that, we first fit the spatial exponential model, then we use the $\rho$ parameter to the alpha parameter, and finally we create the correlation matrix.
+<!-- I am trying how to do that using the `brms` package, but it is not working yet... -->
+
+```{r}
+#| label: dat2 - phylo_ornstein - metafor
+
+dat2$const <- 1
+
+# make identity matrix to calculate the distance matrix
+I <- matrix(1, nrow = nrow(dat2_vcv), ncol = ncol(dat2_vcv))
+
+# then, make distance matrix
+D_dat2 <- I - dat2_vcv 
+
+dat2_spatial <- rma.mv(lnRR, var,
+                     random = list(~ 1 | study_id, 
+                                   ~ 1 | effect_id, 
+                                   ~ 1 | species, 
+                                   ~ phylo | const),
+                     dist=list(D_dat2), 
+                     struct = "SPEXP",
+                     control=list(rho.init=1), 
+                     data = dat2)
+
+summary(dat2_spatial)
+
+
+```
+
+Then, we can extract the $\rho$ parameter and calculate the $\alpha$ parameter, and then create the correlation matrix using the `exp(-alpha * D)` formula.
+
+```{r}
+#| label: dat2 - phylo_ornstein - metafor - alpha
+
+
+rho_dat2 <- dat2_spatial$rho
+alpha_dat2 <- 1/rho_dat2
+dat2_OU <- exp(-alpha_dat2 * D_dat2)
+
+dat2_OU <- rma.mv(lnRR, var,
+                random = list(~ 1 | study_id, 
+                              ~ 1 | effect_id, 
+                              ~ 1 | species,  
+                              ~ 1 | phylo),
+                  R = list(phylo = dat2_OU), 
+                  data = dat2
+                )
+
+summary(dat2_OU)
+
+```
+
+Let's compare the results from spatial exponential model and OU model. You can find the estimates are the same, but the AIC is lower for the OU model..
+
+```{r}
+#| label: dat2 - phylo_ornstein - metafor - compar
+
+summary(dat2_spatial)
+summary(dat2_OU)
+summary(dat2_BM_metafor)
+AIC(dat2_spatial, dat2_OU, dat2_BM_metafor)
+
+```
+
+## Gaussian phylogenetic process model
+```{r}
+#| label: dat2 - phylo_gaussian - metafor
+
+dat2_GP <- rma.mv(lnRR, var,
+                     random = list(~ 1 | study_id, 
+                                   ~ 1 | effect_id, 
+                                   ~ 1 | species, 
+                                   ~ phylo | const),
+                     dist=list(D_dat2), 
+                     struct = "SPGAU",
+                     control=list(rho.init=1), 
+                     data = dat2)
+
+summary(dat2_GP)
+
 
 ```
 
