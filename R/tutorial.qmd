@@ -1,5 +1,5 @@
 ---
-title: "Model 2 (count data)"
+title: "Phylo spatial meta-analysis"
 date: "`r Sys.Date()`"
 # author: " "
 format: 
@@ -43,21 +43,79 @@ execute:
 ---
 
 # setup
+
 ```{r}
 #| label: setup
 # Load required packages
 rm(list = ls())
 
-pacman::p_load(brms, MCMCglmm, metafor, metadat, tidyverse, data.table, crayon, 
+pacman::p_load(brms, MCMCglmm, metafor, metadat, tidyverse, data.table, crayon, here, ape,
                dplyr, tidyr, purrr, stringr, readr, readxl, lubridate, magrittr, janitor, 
-               flextable, kableExtra, geosphere, rotl, here)
+               flextable, kableExtra, geosphere, rotl, databases)
 
 ```
 
+In this tutorial, we provide the basics of (1) phylogenetic, (2) spatial, and (3) phylogenetic-spatial meta-analysis. We show how to make phylogenetic correlation matrix and distance matrix - you can see the similarity of both and connection
+
 # phylogenetic meta-analysis
+
+Phylogenetic meta-analysis is…
+Explain brieflt  BM, OU, PGP model here.
+
+## How to make phylogenetic correlation matrix?
+
+In phylogenetic meta-analysis, it is important to account for the shared evolutionary history of species. Most common way to do this is by incorporating a phylogenetic correlation matrix into your model. This matrix reflects how closely related species are,and can be derived in two main ways:
+
+1. [Using a specific phylogenetic tree](#using-a-specific-phylogenetic-tree)  
+2. [Using the `rotl` package (Open Tree of Life)](#using-the-rotl-package-open-tree-of-life)
+
+In the following two sections, we introduce how to make the correlation matrix in two ways.
+The example below demonstrates how to compute a correlation matrix under the *Brownian motion process*. For the *Ornstein–Uhlenbeck process* and *Phylogenetic Gaussian Process*, please refere to their respective sections.
+
+Note: sometimes, the species names in your data may not match those in the tree - please ensure that they are consistent. Also, it will be necessity when dropping species from the tree that are not in your dataset. In that case, you can use `TreeTools::DropTip()` / `ape::drop.tip()` (or `TreeTools::KeepTip()` / `ape::keep.tip()`)
+
+
+### Using a specific phylogenetic tree
+If the phylogenetic relationships among the species you want to analyse are already known and you have access to a corresponding tree (e.g., from a published source — for birds, you can usually obtain one from BirdTree.org), you can easily generate a phylogenetic correlation matrix using simple codes. 
+
+
+```{r}
+#| label: way 1 - phylometa
+
+library(ape) 
+
+# 1. read a phylogenetic tree file – supported formats include Newick (.nwk), Nexus (.nex), etc.
+##   if the file contains multiple trees, it's better to start by selecting just one.
+##   using ~50 trees is generally considered sufficient for phylogenetic meta-analysis.
+##   (see: https://doi.org/10.1093/sysbio/syy089)
+tree <- read.nexus("tree.txt")
+
+# 2. check whether the tree is ultrametric and fully bifurcating
+is.ultrametric(tree) # should return TRUE
+
+# 3. compute the correlation matrix under BM process
+A <- vcv(tree, corr = TRUE)
+
+# 4. check the dimensions and preview a part of correlation matrix
+dim(A) # returns the number of species (rows / columns)
+A[1:5, 1:5] # show the top-left block of the matrix
+```
+
+
+### Using the `rotl` package (Open Tree of Life)
+If no tree is available (which is often the case), you can build one using the Open Tree of Life via the `rotl` package.
+This approach is especially useful when your meta-analysis includes species from diverse taxonomic groups - which is commonly the case.
+
+```{r}
+#| label: way 2 - phylometa
+
+```
+
 ## example 1
+
 ```{r}
 #| label: load_data - phylo
+#| eval: false
 
 Huberty_Denno_2004 <- read_csv(here("data", "Huberty_Denno_2004", "Huberty_Denno_2004_cleaned.csv"))
 HubDen_tree <- read.tree(here("data", "Huberty_Denno_2004", "Huberty_Denno_2004_tree.txt"))
@@ -95,6 +153,7 @@ HubDen_2004$effect_id <- seq_len(nrow(HubDen_2004))
 
 ```{r}
 #| label: phylo_brownian - metafor
+#| eval: false
 
 HD_BM <- rma.mv(d, var,
                  random = list(~ 1 | Reference, 
@@ -110,8 +169,10 @@ summary(HD_BM)
 ## Ornstein-Uhlenbeck model
 
 ### spatial exponential model
+
 ```{r}
 #| label: phylo_spatialEXP - metafor
+#| eval: false
 
 HubDen_2004$Const <- 1
 I <- matrix(1, nrow = 54, ncol = 54)
@@ -135,8 +196,10 @@ summary(HD_spatial)
 ### Ornstein-Uhlenbeck model
 
 Using the rho parameter from the spatial exponential model, we can fit an Ornstein-Uhlenbeck model.
+
 ```{r}
 #| label: phylo_ornstein - metafor
+#| eval: false
 
 rho <- HD_spatial$rho
 alpha <- 1/rho
@@ -154,14 +217,16 @@ HD_OU <- rma.mv(d, var,
 summary(HD_OU)
 
 ```
+
 You can see that the estimate of the Ornstein-Uhlenbeck model is the same to the spatial exponential model, but the AIC is lower for the Ornstein-Uhlenbeck model.
 
-
 ## Gaussian phylogenetic process model
+
 Actually, we can fit the Gaussian phylogenetic process model using spatial Gaussian process model.
 
 ```{r}
 #| label: phylo_gaussian - metafor
+#| eval: false
 
 HD_GP <- rma.mv(d, var,
                 random = list(~ 1 | Reference, 
@@ -176,12 +241,13 @@ HD_GP <- rma.mv(d, var,
 summary(HD_GP)
 
 ```
-
 :::
 
 ## example 2
+
 ```{r}
 #| label: load_data - example 2
+#| eval: false
 
 dat2 <- read_csv(here("data", "Hoeksema_etal_2010", "HoeksemaEtal2010EcoLett.csv"))
 tree_dat2 <- read.tree(here("data", "Hoeksema_etal_2010", "HoeksemaEtal2010EcoLett_tree.txt"))
@@ -206,8 +272,11 @@ dat2 <- dat2 %>%
 
 ```
 
-Then, we need to create the correlation matrix from the phylogenetic tree for phylogenetic meta-analysis. 
+Then, we need to create the correlation matrix from the phylogenetic tree for phylogenetic meta-analysis.
+
 ```{r}
+#| eval: false
+
 # make variance covariance matrix
 
 dat2_vcv <- vcv.phylo(tree_dat2, corr = TRUE) # make sure the `corr = TRUE`
@@ -218,13 +287,13 @@ dat2_vcv[1:5, 1:5] # check the first few rows and columns
 ### model fitting
 
 ::: panel-tabset
-
 ## Brownian motion model
 
-Let's fit the Brownian motion model using the `rma.mv` function from the `metafor`and `brms` packages.
-First, we run the metafor model, then we run the brms model.
+Let's fit the Brownian motion model using the `rma.mv` function from the `metafor`and `brms` packages. First, we run the metafor model, then we run the brms model.
+
 ```{r}
 #| label: dat2 - phylo_brownian - metafor
+#| eval: false
 
 # check variable names
 names(dat2)
@@ -255,6 +324,7 @@ In `brms`, variance is specified using the `se()` function, and we need to speci
 
 ```{r}
 #| label: dat2 - phylo_brownian - brms
+#| eval: false
 
 formula_dat2_BM <- bf(lnRR | se(sqrt(var)) ~ 1 + 
                         (1 | study_id) + 
@@ -288,11 +358,12 @@ summary(dat2_BM_brms)
 ```
 
 ## Ornstein-Uhlenbeck model
-It is a bit tricky when we fit the OU model - we need to calculate the $\alpha$ parameter from the rho parameter, and then create the correlation matrix using the `exp(-alpha * D)` formula, where `D` is the distance matrix. To do that, we first fit the spatial exponential model, then we use the $\rho$ parameter to the alpha parameter, and finally we create the correlation matrix.
-<!-- I am trying how to do that using the `brms` package, but it is not working yet... -->
+
+It is a bit tricky when we fit the OU model - we need to calculate the $\alpha$ parameter from the rho parameter, and then create the correlation matrix using the `exp(-alpha * D)` formula, where `D` is the distance matrix. To do that, we first fit the spatial exponential model, then we use the $\rho$ parameter to the alpha parameter, and finally we create the correlation matrix. <!-- I am trying how to do that using the `brms` package, but it is not working yet... -->
 
 ```{r}
 #| label: dat2 - phylo_ornstein - metafor
+#| eval: false
 
 dat2$const <- 1
 
@@ -321,7 +392,7 @@ Then, we can extract the $\rho$ parameter and calculate the $\alpha$ parameter, 
 
 ```{r}
 #| label: dat2 - phylo_ornstein - metafor - alpha
-
+#| eval: false
 
 rho_dat2 <- dat2_spatial$rho
 alpha_dat2 <- 1/rho_dat2
@@ -340,21 +411,11 @@ summary(dat2_OU)
 
 ```
 
-Let's compare the results from spatial exponential model and OU model. You can find the estimates are the same, but the AIC is lower for the OU model..
-
-```{r}
-#| label: dat2 - phylo_ornstein - metafor - compar
-
-summary(dat2_spatial)
-summary(dat2_OU)
-summary(dat2_BM_metafor)
-AIC(dat2_spatial, dat2_OU, dat2_BM_metafor)
-
-```
-
 ## Gaussian phylogenetic process model
+
 ```{r}
 #| label: dat2 - phylo_gaussian - metafor
+#| eval: false
 
 dat2_GP <- rma.mv(lnRR, var,
                      random = list(~ 1 | study_id, 
@@ -371,12 +432,92 @@ summary(dat2_GP)
 
 ```
 
+Let's compare the all results. You can find the estimates are the same, but the AIC is lower for the OU model..
+
+```{r}
+#| label: dat2 - phylo_ornstein - metafor - compar
+#| eval: false
+
+summary(dat2_spatial)
+summary(dat2_OU)
+summary(dat2_BM_metafor)
+summary(dat2_GP)
+
+
+## make summary table ----
+
+## make list
+model_list <- list(
+  "BM_metafor" = dat2_BM_metafor,
+  "OU_metafor" = dat2_OU,
+  "Spatial_EXP_metafor" = dat2_spatial,
+  "GP_metafor" = dat2_GP
+)
+
+m <- dat2_BM_metafor
+m <- model_list$SPEXP
+m$tau2
+m$rho
+lapply(model_list, function(x) is.na(x$rho))
+lapply(model_list, function(x) is.na(x$tau2))
+
+## function for tidying up the model results ----
+
+tidy_table <- function(m) {
+
+  library("tidyr")
+  
+  # extract the sigma2 vector (random effect variances),
+  # transpose it to a row, and convert to a data frame
+  sigmas <- m$sigma2 |> t() |> as.data.frame()
+  
+  # assign names to the sigma2 columns using m$s.names
+  # these correspond to random effect levels - "study", "species", "phylo", etc.
+  names(sigmas) <- m$s.names
+  
+  # use broom::tidy() to extract model summary statistics
+  # then add:
+  # - lower and upper 95% confidence intervals (from m$ci.lb and m$ci.ub)
+  # - rho (e.g., spatial/phylogenetic correlation parameter)
+  # - tau2 (variance in spatial/GP models - spatial model patameter)
+  # - AIC (model fit)
+  
+  m.tidy <- tidy(m) %>% 
+    mutate(
+      lwr_ci = m$ci.lb,
+      upper_ci = m$ci.ub,
+      rho = m$rho,
+      tau2 = m$tau2,
+      AIC = AIC(m)
+    ) %>%
+    # bind the sigma2 values as columns to the tidy output
+    bind_cols(sigmas)
+  
+  # convert the result to a data.table for easier manipulation if needed
+  setDT(m.tidy)
+  
+  # return the complete tidy table
+  return(m.tidy)
+}
+
+# run the tidy_table function on each model in the model_list
+tidy.models <- lapply(model_list, tidy_table)
+
+# combine the tidy models into a single data.table
+tidy.models.dat <- rbindlist(tidy.models,
+                             fill = TRUE,
+                             idcol = "model_id")
+tidy.models.dat
+```
 :::
 
-# spatial meta-analysis
+# Spatial meta-analysis
+
+## Example 1
 
 ```{r}
 #| label: load_data - spatial
+#| eval: false
 
 dat_coetzee <- read.xlsx(here("data", "examples", "Coetzee_2014.xlsx"), sheet = 2)
 dat_coetzee$const <- 1 # add constant for spatial models
@@ -392,10 +533,11 @@ colnames(dist_matrix) <- dat_coetzee$datapt_id
 ```
 
 ::: panel-tabset
-
 ## spatial exponential model
+
 ```{r}
 #| label: spatial_exp - metafor
+#| eval: false
 
 EXP_mod1 <- rma.mv(yi, vi, 
                   random = list(
@@ -411,10 +553,18 @@ EXP_mod1 <- rma.mv(yi, vi,
 summary(EXP_mod1)
 ```
 
+### brms
+
+```{r}
+
+
+```
+
 ## spatial Gaussian process model
 
 ```{r}
 #| label: spatial_gaussian - metafor
+#| eval: false
 
 EXP_mod2 <- rma.mv(yi, vi, 
                       random = list(
@@ -434,6 +584,7 @@ summary(EXP_mod2)
 
 ```{r}
 #| label: spatial_linear - metafor
+#| eval: false
 
 EXP_mod3 <- rma.mv(yi, vi, 
                       random = list(
@@ -450,10 +601,15 @@ summary(EXP_mod3)
 ```
 :::
 
+## Example 2
+
 # phylo-spatial meta-analysis
+
 Current version, the model estimated no the phylogenetic effect and spatial effect - I need to find ideal dataset (I can detect such effects) to test this model.
+
 ```{r}
 #| label: phylo_spatial - metafor
+#| eval: false
 
 library(rotl)
 library(readxl)
