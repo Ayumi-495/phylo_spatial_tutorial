@@ -81,7 +81,9 @@ If the phylogenetic relationships among the species you want to analyse are alre
 
 ```{r}
 #| label: way 1 - phylometa
+#| eval: false
 
+# load necessary package
 library(ape) 
 
 # 1. read a phylogenetic tree file – supported formats include Newick (.nwk), Nexus (.nex), etc.
@@ -105,9 +107,67 @@ A[1:5, 1:5] # show the top-left block of the matrix
 ### Using the `rotl` package (Open Tree of Life)
 If no tree is available (which is often the case), you can build one using the Open Tree of Life via the `rotl` package.
 This approach is especially useful when your meta-analysis includes species from diverse taxonomic groups - which is commonly the case.
-
 ```{r}
 #| label: way 2 - phylometa
+#| eval: false
+
+# load necessary package
+pacman::p_load(ape, 
+               rotl,      # for accessing the OTL
+               phytools,  # computing branch lengths
+               stringr    # string manipulation
+               ) 
+
+# 1. get a list of unique species names from your dataaset
+species_names <- unique(dat$species)
+
+# 2. match the species names to OTL taxa
+##   approximate matching is enabled to handle small name differences - e.g. 
+##   you can specified the context name input - default is `All life`. you can check possible contexts `tnrs_contexts()` 
+taxa <- tnrs_match_names(species,
+                         context_name = "All life", 
+                         do_approximate_matching = TRUE)
+
+# 3. manually correct unmatch or incorrectly matched species
+#   you can identify mismatches by checking:
+# - if ott_id is NA (not matched)
+# - if approximate_match is TRUE (matched with uncertainty)
+# - if unique_name differs from the expected name
+
+## e.g. replace ott_id for one mismatches - let's say it is drosophia melanogaster
+tnrs_match_names("drosophila_melanogaster")
+#             search_string             unique_name approximate_match     score ott_id is_synonym flags number_matches
+# 1 drosophila_melanogaster Drosophila melanogaster              TRUE 0.9565217 505714      FALSE                    2
+taxa$ott_id[taxa$search_string == "drosophila_melanogaster"] <- 505714
+
+# 4. create a mapping between OTL names and original species names
+##   this helps to restore originak species names later
+taxon_map <- structure(taxa$search_string, names = taxa$unique_name)
+
+# 5. retrieve the phylogenetic tree from the OTL
+##   only use taxa that are present in the tree
+tr <- tol_induced_subtree(ott_ids = ott_id(taxa)[is_in_tree(ott_id(taxa))])
+
+# 6. clean up the tip labels (species names) in the tree
+##   remove underscores and OTT IDs, and replace them with your original names
+otl_tips <- strip_ott_ids(tr$tip.label, remove_underscores = TRUE)
+tr$tip.label <- taxon_map[otl_tips]
+
+# Add branch lengths to the tree (required to compute correlations)
+tr <- compute.brlen(tr)
+
+# 7. Compute the phylogenetic correlation matrix (Brownian motion assumption)!!
+A <- vcv(tr, corr = TRUE)
+
+
+# Optional ----
+# standardise row/column names of the matrix
+# (lowercase and use underscores instead of spaces)
+rownames(A) <- tolower(gsub(" ", "_", rownames(A)))
+colnames(A) <- tolower(gsub(" ", "_", colnames(A)))
+
+# create nicely formatted tip labels for plotting
+tr$tip.label <- str_replace(str_to_title(taxon_map[otl_tips]), "_", " ")
 
 ```
 
@@ -146,6 +206,66 @@ HubDen_2004$effect_id <- seq_len(nrow(HubDen_2004))
 
 ```
 
+LEt's try to use `rotl` package
+
+```{r}
+#| echo: false
+#| eval: false
+
+species_names <- unique(Huberty_Denno_2004$Herbivore)
+taxa <- tnrs_match_names(species_names,
+                         context_name = "All life", 
+                         do_approximate_matching = TRUE)
+# Warning message:
+# Semiothesia_sp, Neodiprion_fulviceps, Cameraria_sp, Multireoides_sp, Aphalara_sp, Tachardiella_larreae, Phytocoris_sp are not matched 
+tnrs_match_names("Neodiprion fulviceps") 
+#         search_string unique_name approximate_match score ott_id is_synonym flags number_matches
+# 1 neodiprion fulviceps        <NA>                NA    NA     NA         NA    NA             NA
+# Warning message:
+# Neodiprion fulviceps are not matched 
+
+tnrs_match_names("Tachardiella larreae")
+# search_string        unique_name approximate_match     score  ott_id is_synonym flags number_matches
+# 1 tachardiella larreae Tachardiella parva              TRUE 0.7777778 3445352      FALSE                    2
+
+taxa$ott_id[taxa$search_string == "Tachardiella_larreae"] <- 3445352
+
+# provided only sp 
+sp_only <- c("Semiothesia", "Cameraria", "Multireoides", 
+             "Aphalara", "Parthenicus", "Phytocoris")
+tnrs_match_names(sp_only, context_name = "All life")
+#   search_string                                 unique_name approximate_match     score  ott_id is_synonym          flags number_matches
+# 1   semiothesia                                 Demiothecia              TRUE 0.8181818 4116721      FALSE hidden, barren              2
+# 2     cameraria Cameraria (genus in kingdom Archaeplastida)             FALSE 1.0000000 1086195      FALSE                             2
+# 3  multireoides                                Multareoides              TRUE 0.9166667  250857      FALSE                             1
+# 4      aphalara                                    Aphalara             FALSE 1.0000000 3450985      FALSE                             1
+# 5   parthenicus                                 Parthenicus             FALSE 1.0000000  625583      FALSE                             1
+# 6    phytocoris                                  Phytocoris             FALSE 1.0000000  170631      FALSE                             1
+
+taxa$ott_id[taxa$search_string == "Semiothesia_sp"] <- 4116721
+taxa$ott_id[taxa$search_string == "Cameraria_sp"] <- 1086195
+taxa$ott_id[taxa$search_string == "Multareoides_sp"] <- 250857
+taxa$ott_id[taxa$search_string == "Aphalara_sp"] <- 3450985
+taxa$ott_id[taxa$search_string == "Parthenicus_sp"] <- 625583
+taxa$ott_id[taxa$search_string == "Phytocoris_sp"] <- 170631
+
+taxon_map <- structure(taxa$search_string, names = taxa$unique_name)
+valid_taxa <- taxa[!is.na(taxa$unique_name), ]
+taxon_map <- structure(valid_taxa$search_string, names = valid_taxa$unique_name)
+
+tr <- tol_induced_subtree(ott_ids = ott_id(taxa)[is_in_tree(ott_id(taxa))])
+
+otl_tips <- strip_ott_ids(tr$tip.label, remove_underscores = TRUE)
+
+tr$tip.label <- taxon_map[otl_tips]
+
+tr <- compute.brlen(tr)
+
+A <- vcv(tr, corr = TRUE)
+
+plot(tr)
+```
+
 ### model fitting
 
 ::: panel-tabset
@@ -165,6 +285,45 @@ HD_BM <- rma.mv(d, var,
 
 summary(HD_BM)
 ```
+
+In `brms`, variance is specified using the `se()` function, and we need to specify the phylogenetic covariance matrix using the `data2` argument. The `gr()` function is used to specify the phylogenetic random effect. Do not forget to specify `|a|`- it means that correlation is allowed between the phylogenetic random effects.
+
+```{r}
+#| label: dat1 - phylo_brownian - brms
+#| eval: false
+
+formula_dat1_BM <- bf(d | se(sqrt(var)) ~ 1 + 
+                        (1 | Reference) + 
+                        (1 | effect_id) + 
+                        (1 | Herbivore) +  # non-phylogenetic random effect
+                        (1 |a| gr(Phylo, cov = HubDen_vcv))
+                      )
+
+prior_dat1_BM <- get_prior(
+  formula = formula_dat1_BM,
+  data = HubDen_2004,
+  data2 = list(HubDen_vcv = HubDen_vcv),
+  family = gaussian()
+)
+
+dat1_BM_brms <- brm(
+  formula = formula_dat1_BM,
+  family = gaussian(),
+  data = HubDen_2004,
+  data2 = list(HubDen_vcv = HubDen_vcv),
+  prior = prior_dat1_BM,
+  iter = 6000, 
+  warmup = 4000,  
+  thin = 1,
+  chains = 2, 
+  control = list(adapt_delta = 0.95)
+  
+)
+summary(dat1_BM_brms)
+
+```
+
+Both the Bayesian model (brms) and the frequentist model (rma.mv) consistently showed strong phylogenetic signal, with the phylogenetic variance component being the largest among all random effects. The estimates of random effect magnitudes were broadly similar between the two models. 
 
 ## Ornstein-Uhlenbeck model
 
