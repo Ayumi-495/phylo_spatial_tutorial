@@ -55,29 +55,30 @@ pacman::p_load(brms, MCMCglmm, metafor, metadat, tidyverse, data.table, crayon, 
 
 ```
 
-In this tutorial, we provide the basics of (1) phylogenetic, (2) spatial, and (3) phylogenetic-spatial meta-analysis. We show how to make phylogenetic correlation matrix and distance matrix - you can see the similarity of both and connection
+In this tutorial, we provide the basics of (1) phylogenetic, (2) spatial, and (3) phylogenetic-spatial meta-analysis. We show how to make phylogenetic correlation matrix and distance matrix - you can see the similarity of both and connection.
+
+In phylogenetic meta-analysis, the Brownian Motion model (BM model) is most commonly used. This model assumes that closely related species tend to have similar traits, and it represents correlations based on the distances in a phylogenetic tree.
+
+In contrast, spatial meta-analysis assumes that data points located closer together are more similar. It models correlation based on geographic distances, known as spatial correlation.
+
+What is important here is the both approaches rely on distance to difine correlation. In this sencem a phylogenetic distance matrix and a spatial distance matrix share the same sttructure - they are both just distance matrices.
 
 # phylogenetic meta-analysis
 
-Phylogenetic meta-analysis is…
-Explain brieflt  BM, OU, PGP model here.
-
 ## How to make phylogenetic correlation matrix?
 
-In phylogenetic meta-analysis, it is important to account for the shared evolutionary history of species. Most common way to do this is by incorporating a phylogenetic correlation matrix into your model. This matrix reflects how closely related species are,and can be derived in two main ways:
+Before moving the each model, we show how to make phylogenetic correlation matrix. It is important to account for the shared evolutionary history of species. Most common way to do this is by incorporating a phylogenetic correlation matrix into your model. This matrix reflects how closely related species are,and can be derived in two main ways:
 
-1. [Using a specific phylogenetic tree](#using-a-specific-phylogenetic-tree)  
-2. [Using the `rotl` package (Open Tree of Life)](#using-the-rotl-package-open-tree-of-life)
+1.  [Using a specific phylogenetic tree](#using-a-specific-phylogenetic-tree)\
+2.  [Using the `rotl` package (Open Tree of Life)](#using-the-rotl-package-open-tree-of-life)
 
-In the following two sections, we introduce how to make the correlation matrix in two ways.
-The example below demonstrates how to compute a correlation matrix under the *Brownian motion process*. For the *Ornstein–Uhlenbeck process* and *Phylogenetic Gaussian Process*, please refere to their respective sections.
+In the following two sections, we introduce how to make the correlation matrix in two ways. The example below demonstrates how to compute a correlation matrix under the *Brownian motion process*. For the *Ornstein–Uhlenbeck process* and *Phylogenetic Gaussian Process*, please refere to their respective sections.
 
 Note: sometimes, the species names in your data may not match those in the tree - please ensure that they are consistent. Also, it will be necessity when dropping species from the tree that are not in your dataset. In that case, you can use `TreeTools::DropTip()` / `ape::drop.tip()` (or `TreeTools::KeepTip()` / `ape::keep.tip()`)
 
+### Using a specific phylogenetic tree {#using-a-specific-phylogenetic-tree}
 
-### Using a specific phylogenetic tree
-If the phylogenetic relationships among the species you want to analyse are already known and you have access to a corresponding tree (e.g., from a published source — for birds, you can usually obtain one from BirdTree.org), you can easily generate a phylogenetic correlation matrix using simple codes. 
-
+If the phylogenetic relationships among the species you want to analyse are already known and you have access to a corresponding tree (e.g., from a published source — for birds, you can usually obtain one from BirdTree.org), you can easily generate a phylogenetic correlation matrix using simple codes.
 
 ```{r}
 #| label: way 1 - phylometa
@@ -103,10 +104,10 @@ dim(A) # returns the number of species (rows / columns)
 A[1:5, 1:5] # show the top-left block of the matrix
 ```
 
+### Using the `rotl` package (Open Tree of Life) {#using-the-rotl-package-open-tree-of-life}
 
-### Using the `rotl` package (Open Tree of Life)
-If no tree is available (which is often the case), you can build one using the Open Tree of Life via the `rotl` package.
-This approach is especially useful when your meta-analysis includes species from diverse taxonomic groups - which is commonly the case.
+If no tree is available (which is often the case), you can build one using the Open Tree of Life via the `rotl` package. This approach is especially useful when your meta-analysis includes species from diverse taxonomic groups - which is commonly the case.
+
 ```{r}
 #| label: way 2 - phylometa
 #| eval: false
@@ -269,7 +270,13 @@ plot(tr)
 ### model fitting
 
 ::: panel-tabset
-## Brownian motion model
+## Brownian motion model and spatial linear model
+
+The BM model assumes that traits evolve randomly over time. In this model, the correlation between two species depends on how much of their evolutionary history they share (i.e., the total branch length from the root to their most recent common ancestor). As the distance between species increase, the correlation decreases linearly.
+
+This conceptually similar to a spatial model where nearby locations are more similar and ones are less so - also with a linear decay in correlation.
+
+### Brownian motion model
 
 ```{r}
 #| label: phylo_brownian - metafor
@@ -323,28 +330,62 @@ summary(dat1_BM_brms)
 
 ```
 
-Both the Bayesian model (brms) and the frequentist model (rma.mv) consistently showed strong phylogenetic signal, with the phylogenetic variance component being the largest among all random effects. The estimates of random effect magnitudes were broadly similar between the two models. 
+Both the Bayesian model (`brms`) and the frequentist model (`metafor`) consistently showed strong phylogenetic signal, with the phylogenetic variance component being the largest among all random effects. The estimates of random effect magnitudes were broadly similar between the two models.
+
+### Spatial linear model
+
+```{r}
+
+
+
+```
 
 ## Ornstein-Uhlenbeck model
 
-### spatial exponential model
+The OU model extends the BM model by assuming that traits are pulled toward an optimal value over time (this reflects stabilising selection). In the OU model, correlation between species decays exponentially with distance:
+
+$
+\text{cor}(t) = exp(-\alpha_t)
+$
+
+Here, $t$ is the phylogenetic distance and $\alpha$ controls how strongly traits are pulled toward the optimum. Larger values of $\alpha$ lead to faster decay in correlation. Interestingly, this has the same form as the exponential spatial correlation function:
+
+$
+\text{cor}(d) = exp(-d/\rho)
+$
+
+This means that the OU model and exponential spatial model are mathematically equivalent.
+If we set $\alpha = 1/\rho$, the two models produce the same correlation values for the same distance.
+In this way, by recognising the structural similarity between phylogenetic and spatial distance matrices, we can use the spatial modelling framework to implement the OU model in  phylogenetic meta-analysis.
+
+This allows us to incorporate more realistic assumptions, such as stabilising selection, than the BM model. And while estimating $\alpha$ directly in OU model is often challenging, estimating $\rho$ in a spatial model is typically more straightforward (you can see the below). Thus, hacking spatial meta-analysis framework is a practical way to estimating $\alpha$ values in the meta-analysis with OU model.
+
+:::
+
+::: panel-tabset
+### Spatial exponential model
 
 ```{r}
 #| label: phylo_spatialEXP - metafor
 #| eval: false
 
+# add a constant column for specifying a shared correlation structure
 HubDen_2004$Const <- 1
+
+#  make distance matrix
+## by subtracting the correlation matrix from the identity matrix (i.e., distance = 1 - correlation)
 I <- matrix(1, nrow = 54, ncol = 54)
 
-D_HD <- I - HubDen_vcv # make distance matrix
+## convert the phylogenetic correlation matrix into a distance matrix
+D_HD <- I - HubDen_vcv 
 
 HD_spatial <- rma.mv(d, var,
-                     random = list(~ 1 | Reference, 
-                                   ~ 1 | effect_id, 
-                                   ~ 1 | Herbivore, 
-                                   ~ Phylo | Const),
-                     dist=list(D_HD), 
-                     struct = "SPEXP",
+                     random = list(~ 1 | Reference,  # random effect for study
+                                   ~ 1 | effect_id, #  random effect for each effect size
+                                   ~ 1 | Herbivore, #  random effect for species
+                                   ~ Phylo | Const), # random effect for phylogeny
+                     dist=list(D_HD),  # phylogenetic distance matrix
+                     struct = "SPEXP", # use patial exponential correlation structure
                      control=list(rho.init=1), 
                      data = HubDen_2004)
 
