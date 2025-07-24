@@ -49,7 +49,7 @@ colnames(A) <- tolower(gsub(" ", "_", colnames(A)))
 # 6. label the chips
 tr$tip.label <- str_replace(str_to_title(taxon_map[otl_tips]), "_", " ")
 
-D <- 1 - A
+D <- 1 - A # make 
 D[1:5, 1:5]  # Check the first few rows and columns
 
 # BM model ----
@@ -66,7 +66,7 @@ mod1 <- rma.mv(yi = smd,
        data = hyp_1)
 mod1
 
-# spatial exponatial model----
+# spatial exponential model----
 mod2 <- rma.mv(yi = smd,
                V = var,
                random = list(~1|effect_id,

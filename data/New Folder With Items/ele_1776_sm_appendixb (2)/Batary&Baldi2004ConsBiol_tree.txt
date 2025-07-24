@@ -1,0 +1,1 @@
+(((spizella_pusilla:0.088657,acrocephalus_scirpaceus:0.088661):0.145719,(numenius_arquata:0.221362,vanellus_vanellus:0.221362):0.013015):0.049297,((anas_platyrhynchos:0.083369,anas_strepera:0.083369,anas_discors:0.083369):0.083369,anser_anser:0.166738):0.116937);

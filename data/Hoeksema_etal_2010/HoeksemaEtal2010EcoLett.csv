@@ -1,0 +1,621 @@
+Pub_1st_author,Pub_year,Analysis_1,Analysis_2,Analysis_3,Analysis_4,Nutrient_Analyses,Effect_size (natural log response ratio of mean inoculated plant mass over mean non-inoculated plant mass),Estimated_variance (inverse of summed replicates of inoculated and non-inoculated plants),"N-fertilization (0=not fertilized with N, 1=fertilized with N)","P-fertilization (0=not fertilized with P, 1=fertilized with P)","Fertilization (N only, P only, neither, or both)",Location (lab or field),MycorrhizaType (AM or EM),"InoculumComplexity (Single species, multiple species, or whole soil inoculum)",PlantGenus,PlantSpecificEpithet,PlantFamily,PlantFunctionalGroup,FungalGenus,MicrobeControl,Sterility,Plant_tissue_N:P_ratio
+Abdalla,2000,Yes,Yes,Yes,Yes,No,0.361566805,0.05,0,0,neither,lab,AM,Single,Arachis,hypogaea,Fabaceae,N-fixing forb,Glomus,microbial wash,sterile,
+Abdalla,2000,Yes,Yes,Yes,Yes,No,0.283345118,0.05,0,0,neither,lab,AM,Single,Arachis,hypogaea,Fabaceae,N-fixing forb,Glomus,microbial wash,sterile,
+Abdalla,2000,Yes,Yes,Yes,Yes,No,0.230269764,0.05,0,0,neither,lab,AM,Single,Arachis,hypogaea,Fabaceae,N-fixing forb,Glomus,microbial wash,sterile,
+Azcon,1997,Yes,Yes,Yes,Yes,No,2.257464658,0.1,0,0,neither,lab,AM,Single,Lavandula,spica,Lamiaceae,non-N-fixing woody,Glomus,microbial wash,sterile,
+Azcon,1997,Yes,Yes,Yes,Yes,No,2.171249091,0.1,0,0,neither,lab,AM,Single,Lavandula,spica,Lamiaceae,non-N-fixing woody,Glomus,microbial wash,sterile,
+Azcon,1997,Yes,Yes,Yes,Yes,No,2.140066163,0.1,0,0,neither,lab,AM,Single,Lavandula,spica,Lamiaceae,non-N-fixing woody,Glomus,microbial wash,sterile,
+Azcon,1997,Yes,Yes,Yes,Yes,No,0.748576985,0.1,0,0,neither,lab,AM,Single,Lavandula,spica,Lamiaceae,non-N-fixing woody,Glomus,microbial wash,sterile,
+Azcon,1997,Yes,Yes,Yes,Yes,No,0.794929875,0.1,0,0,neither,lab,AM,Single,Lavandula,spica,Lamiaceae,non-N-fixing woody,Glomus,microbial wash,sterile,
+Azcon,1997,Yes,Yes,Yes,Yes,No,1.645971656,0.1,0,0,neither,lab,AM,Single,Lavandula,spica,Lamiaceae,non-N-fixing woody,Glomus,microbial wash,sterile,
+Azcon,1997,Yes,Yes,Yes,Yes,No,0.18859117,0.1,0,0,neither,lab,AM,Single,Lavandula,spica,Lamiaceae,non-N-fixing woody,Glomus,microbial wash,sterile,
+Azcon,1997,Yes,Yes,Yes,Yes,No,0.677398824,0.1,0,0,neither,lab,AM,Single,Lavandula,spica,Lamiaceae,non-N-fixing woody,Glomus,microbial wash,sterile,
+Azcon,1997,Yes,Yes,Yes,Yes,No,2.613216098,0.1,0,0,neither,lab,AM,Single,Lavandula,spica,Lamiaceae,non-N-fixing woody,Glomus,microbial wash,sterile,
+Azcon,1997,Yes,Yes,Yes,Yes,No,0.729350229,0.1,0,0,neither,lab,AM,Single,Lavandula,spica,Lamiaceae,non-N-fixing woody,Glomus,microbial wash,sterile,
+Azcon,1997,Yes,Yes,Yes,Yes,No,0.571913316,0.1,0,0,neither,lab,AM,Single,Lavandula,spica,Lamiaceae,non-N-fixing woody,Glomus,microbial wash,sterile,
+Azcon,1997,Yes,Yes,Yes,Yes,No,2.083895892,0.1,0,0,neither,lab,AM,Single,Lavandula,spica,Lamiaceae,non-N-fixing woody,Glomus,microbial wash,sterile,
+Azcon,1997,Yes,Yes,Yes,Yes,No,-0.002129926,0.5,0,0,neither,lab,AM,Single,Lavandula,spica,Lamiaceae,non-N-fixing woody,Glomus,microbial wash,sterile,
+Azcon,1997,Yes,Yes,Yes,Yes,No,-0.010787591,0.1,0,0,neither,lab,AM,Single,Lavandula,spica,Lamiaceae,non-N-fixing woody,Glomus,microbial wash,sterile,
+Azcon,1997,Yes,Yes,Yes,Yes,No,-0.018127385,0.1,0,0,neither,lab,AM,Single,Lavandula,spica,Lamiaceae,non-N-fixing woody,Glomus,microbial wash,sterile,
+Azcon,1997,Yes,Yes,Yes,Yes,No,0.182709982,0.1,0,0,neither,lab,AM,Single,Lavandula,spica,Lamiaceae,non-N-fixing woody,Glomus,microbial wash,sterile,
+Azcon,1997,Yes,Yes,Yes,Yes,No,0.663990596,0.1,0,0,neither,lab,AM,Single,Lavandula,spica,Lamiaceae,non-N-fixing woody,Glomus,microbial wash,sterile,
+Azcon,1997,Yes,Yes,Yes,Yes,No,2.432064168,0.1,0,0,neither,lab,AM,Single,Lavandula,spica,Lamiaceae,non-N-fixing woody,Glomus,microbial wash,sterile,
+Azcon,1997,Yes,Yes,Yes,Yes,No,0.25022451,0.1,0,0,neither,lab,AM,Single,Lavandula,spica,Lamiaceae,non-N-fixing woody,Glomus,microbial wash,sterile,
+Azcon,1997,Yes,Yes,Yes,Yes,No,0.238504836,0.1,0,0,neither,lab,AM,Single,Lavandula,spica,Lamiaceae,non-N-fixing woody,Glomus,microbial wash,sterile,
+Azcon,1997,Yes,Yes,Yes,Yes,No,0.374502883,0.1,0,0,neither,lab,AM,Single,Lavandula,spica,Lamiaceae,non-N-fixing woody,Glomus,microbial wash,sterile,
+Azcon,1997,Yes,Yes,Yes,Yes,No,0.484680344,0.1,0,0,neither,lab,AM,Single,Lavandula,spica,Lamiaceae,non-N-fixing woody,Glomus,microbial wash,sterile,
+Azcon,1997,Yes,Yes,Yes,Yes,No,0.565759343,0.1,0,0,neither,lab,AM,Single,Lavandula,spica,Lamiaceae,non-N-fixing woody,Glomus,microbial wash,sterile,
+Azcon,1997,Yes,Yes,Yes,Yes,No,1.982113198,0.1,0,0,neither,lab,AM,Single,Lavandula,spica,Lamiaceae,non-N-fixing woody,Glomus,microbial wash,sterile,
+Aziz,1992,Yes,Yes,Yes,Yes,No,-0.098873004,0.0625,1,1,both,lab,AM,Single,Panicum,amarum,Poaceae,C4 grass,Glomus,none,sterile,
+Aziz,1992,Yes,Yes,Yes,Yes,No,1.419817053,0.0625,1,1,both,lab,AM,Single,Panicum,amarum,Poaceae,C4 grass,Glomus,none,sterile,
+Aziz,1992,Yes,Yes,Yes,Yes,No,0.564314309,0.0625,1,1,both,lab,AM,Single,Panicum,amarum,Poaceae,C4 grass,Glomus,none,sterile,
+Aziz,1992,Yes,Yes,Yes,Yes,No,0.684014697,0.0625,1,1,both,lab,AM,Single,Panicum,amarum,Poaceae,C4 grass,Glomus,none,sterile,
+Aziz,1992,Yes,Yes,Yes,Yes,No,-0.084796537,0.0625,1,1,both,lab,AM,Single,Uniola,paniculata,Poaceae,C3 grass,Glomus,none,sterile,
+Aziz,1992,Yes,Yes,Yes,Yes,No,0.426084395,0.0625,1,1,both,lab,AM,Single,Uniola,paniculata,Poaceae,C3 grass,Glomus,none,sterile,
+Bala,1985,Yes,Yes,Yes,No,No,0.759838555,0.083333333,0,0,neither,field,AM,Single,Lens,culinaris,Fabaceae,N-fixing forb,Glomus,none,Unknown,
+Bala,1985,Yes,Yes,Yes,No,No,0.280077473,0.083333333,0,0,neither,field,AM,Single,Lens,culinaris,Fabaceae,N-fixing forb,Glomus,none,Unknown,
+Bala,1985,Yes,Yes,Yes,No,No,0.162518929,0.083333333,0,0,neither,field,AM,Single,Lens,culinaris,Fabaceae,N-fixing forb,Glomus,none,Unknown,
+Baon,1993,Yes,Yes,Yes,Yes,No,0.057833957,0.166666667,1,0,N_only,lab,AM,Single,Hordeum,vulgare,Poaceae,C3 grass,Glomus,none,sterile,
+Baon,1993,Yes,Yes,Yes,Yes,No,-0.019468235,0.166666667,1,0,N_only,lab,AM,Single,Hordeum,vulgare,Poaceae,C3 grass,Glomus,none,sterile,
+Baon,1993,Yes,Yes,Yes,Yes,No,0.091342526,0.166666667,1,0,N_only,lab,AM,Single,Hordeum,vulgare,Poaceae,C3 grass,Glomus,none,sterile,
+Baon,1993,Yes,Yes,Yes,Yes,No,-0.065081852,0.166666667,1,0,N_only,lab,AM,Single,Hordeum,vulgare,Poaceae,C3 grass,Glomus,none,sterile,
+Baon,1993,Yes,Yes,Yes,Yes,No,-0.210942374,0.166666667,1,0,N_only,lab,AM,Single,Hordeum,vulgare,Poaceae,C3 grass,Glomus,none,sterile,
+Baon,1993,Yes,Yes,Yes,Yes,No,0.689117625,0.166666667,1,0,N_only,lab,AM,Single,Hordeum,vulgare,Poaceae,C3 grass,Glomus,none,sterile,
+Baon,1993,Yes,Yes,Yes,Yes,No,-0.080022035,0.166666667,1,0,N_only,lab,AM,Single,Hordeum,vulgare,Poaceae,C3 grass,Glomus,none,sterile,
+Baon,1993,Yes,Yes,Yes,Yes,No,0.019346327,0.166666667,1,0,N_only,lab,AM,Single,Hordeum,vulgare,Poaceae,C3 grass,Glomus,none,sterile,
+Baon,1993,Yes,Yes,Yes,Yes,No,-0.069422887,0.166666667,1,0,N_only,lab,AM,Single,Hordeum,vulgare,Poaceae,C3 grass,Glomus,none,sterile,
+Baon,1993,Yes,Yes,Yes,Yes,No,0.109650366,0.166666667,1,0,N_only,lab,AM,Single,Hordeum,vulgare,Poaceae,C3 grass,Glomus,none,sterile,
+Baon,1993,Yes,Yes,Yes,Yes,No,-0.150277248,0.166666667,1,0,N_only,lab,AM,Single,Hordeum,vulgare,Poaceae,C3 grass,Glomus,none,sterile,
+Baon,1993,Yes,Yes,Yes,Yes,No,0.136056459,0.166666667,1,0,N_only,lab,AM,Single,Hordeum,vulgare,Poaceae,C3 grass,Glomus,none,sterile,
+Baon,1993,Yes,Yes,Yes,Yes,No,-0.108912917,0.166666667,1,0,N_only,lab,AM,Single,Hordeum,vulgare,Poaceae,C3 grass,Glomus,none,sterile,
+Baon,1993,Yes,Yes,Yes,Yes,No,-0.066353961,0.166666667,1,0,N_only,lab,AM,Single,Hordeum,vulgare,Poaceae,C3 grass,Glomus,none,sterile,
+Baon,1993,Yes,Yes,Yes,Yes,No,-0.031133044,0.166666667,1,0,N_only,lab,AM,Single,Hordeum,vulgare,Poaceae,C3 grass,Glomus,none,sterile,
+Baon,1993,Yes,Yes,Yes,Yes,No,0.011368728,0.166666667,1,0,N_only,lab,AM,Single,Hordeum,vulgare,Poaceae,C3 grass,Glomus,none,sterile,
+Baon,1993,Yes,Yes,Yes,Yes,No,0.050788966,0.166666667,1,0,N_only,lab,AM,Single,Hordeum,vulgare,Poaceae,C3 grass,Glomus,none,sterile,
+Baon,1993,Yes,Yes,Yes,Yes,No,-0.195879947,0.166666667,1,0,N_only,lab,AM,Single,Hordeum,vulgare,Poaceae,C3 grass,Glomus,none,sterile,
+Baon,1993,Yes,Yes,Yes,Yes,No,-0.059811639,0.166666667,1,0,N_only,lab,AM,Single,Hordeum,vulgare,Poaceae,C3 grass,Glomus,none,sterile,
+Baon,1993,Yes,Yes,Yes,Yes,No,-0.010645658,0.166666667,1,0,N_only,lab,AM,Single,Hordeum,vulgare,Poaceae,C3 grass,Glomus,none,sterile,
+Baon,1993,Yes,Yes,Yes,Yes,No,-0.049213355,0.166666667,1,0,N_only,lab,AM,Single,Hordeum,vulgare,Poaceae,C3 grass,Glomus,none,sterile,
+Baon,1993,Yes,Yes,Yes,Yes,No,-0.074026961,0.166666667,1,0,N_only,lab,AM,Single,Hordeum,vulgare,Poaceae,C3 grass,Glomus,none,sterile,
+Baon,1993,Yes,Yes,Yes,Yes,No,0.088406799,0.166666667,1,0,N_only,lab,AM,Single,Hordeum,vulgare,Poaceae,C3 grass,Glomus,none,sterile,
+Baon,1993,Yes,Yes,Yes,Yes,No,-0.078490635,0.166666667,1,0,N_only,lab,AM,Single,Hordeum,vulgare,Poaceae,C3 grass,Glomus,none,sterile,
+Baum,2000,Yes,No,Yes,No,No,0.158954532,0.0625,0,0,neither,lab,EM,Single,Populus,trichocarpa,Saliaceae,non-N-fixing woody,Laccaria,none,non,
+Baum,2000,Yes,No,Yes,No,No,-0.065751378,0.0625,0,0,neither,lab,EM,Single,Populus,trichocarpa,Saliaceae,non-N-fixing woody,Paxillus,none,non,
+Baum,2002,Yes,No,Yes,No,No,0.160063086,0.0625,0,0,neither,lab,EM,Single,Populus,trichocarpa,Saliaceae,non-N-fixing woody,Laccaria,none,non,
+Baumann,2005,Yes,No,Yes,No,No,-1.295322583,0.1,0,0,neither,lab,EM,Single,Pinus,sylvestris,Pinaceae,non-N-fixing woody,Paxillus,microbial wash,sterile,
+Baumann,2005,Yes,No,Yes,No,No,0.063460354,0.1,0,0,neither,lab,EM,Single,Pinus,sylvestris,Pinaceae,non-N-fixing woody,Paxillus,microbial wash,sterile,
+Baumann,2005,Yes,No,Yes,No,No,0.623001571,0.1,0,0,neither,lab,EM,Single,Pinus,sylvestris,Pinaceae,non-N-fixing woody,Paxillus,microbial wash,sterile,
+Baumann,2005,Yes,No,Yes,No,No,0.324092436,0.1,0,0,neither,lab,EM,Single,Pinus,sylvestris,Pinaceae,non-N-fixing woody,Paxillus,microbial wash,sterile,
+Baumann,2005,Yes,No,Yes,No,No,0.069886127,0.1,0,0,neither,lab,EM,Single,Pinus,sylvestris,Pinaceae,non-N-fixing woody,Paxillus,microbial wash,sterile,
+Beyeler,1997,Yes,No,No,No,No,1.043927255,0.083333333,1,1,both,lab,EM,Multiple,Fagus,sylvatica,Fagaceae,non-N-fixing woody,.,none,sterile,
+Beyeler,1997,Yes,No,No,No,No,0.54024984,0.083333333,1,1,both,lab,EM,Multiple,Fagus,sylvatica,Fagaceae,non-N-fixing woody,.,none,sterile,
+Bi,2003,Yes,Yes,Yes,Yes,No,-1.214444104,0.5,1,0,N_only,lab,AM,Single,Trifolium,pratense,Fabaceae,N-fixing forb,Glomus,microbial wash,sterile,
+Bi,2003,Yes,Yes,Yes,Yes,No,2.021354656,0.5,1,0,N_only,lab,AM,Single,Trifolium,pratense,Fabaceae,N-fixing forb,Glomus,microbial wash,sterile,
+Bi,2003,Yes,Yes,Yes,Yes,No,-1.740727989,0.5,1,0,N_only,lab,AM,Single,Trifolium,pratense,Fabaceae,N-fixing forb,Glomus,microbial wash,sterile,
+Bi,2003,Yes,Yes,Yes,Yes,No,-0.404492818,0.5,1,0,N_only,lab,AM,Single,Trifolium,pratense,Fabaceae,N-fixing forb,Glomus,microbial wash,sterile,
+Bi,2003,Yes,Yes,Yes,Yes,No,2.270119292,0.5,1,0,N_only,lab,AM,Single,Trifolium,pratense,Fabaceae,N-fixing forb,Glomus,microbial wash,sterile,
+Bi,2003,Yes,Yes,Yes,Yes,No,-1.21587354,0.5,1,0,N_only,lab,AM,Single,Trifolium,pratense,Fabaceae,N-fixing forb,Glomus,microbial wash,sterile,
+Borowicz,1997,Yes,Yes,Yes,Yes,No,-0.020000667,0.071428571,1,0,N_only,lab,AM,Single,Glycine,max,Fabaceae,N-fixing forb,Glomus,microbial wash,sterile,
+Borowicz,1997,Yes,Yes,Yes,Yes,No,1.034965361,0.071428571,1,0,N_only,lab,AM,Single,Glycine,max,Fabaceae,N-fixing forb,Glomus,microbial wash,sterile,
+Bougher,1990,Yes,No,Yes,No,No,0.575364145,0.166666667,1,0,N_only,lab,EM,Single,Eucalyptus,diversicolor,Myrtaceae,non-N-fixing woody,Laccaria,none,sterile,
+Bougher,1990,Yes,No,Yes,No,No,0.753771802,0.166666667,1,0,N_only,lab,EM,Single,Eucalyptus,diversicolor,Myrtaceae,non-N-fixing woody,Descolea,none,sterile,
+Bougher,1990,Yes,No,Yes,No,No,0.416246884,0.166666667,1,0,N_only,lab,EM,Single,Eucalyptus,diversicolor,Myrtaceae,non-N-fixing woody,Descolea,none,sterile,
+Bougher,1990,Yes,No,Yes,No,No,1.170071253,0.166666667,1,0,N_only,lab,EM,Single,Eucalyptus,diversicolor,Myrtaceae,non-N-fixing woody,Descolea,none,sterile,
+Bougher,1990,Yes,No,Yes,No,No,-0.258734496,0.166666667,1,0,N_only,lab,EM,Single,Eucalyptus,diversicolor,Myrtaceae,non-N-fixing woody,Descolea,none,sterile,
+Bougher,1990,Yes,No,Yes,No,No,-0.149718646,0.166666667,1,0,N_only,lab,EM,Single,Eucalyptus,diversicolor,Myrtaceae,non-N-fixing woody,Laccaria,none,sterile,
+Bougher,1990,Yes,No,Yes,No,No,-0.168432445,0.166666667,1,0,N_only,lab,EM,Single,Eucalyptus,diversicolor,Myrtaceae,non-N-fixing woody,Descolea,none,sterile,
+Bougher,1990,Yes,No,Yes,No,No,2.197224577,0.166666667,1,0,N_only,lab,EM,Single,Eucalyptus,diversicolor,Myrtaceae,non-N-fixing woody,Descolea,none,sterile,
+Bougher,1990,Yes,No,Yes,No,No,-0.063938101,0.166666667,1,0,N_only,lab,EM,Single,Eucalyptus,diversicolor,Myrtaceae,non-N-fixing woody,Laccaria,none,sterile,
+Bougher,1990,Yes,No,Yes,No,No,1.517870719,0.166666667,1,0,N_only,lab,EM,Single,Eucalyptus,diversicolor,Myrtaceae,non-N-fixing woody,Descolea,none,sterile,
+Browning,1991,Yes,No,Yes,No,No,-0.031306905,0.029411765,1,1,both,lab,EM,Single,Pinus,banksiana,Pinaceae,non-N-fixing woody,Pisolithus,none,sterile,
+Browning,1991,Yes,No,Yes,No,No,0.036523931,0.027027027,1,1,both,lab,EM,Single,Picea,mariana,Pinaceae,non-N-fixing woody,Laccaria,none,sterile,
+Browning,1991,Yes,No,Yes,No,No,0.138321228,0.022222222,1,1,both,lab,EM,Single,Pinus,banksiana,Pinaceae,non-N-fixing woody,Tricholoma,none,sterile,
+Browning,1991,Yes,No,Yes,No,No,-0.004830927,0.028571429,1,1,both,lab,EM,Single,Picea,mariana,Pinaceae,non-N-fixing woody,Tricholoma,none,sterile,
+Burgess,1993,Yes,No,Yes,No,No,0.356674944,0.125,1,1,both,lab,EM,Single,Eucalyptus,globulus,Myrtaceae,non-N-fixing woody,Cortinarius,none,sterile,
+Burgess,1993,Yes,No,Yes,No,No,0.022989518,0.125,1,1,both,lab,EM,Single,Eucalyptus,globulus,Myrtaceae,non-N-fixing woody,Hymenogaster,none,sterile,
+Burgess,1993,Yes,No,Yes,No,No,0.011560822,0.125,1,1,both,lab,EM,Single,Eucalyptus,globulus,Myrtaceae,non-N-fixing woody,Scleroderma,none,sterile,
+Burgess,1993,Yes,No,Yes,No,No,1.488077055,0.125,1,1,both,lab,EM,Single,Eucalyptus,globulus,Myrtaceae,non-N-fixing woody,Hydnangium,none,sterile,
+Burgess,1993,Yes,No,Yes,No,No,0.810930216,0.125,1,1,both,lab,EM,Single,Eucalyptus,diversicolor,Myrtaceae,non-N-fixing woody,Hysterangium,none,sterile,
+Burgess,1993,Yes,No,Yes,No,No,-0.544301553,0.125,1,1,both,lab,EM,Single,Eucalyptus,diversicolor,Myrtaceae,non-N-fixing woody,Hymenogaster,none,sterile,
+Burgess,1993,Yes,No,Yes,No,No,-0.117783036,0.125,1,1,both,lab,EM,Single,Eucalyptus,diversicolor,Myrtaceae,non-N-fixing woody,Setchelliogaster,none,sterile,
+Burgess,1993,Yes,No,Yes,No,No,1.609437912,0.125,1,1,both,lab,EM,Single,Eucalyptus,diversicolor,Myrtaceae,non-N-fixing woody,Scleroderma,none,sterile,
+Burgess,1994,Yes,No,Yes,No,No,2.762117422,0.125,1,1,both,lab,EM,Single,Eucalyptus,grandis,Myrtaceae,non-N-fixing woody,Pisolithus,none,sterile,
+Burgess,1994,Yes,No,Yes,No,No,3.283414346,0.125,1,1,both,lab,EM,Single,Eucalyptus,grandis,Myrtaceae,non-N-fixing woody,Pisolithus,none,sterile,
+Burgess,1994,Yes,No,Yes,No,No,3.688879454,0.125,1,1,both,lab,EM,Single,Eucalyptus,grandis,Myrtaceae,non-N-fixing woody,Pisolithus,none,sterile,
+Caravaca,2004,Yes,Yes,Yes,No,Yes,0.93309785,0.1,0,0,neither,field,AM,Single,Dorycnium,pentaphyllum,Fabaceae,N-fixing woody,Glomus,microbial wash,non,14.28571429
+Caravaca,2004,Yes,Yes,Yes,No,Yes,0.464493973,0.1,0,0,neither,field,AM,Single,Dorycnium,pentaphyllum,Fabaceae,N-fixing woody,Glomus,microbial wash,non,22.38938053
+Chakravarty,1987,Yes,No,Yes,No,No,4.923623917,0.05,1,1,both,lab,EM,Single,Pinus,sylvestris,Pinaceae,non-N-fixing woody,Pisolithus,none,sterile,
+Chakravarty,1987,Yes,No,Yes,No,No,7.377758908,0.05,1,1,both,lab,EM,Single,Pinus,sylvestris,Pinaceae,non-N-fixing woody,Laccaria,none,sterile,
+Chen,2000,Yes,No,Yes,No,No,2.228477121,0.125,1,1,both,lab,EM,Single,Eucalyptus,europhylla,Myrtaceae,non-N-fixing woody,Laccaria,Unknown,sterile,
+Chen,2004,Yes,Yes,Yes,Yes,No,0.070243598,0.166666667,1,1,both,lab,AM,Single,Zea,mays,Poaceae,C4 grass,Glomus,microbial wash,sterile,
+Chen,2004,Yes,Yes,Yes,Yes,No,0.0129392,0.166666667,1,1,both,lab,AM,Single,Zea,mays,Poaceae,C4 grass,Glomus,microbial wash,sterile,
+Chen,2004,Yes,Yes,Yes,Yes,No,0.007825359,0.166666667,1,1,both,lab,AM,Single,Zea,mays,Poaceae,C4 grass,Glomus,microbial wash,sterile,
+Chen,2006,Yes,No,Yes,No,No,0.10047053,0.03125,1,1,both,lab,EM,Single,Eucalyptus,globulus,Myrtaceae,non-N-fixing woody,Scleroderma,none,sterile,
+Chen,2006,Yes,No,Yes,No,No,0.075655361,0.5,1,1,both,lab,EM,Single,Eucalyptus,globulus,Myrtaceae,non-N-fixing woody,Scleroderma,none,sterile,
+Chen,2006,Yes,No,Yes,No,No,0.041147145,0.03125,1,1,both,lab,EM,Single,Eucalyptus,globulus,Myrtaceae,non-N-fixing woody,Scleroderma,none,sterile,
+Chen,2006,Yes,No,Yes,No,No,0.10047053,0.03125,1,1,both,lab,EM,Single,Eucalyptus,globulus,Myrtaceae,non-N-fixing woody,Scleroderma,none,sterile,
+Chen,2006,Yes,No,Yes,No,No,-0.004073325,0.03125,1,1,both,lab,EM,Single,Eucalyptus,globulus,Myrtaceae,non-N-fixing woody,Scleroderma,none,sterile,
+Chen,2006,Yes,No,Yes,No,No,0.041192198,0.03125,1,1,both,lab,EM,Single,Eucalyptus,urophylla,Myrtaceae,non-N-fixing woody,Scleroderma,none,sterile,
+Chen,2006,Yes,No,Yes,No,No,0.082947767,0.03125,1,1,both,lab,EM,Single,Eucalyptus,urophylla,Myrtaceae,non-N-fixing woody,Scleroderma,none,sterile,
+Chen,2006,Yes,No,Yes,No,No,0.105572078,0.03125,1,1,both,lab,EM,Single,Eucalyptus,urophylla,Myrtaceae,non-N-fixing woody,Scleroderma,none,sterile,
+Chen,2006,Yes,No,Yes,No,No,0.012092682,0.03125,1,1,both,lab,EM,Single,Eucalyptus,urophylla,Myrtaceae,non-N-fixing woody,Scleroderma,none,sterile,
+Chen,2006,Yes,No,Yes,No,No,-0.001323277,0.03125,1,1,both,lab,EM,Single,Eucalyptus,urophylla,Myrtaceae,non-N-fixing woody,Scleroderma,none,sterile,
+Chen,2006,Yes,No,Yes,No,No,1.294309305,0.015625,1,1,both,lab,EM,Single,Eucalyptus,globulus,Myrtaceae,non-N-fixing woody,Scleroderma,none,sterile,
+Chen,2006,Yes,No,Yes,No,No,1.424094137,0.015625,1,1,both,lab,EM,Single,Eucalyptus,globulus,Myrtaceae,non-N-fixing woody,Scleroderma,none,sterile,
+Chen,2006,Yes,No,Yes,No,No,0.624211634,0.015625,1,1,both,lab,EM,Single,Eucalyptus,globulus,Myrtaceae,non-N-fixing woody,Scleroderma,none,sterile,
+Chen,2006,Yes,No,Yes,No,No,0.278908254,0.015625,1,1,both,lab,EM,Single,Eucalyptus,urophylla,Myrtaceae,non-N-fixing woody,Scleroderma,none,sterile,
+Chen,2006,Yes,No,Yes,No,No,1.028549199,0.015625,1,1,both,lab,EM,Single,Eucalyptus,urophylla,Myrtaceae,non-N-fixing woody,Scleroderma,none,sterile,
+Chen,2006,Yes,No,Yes,No,No,0.587046883,0.015625,1,1,both,lab,EM,Single,Eucalyptus,urophylla,Myrtaceae,non-N-fixing woody,Scleroderma,none,sterile,
+Chulan,1991,Yes,Yes,No,Yes,Yes,0.161618374,0.166666667,0,0,neither,lab,AM,Single,Theobrama,cacao,Sterculiaceae,non-N-fixing woody,.,none,non,10.95441595
+Chulan,1991,Yes,Yes,No,Yes,Yes,0.067608285,0.166666667,0,0,neither,lab,AM,Single,Theobrama,cacao,Sterculiaceae,non-N-fixing woody,.,none,non,11.42277956
+Chulan,1991,Yes,Yes,No,Yes,Yes,0.087134475,0.166666667,0,0,neither,lab,AM,Single,Theobrama,cacao,Sterculiaceae,non-N-fixing woody,.,none,non,13.24635457
+Chulan,1991,Yes,Yes,No,Yes,Yes,0.176263676,0.166666667,0,0,neither,lab,AM,Single,Theobrama,cacao,Sterculiaceae,non-N-fixing woody,.,none,non,15.14162836
+Chulan,1991,Yes,Yes,No,Yes,Yes,0.060801121,0.166666667,0,0,neither,lab,AM,Single,Theobroma,cacao,Sterculiaceae,non-N-fixing woody,.,none,non,16.61863593
+Chulan,1991,Yes,Yes,No,Yes,Yes,0,0.166666667,0,0,neither,lab,AM,Single,Theobrama,cacao,Sterculiaceae,non-N-fixing woody,.,none,non,16.97106691
+Chulan,1991,Yes,Yes,No,Yes,Yes,0.107800757,0.166666667,0,0,neither,lab,AM,Single,Theobroma,cacao,Sterculiaceae,non-N-fixing woody,.,none,non,19.19768649
+Chulan,1991,Yes,Yes,No,Yes,Yes,0.065844453,0.166666667,0,0,neither,lab,AM,Single,Theobroma,cacao,Sterculiaceae,non-N-fixing woody,.,none,non,20.73894876
+Chulan,1991,Yes,Yes,No,Yes,Yes,0.114064995,0.166666667,0,0,neither,lab,AM,Single,Theobroma,cacao,Sterculiaceae,non-N-fixing woody,.,none,non,20.846494
+Chulan,1991,Yes,Yes,No,Yes,Yes,0.129462632,0.166666667,0,0,neither,lab,AM,Single,Theobroma,cacao,Sterculiaceae,non-N-fixing woody,.,none,non,24.16743994
+Chulan,1991,Yes,Yes,No,Yes,Yes,0.111014437,0.166666667,0,0,neither,lab,AM,Single,Theobroma,cacao,Sterculiaceae,non-N-fixing woody,.,none,non,28.39665164
+Chulan,1991,Yes,Yes,No,Yes,No,0.130496256,0.166666667,0,0,neither,lab,AM,Single,Theobrama,cacao,Sterculiaceae,non-N-fixing woody,.,none,non,
+Cooperband,1994,Yes,Yes,No,Yes,Yes,-0.169264318,0.1,1,0,N_only,lab,AM,Whole,Erythrina,berteriana,Fabaceae,N-fixing woody,.,microbial wash,sterile,55.29301656
+Cooperband,1994,Yes,Yes,No,Yes,No,0.932015504,0.076923077,1,0,N_only,lab,AM,Whole,Paspalum,conjugatum,Poaceae,C4 grass,.,microbial wash,sterile,
+Cooperband,1994,Yes,Yes,No,Yes,No,2.132686056,0.083333333,1,0,N_only,lab,AM,Whole,Homolepsis,aturensis,Poaceae,C4 grass,.,microbial wash,sterile,
+Corkidi,2002,Yes,Yes,No,Yes,No,0.389464767,0.05,0,1,P_only,lab,AM,Whole,Elymus,elymoides,Poaceae,C3 grass,.,microbial wash,sterile,
+Corkidi,2002,Yes,Yes,No,Yes,No,0.63111179,0.05,0,1,P_only,lab,AM,Whole,Elymus,elymoides,Poaceae,C3 grass,.,microbial wash,sterile,
+Corkidi,2002,Yes,Yes,No,Yes,No,-1.113997208,0.05,0,1,P_only,lab,AM,Whole,Bouteloua,gracilis,Poaceae,C4 grass,.,microbial wash,sterile,
+Corkidi,2002,Yes,Yes,No,Yes,No,0.668656161,0.05,0,1,P_only,lab,AM,Whole,Bouteloua,gracilis,Poaceae,C4 grass,.,microbial wash,sterile,
+Corkidi,2002,Yes,Yes,No,Yes,No,0.203598955,0.05,0,1,P_only,lab,AM,Whole,Bouteloua,eriopoda,Poaceae,C4 grass,.,microbial wash,sterile,
+Corkidi,2002,Yes,Yes,No,Yes,No,1.025049721,0.05,0,1,P_only,lab,AM,Whole,Bouteloua,eriopoda,Poaceae,C4 grass,.,microbial wash,sterile,
+Diedhiou,2005,Yes,No,Yes,No,Yes,0.594707108,0.05,0,0,neither,lab,EM,Single,Afzelia,bella,Fabaceae,non-N-fixing woody,Scleroderma,none,sterile,17.95762712
+Diedhiou,2005,Yes,No,No,No,Yes,0.280522509,0.05,0,0,neither,lab,EM,Single,Afzelia,africana,Fabaceae,non-N-fixing woody,.,none,sterile,20.64102564
+Diedhiou,2005,Yes,No,No,No,Yes,0.48928378,0.05,0,0,neither,lab,EM,Single,Cryptosepalum,tetraphyllum,Fabaceae,non-N-fixing woody,.,none,sterile,24.78947368
+Diedhiou,2005,Yes,No,Yes,No,Yes,0.375484276,0.05,0,0,neither,lab,EM,Single,Paramacrolobium,coeruleum,Fabaceae,non-N-fixing woody,Pisolithus,none,sterile,25.19047619
+Diedhiou,2005,Yes,No,No,No,Yes,1.983734458,0.05,0,0,neither,lab,EM,Single,Uapaca,somon,Euphorbiaceae,non-N-fixing woody,.,none,sterile,36.95454545
+Dixon,1981,Yes,No,Yes,No,No,0.185717146,0.125,1,1,both,lab,EM,Single,Quercus,velutina,Fagaceae,non-N-fixing woody,Pisolithus,none,sterile,
+Dixon,1984,Yes,No,Yes,No,No,0.60077386,0.5,1,1,both,lab,EM,Single,Quercus,robur,Fagaceae,non-N-fixing woody,Cenococcum,none,sterile,
+Dixon,1984,Yes,No,Yes,No,No,0.458307589,0.1,1,1,both,lab,EM,Single,Quercus,velutina,Fagaceae,non-N-fixing woody,Thelephora,none,sterile,
+Dixon,1984,Yes,No,Yes,No,No,0.064538521,0.5,1,1,both,lab,EM,Single,Quercus,alba,Fagaceae,non-N-fixing woody,Suillus,none,sterile,
+Dixon,1987,Yes,No,Yes,No,No,0.500775288,0.035714286,1,1,both,lab,EM,Single,Pinus,taeda,Pinaceae,non-N-fixing woody,Pisolithus,none,sterile,
+Dixon,1987,Yes,No,Yes,No,No,0.476082675,0.035714286,1,1,both,lab,EM,Single,Pinus,taeda,Pinaceae,non-N-fixing woody,Pisolithus,none,sterile,
+Dixon,1987,Yes,No,Yes,No,No,0.024097552,0.035714286,1,1,both,lab,EM,Single,Pinus,taeda,Pinaceae,non-N-fixing woody,Pisolithus,none,sterile,
+Dixon,1987,Yes,No,Yes,No,No,0,0.035714286,1,1,both,lab,EM,Single,Pinus,taeda,Pinaceae,non-N-fixing woody,Pisolithus,none,sterile,
+Dixon,1987,Yes,No,Yes,No,No,0.170625517,0.035714286,1,1,both,lab,EM,Single,Pinus,taeda,Pinaceae,non-N-fixing woody,Pisolithus,none,sterile,
+Dixon,1987,Yes,No,Yes,No,No,0.022989518,0.035714286,1,1,both,lab,EM,Single,Pinus,taeda,Pinaceae,non-N-fixing woody,Pisolithus,none,sterile,
+Dixon,1987,Yes,No,Yes,No,No,0.223143551,0.035714286,1,1,both,lab,EM,Single,Pinus,taeda,Pinaceae,non-N-fixing woody,Pisolithus,none,sterile,
+Dixon,1987,Yes,No,Yes,No,No,0.298492989,0.035714286,1,1,both,lab,EM,Single,Pinus,taeda,Pinaceae,non-N-fixing woody,Pisolithus,none,sterile,
+Dixon,1987,Yes,No,Yes,No,No,0.606135804,0.035714286,1,1,both,lab,EM,Single,Pinus,taeda,Pinaceae,non-N-fixing woody,Pisolithus,none,sterile,
+Dosskey,1991,Yes,No,Yes,No,Yes,-0.193863317,0.0025,1,1,both,lab,EM,Single,Pseudotsuga,menziesii,Pinaceae,non-N-fixing woody,Hebeloma,other,sterile,8
+Dosskey,1991,Yes,No,Yes,No,Yes,-0.080042708,0.0025,1,1,both,lab,EM,Single,Pseudotsuga,menziesii,Pinaceae,non-N-fixing woody,Rhizopogon,Unknown,Unknown,10.66666667
+Dunabeitia,2004,Yes,No,Yes,No,Yes,0.179393297,0.02,1,1,both,lab,EM,Single,Pinus,radiata,Pinaceae,non-N-fixing woody,Scleroderma,Unknown,Unknown,4.75
+Dunabeitia,2004,Yes,No,Yes,No,No,0.202278413,0.02,1,1,both,lab,EM,Single,Pinus,radiata,Pinaceae,non-N-fixing woody,Rhizopogon,none,sterile,
+Dunstan,1998,Yes,No,Yes,No,No,0.362114667,0.083333333,1,1,both,lab,EM,Single,Eucalyptus,diversicolor,Myrtaceae,non-N-fixing woody,Laccaria,other,sterile,
+Dunstan,1998,Yes,No,Yes,No,No,0.233093882,0.083333333,1,1,both,lab,EM,Single,Eucalyptus,diversicolor,Myrtaceae,non-N-fixing woody,Laccaria,other,sterile,
+Dunstan,1998,Yes,No,Yes,No,No,-0.033901552,0.083333333,1,1,both,lab,EM,Single,Eucalyptus,diversicolor,Myrtaceae,non-N-fixing woody,Laccaria,other,sterile,
+Dunstan,1998,Yes,No,Yes,No,No,0.044451763,0.083333333,1,1,both,lab,EM,Single,Eucalyptus,diversicolor,Myrtaceae,non-N-fixing woody,Laccaria,other,sterile,
+Dunstan,1998,Yes,No,Yes,No,No,0.399985642,0.083333333,1,1,both,lab,EM,Single,Eucalyptus,diversicolor,Myrtaceae,non-N-fixing woody,Laccaria,other,sterile,
+Dunstan,1998,Yes,No,Yes,No,No,-0.024692613,0.083333333,1,1,both,lab,EM,Single,Eucalyptus,diversicolor,Myrtaceae,non-N-fixing woody,Laccaria,other,sterile,
+Dunstan,1998,Yes,No,Yes,No,No,-0.121889818,0.083333333,1,1,both,lab,EM,Single,Eucalyptus,diversicolor,Myrtaceae,non-N-fixing woody,Laccaria,other,sterile,
+Dunstan,1998,Yes,No,Yes,No,No,0.050430854,0.083333333,1,1,both,lab,EM,Single,Eucalyptus,diversicolor,Myrtaceae,non-N-fixing woody,Laccaria,other,sterile,
+Dunstan,1998,Yes,No,Yes,No,No,-0.559615788,0.083333333,1,1,both,lab,EM,Single,Eucalyptus,diversicolor,Myrtaceae,non-N-fixing woody,Laccaria,other,sterile,
+Dunstan,1998,Yes,No,Yes,No,No,0.291910409,0.083333333,1,1,both,lab,EM,Single,Eucalyptus,diversicolor,Myrtaceae,non-N-fixing woody,Laccaria,other,sterile,
+Edathil,1996,Yes,Yes,No,Yes,Yes,0.266175867,0.125,0,0,neither,lab,AM,Multiple,Lycopersicon,esculentum,Solanaceae,non-N-fixing forb,.,none,sterile,16.27272727
+Edathil,1996,Yes,Yes,Yes,Yes,Yes,0.700214348,0.125,0,0,neither,lab,AM,Single,Lycopersicon,esculentum,Solanaceae,non-N-fixing forb,Glomus,none,sterile,16.27272727
+El-din,1988,Yes,Yes,No,No,Yes,0.14518201,0.125,0,1,P_only,field,AM,Whole,Glycine,max,Fabaceae,N-fixing forb,Glomus,none,non,3.290322581
+El-din,1988,Yes,Yes,No,No,Yes,0.344194283,0.125,0,1,P_only,field,AM,Whole,Glycine,max,Fabaceae,N-fixing forb,Glomus,none,non,3.52173913
+El-din,1988,Yes,Yes,No,No,Yes,0.159759219,0.125,0,1,P_only,field,AM,Whole,Glycine,max,Fabaceae,N-fixing forb,Glomus,none,non,3.666666667
+El-din,1988,Yes,Yes,No,No,Yes,0.100442783,0.125,0,1,P_only,field,AM,Whole,Glycine,max,Fabaceae,N-fixing forb,Glomus,none,non,4.469387755
+El-din,1988,Yes,Yes,No,No,Yes,-0.098440073,0.125,0,1,P_only,field,AM,Whole,Glycine,max,Fabaceae,N-fixing forb,Glomus,none,non,4.947368421
+El-din,1988,Yes,Yes,No,No,Yes,0.106710955,0.125,0,1,P_only,field,AM,Whole,Glycine,max,Fabaceae,N-fixing forb,Glomus,none,non,5.111111111
+El-din,1988,Yes,Yes,No,No,Yes,0.410914713,0.125,0,1,P_only,lab,AM,Whole,Lens,culinaris,Fabaceae,N-fixing forb,Glomus,Unknown,Unknown,9.726495726
+El-din,1988,Yes,Yes,No,No,Yes,0.189242,0.125,0,1,P_only,lab,AM,Whole,Lens,culinaris,Fabaceae,N-fixing forb,Glomus,Unknown,Unknown,9.739910314
+El-din,1988,Yes,Yes,No,No,Yes,0.229310066,0.125,0,1,P_only,lab,AM,Whole,Lens,culinaris,Fabaceae,N-fixing forb,Glomus,Unknown,Unknown,10.06547619
+El-din,1988,Yes,Yes,No,No,Yes,0.251314428,0.125,0,1,P_only,lab,AM,Whole,Lens,culinaris,Fabaceae,N-fixing forb,Glomus,Unknown,Unknown,10.10810811
+El-din,1988,Yes,Yes,No,No,Yes,0.411734721,0.125,0,1,P_only,lab,AM,Whole,Lens,culinaris,Fabaceae,N-fixing forb,Glomus,Unknown,Unknown,10.37777778
+El-din,1988,Yes,Yes,No,No,Yes,0.441832752,0.125,0,1,P_only,lab,AM,Whole,Lens,culinaris,Fabaceae,N-fixing forb,Glomus,Unknown,Unknown,11.36
+Estaun,2003,Yes,Yes,Yes,Yes,No,0.978166136,0.05,0,0,neither,lab,AM,Single,Olea,europaea,Oleaceae,non-N-fixing woody,Glomus,none,sterile,
+Fagbola,1998,Yes,Yes,Yes,No,No,0.31121257,0.166666667,0,0,neither,field,AM,Single,Manihot,esculenta,Euphorbiaceae,non-N-fixing woody,Glomus,none,non,
+Fagbola,1998,Yes,Yes,Yes,No,No,0.892760234,0.166666667,0,0,neither,field,AM,Single,Manihot,esculenta,Euphorbiaceae,non-N-fixing woody,Glomus,none,non,
+Gaur,1999,Yes,Yes,No,No,No,0.020429047,0.033333333,0,0,neither,lab,AM,Whole,Syngonium,podophyllum,Araceae,non-N-fixing forb,.,Unknown,non,
+Gaur,1999,Yes,Yes,No,No,No,0.087483744,0.033333333,0,0,neither,lab,AM,Whole,Syngonium,podophyllum,Araceae,non-N-fixing forb,.,Unknown,non,
+Gaur,1999,Yes,Yes,No,No,No,0.168273674,0.033333333,0,0,neither,lab,AM,Whole,Syngonium,podophyllum,Araceae,non-N-fixing forb,.,Unknown,non,
+Gaur,1999,Yes,Yes,No,No,No,0.133992825,0.033333333,0,0,neither,lab,AM,Whole,Syngonium,podophyllum,Araceae,non-N-fixing forb,.,Unknown,non,
+Gemma,1997,Yes,Yes,Yes,Yes,No,0.96842874,0.1,1,1,both,lab,AM,Single,Prunus,maritima,Rosaceae,non-N-fixing woody,Glomus,none,sterile,
+Gemma,1997,Yes,Yes,Yes,Yes,No,0.476339448,0.055555556,1,1,both,lab,AM,Single,Solidago,sempervirens,Asteraceae,non-N-fixing forb,Glomus,none,sterile,
+Godse,1978,Yes,Yes,Yes,No,No,1.073467133,0.125,0,1,P_only,lab,AM,Single,Vigna,unguiculata,Fabaceae,N-fixing forb,Glomus,Unknown,non,
+Godse,1978,Yes,Yes,Yes,No,No,0.604433898,0.125,0,1,P_only,lab,AM,Single,Vigna,unguiculata,Fabaceae,N-fixing forb,Glomus,Unknown,non,
+Goicoechea,1997,Yes,Yes,Yes,Yes,Yes,0.559615788,0.071428571,1,1,both,lab,AM,Single,Medicago,sativa,Fabaceae,N-fixing forb,Glomus,other,non,16
+Goicoechea,1997,Yes,Yes,Yes,Yes,Yes,-0.322773392,0.071428571,1,1,both,lab,AM,Single,Medicago,sativa,Fabaceae,N-fixing forb,Glomus,other,non,26.5
+Goicoechea,1997,Yes,Yes,Yes,Yes,Yes,-0.121889818,0.071428571,1,1,both,lab,AM,Single,Medicago,sativa,Fabaceae,N-fixing forb,Glomus,other,non,30.25
+Goicoechea,1997,Yes,Yes,Yes,Yes,Yes,0.072759354,0.071428571,1,1,both,lab,AM,Single,Medicago,sativa,Fabaceae,N-fixing forb,Glomus,other,non,30.25
+Greipsson,2000,Yes,Yes,No,Yes,No,1.38686397,0.166666667,1,1,both,lab,AM,Whole,Leymus,arenarius,Poaceae,C3 grass,Glomus,microbial wash,sterile,
+Habte,1991,Yes,Yes,Yes,No,No,0.295980875,0.166666667,1,0,N_only,lab,AM,Single,Cassia,Spectabilis,Fabaceae,non-N-fixing woody,Glomus,Unknown,sterile,
+Habte,1991,Yes,Yes,Yes,No,No,1.609437912,0.166666667,1,0,N_only,lab,AM,Single,Cassia,Spectabilis,Fabaceae,non-N-fixing woody,Glomus,Unknown,sterile,
+Habte,1991,Yes,Yes,Yes,No,No,-0.283435782,0.166666667,1,0,N_only,lab,AM,Single,Cassia,reticulata,Fabaceae,non-N-fixing woody,Glomus,Unknown,sterile,
+Habte,1991,Yes,Yes,Yes,No,No,-0.112117298,0.166666667,1,0,N_only,lab,AM,Single,Cassia,reticulata,Fabaceae,non-N-fixing woody,Glomus,Unknown,sterile,
+Habte,1991,Yes,Yes,Yes,No,No,-0.240004649,0.166666667,1,0,N_only,lab,AM,Single,Gliricidia,sepium,Fabaceae,N-fixing woody,Glomus,Unknown,sterile,
+Habte,1991,Yes,Yes,Yes,No,No,-0.363947703,0.166666667,1,0,N_only,lab,AM,Single,Gliricidia,sepium,Fabaceae,N-fixing woody,Glomus,Unknown,sterile,
+Habte,1995,Yes,Yes,Yes,No,No,-0.296874521,0.166666667,1,1,both,lab,AM,Single,Cassia,siamea,Fabaceae,non-N-fixing woody,Glomus,Unknown,sterile,
+Habte,1995,Yes,Yes,Yes,No,No,1.515127233,0.166666667,1,1,both,lab,AM,Single,Cassia,siamea,Fabaceae,non-N-fixing woody,Glomus,Unknown,sterile,
+Hamel,1991,Yes,Yes,Yes,No,Yes,1.219020142,0.5,0,0,neither,field,AM,Single,Zea,mays,Poaceae,C4 grass,Glomus,microbial wash,sterile,13.27272727
+Hamel,1991,Yes,Yes,Yes,No,Yes,0.559285587,0.5,0,0,neither,field,AM,Single,Glycine,max,Fabaceae,N-fixing forb,Glomus,microbial wash,sterile,16.1875
+Hartwig,2002,Yes,Yes,Yes,No,Yes,0.01892801,0.0625,1,1,both,lab,AM,Single,Lolium,perenne,Poaceae,C3 grass,Glomus,microbial wash,Unknown,0.466292135
+Hartwig,2002,Yes,Yes,Yes,No,Yes,0.087157309,0.0625,1,1,both,lab,AM,Single,Lolium,perenne,Poaceae,C3 grass,Glomus,microbial wash,Unknown,0.487394958
+Hartwig,2002,Yes,Yes,Yes,No,Yes,0.30302223,0.0625,1,1,both,lab,AM,Single,Lolium,perenne,Poaceae,C3 grass,Glomus,microbial wash,Unknown,1.119205298
+Hartwig,2002,Yes,Yes,Yes,No,Yes,0.114174427,0.0625,1,1,both,lab,AM,Single,Lolium,perenne,Poaceae,C3 grass,Glomus,microbial wash,Unknown,1.291139241
+Heinonsalo,2004,Yes,No,Yes,No,No,0.36926626,0.010416667,0,0,neither,field,EM,Single,Pseudotsuga,menziesii,Pinaceae,non-N-fixing woody,Laccaria,none,non,
+Heinonsalo,2004,Yes,No,Yes,No,No,0.20700669,0.010416667,0,0,neither,field,EM,Single,Pseudotsuga,menziesii,Pinaceae,non-N-fixing woody,Laccaria,none,non,
+Heinrich,1988,Yes,No,Yes,No,No,1.188358577,0.125,1,0,N_only,lab,EM,Single,Eucalyptus,pilularis,Myrtaceae,non-N-fixing woody,Pisolithus,none,sterile,
+Heinrich,1988,Yes,No,Yes,No,No,0.493889114,0.125,1,0,N_only,lab,EM,Single,Eucalyptus,pilularis,Myrtaceae,non-N-fixing woody,Pisolithus,none,sterile,
+Heinrich,1988,Yes,No,Yes,No,No,0.086404691,0.125,1,0,N_only,lab,EM,Single,Eucalyptus,pilularis,Myrtaceae,non-N-fixing woody,Pisolithus,none,sterile,
+Heinrich,1988,Yes,No,Yes,No,No,0.588923675,0.125,1,0,N_only,lab,EM,Single,Eucalyptus,pilularis,Myrtaceae,non-N-fixing woody,Pisolithus,none,sterile,
+Heinrich,1988,Yes,No,Yes,No,No,1.00144854,0.125,1,0,N_only,lab,EM,Single,Eucalyptus,pilularis,Myrtaceae,non-N-fixing woody,Pisolithus,none,sterile,
+Heinrich,1988,Yes,No,Yes,No,No,2.185583002,0.125,1,0,N_only,lab,EM,Single,Eucalyptus,pilularis,Myrtaceae,non-N-fixing woody,Pisolithus,none,sterile,
+Heinrich,1988,Yes,No,Yes,No,No,1.711459527,0.125,1,0,N_only,lab,EM,Single,Eucalyptus,pilularis,Myrtaceae,non-N-fixing woody,Pisolithus,none,sterile,
+Hung,1986,Yes,No,Yes,No,No,0.383776874,0.0625,1,1,both,lab,EM,Single,Pseudotsuga,menziesii,Pinaceae,non-N-fixing woody,Laccaria,none,sterile,
+Ikram,1987,Yes,Yes,Yes,Yes,Yes,0.247829609,0.166666667,0,1,P_only,lab,AM,Single,Calopogonium,caeruleum,Fabaceae,N-fixing forb,Glomus,other,non,7.974358974
+Ikram,1987,Yes,Yes,Yes,Yes,Yes,1.405248077,0.166666667,0,1,P_only,lab,AM,Single,Calopogonium,caeruleum,Fabaceae,N-fixing forb,Glomus,other,non,12.52631579
+Ikram,1987,Yes,Yes,Yes,Yes,Yes,0.023363622,0.166666667,0,1,P_only,lab,AM,Single,Calopogonium,caeruleum,Fabaceae,N-fixing forb,Glomus,other,non,12.76190476
+Ikram,1987,Yes,Yes,Yes,Yes,Yes,0.13499739,0.166666667,0,1,P_only,lab,AM,Single,Calopogonium,caeruleum,Fabaceae,N-fixing forb,Glomus,other,non,13
+Ikram,1987,Yes,Yes,Yes,Yes,Yes,0.094750337,0.166666667,0,1,P_only,lab,AM,Single,Calopogonium,caeruleum,Fabaceae,N-fixing forb,Glomus,other,non,13.14285714
+Ikram,1987,Yes,Yes,Yes,Yes,Yes,0.494700437,0.166666667,0,1,P_only,lab,AM,Single,Calopogonium,caeruleum,Fabaceae,N-fixing forb,Glomus,other,non,14.27272727
+Ikram,1987,Yes,Yes,Yes,Yes,Yes,0.092010187,0.166666667,0,1,P_only,lab,AM,Single,Calopogonium,caeruleum,Fabaceae,N-fixing forb,Glomus,other,non,14.58823529
+Ikram,1987,Yes,Yes,Yes,Yes,Yes,0.301512356,0.166666667,0,1,P_only,lab,AM,Single,Calopogonium,caeruleum,Fabaceae,N-fixing forb,Glomus,other,non,16.5
+Ikram,1987,Yes,Yes,Yes,Yes,Yes,-0.129170478,0.166666667,0,1,P_only,lab,AM,Single,Calopogonium,caeruleum,Fabaceae,N-fixing forb,Glomus,other,non,16.61538462
+Ikram,1987,Yes,Yes,Yes,Yes,Yes,1.124958896,0.166666667,0,1,P_only,lab,AM,Single,Calopogonium,caeruleum,Fabaceae,N-fixing forb,Glomus,other,non,18.5625
+Ikram,1987,Yes,Yes,Yes,Yes,Yes,1.090401999,0.166666667,0,1,P_only,lab,AM,Single,Calopogonium,caeruleum,Fabaceae,N-fixing forb,Glomus,other,non,18.76470588
+Ikram,1987,Yes,Yes,Yes,Yes,Yes,0.933005445,0.166666667,0,1,P_only,lab,AM,Single,Calopogonium,caeruleum,Fabaceae,N-fixing forb,Glomus,other,non,19.13333333
+Ikram,1987,Yes,Yes,Yes,Yes,Yes,1.259955439,0.166666667,0,1,P_only,lab,AM,Single,Calopogonium,caeruleum,Fabaceae,N-fixing forb,Glomus,other,non,19.92857143
+Ikram,1987,Yes,Yes,Yes,Yes,Yes,0.490203939,0.166666667,0,1,P_only,lab,AM,Single,Calopogonium,caeruleum,Fabaceae,N-fixing forb,Glomus,other,non,21.21428571
+Ikram,1987,Yes,Yes,Yes,Yes,Yes,0.346540206,0.166666667,0,1,P_only,lab,AM,Single,Calopogonium,caeruleum,Fabaceae,N-fixing forb,Glomus,other,non,21.69230769
+Ikram,1987,Yes,Yes,Yes,Yes,Yes,1.756094605,0.166666667,0,1,P_only,lab,AM,Single,Calopogonium,caeruleum,Fabaceae,N-fixing forb,Glomus,other,non,22.33333333
+Ikram,1987,Yes,Yes,Yes,Yes,Yes,0.241401168,0.166666667,0,1,P_only,lab,AM,Single,Calopogonium,caeruleum,Fabaceae,N-fixing forb,Glomus,other,non,22.7
+Ikram,1987,Yes,Yes,Yes,Yes,Yes,0.85823872,0.166666667,0,1,P_only,lab,AM,Single,Calopogonium,caeruleum,Fabaceae,N-fixing forb,Glomus,other,non,22.78571429
+Ikram,1987,Yes,Yes,Yes,Yes,Yes,0.6824906,0.166666667,0,1,P_only,lab,AM,Single,Calopogonium,caeruleum,Fabaceae,N-fixing forb,Glomus,other,non,23
+Ikram,1987,Yes,Yes,Yes,Yes,Yes,0.197703884,0.166666667,0,1,P_only,lab,AM,Single,Calopogonium,caeruleum,Fabaceae,N-fixing forb,Glomus,other,non,23
+Ikram,1987,Yes,Yes,Yes,Yes,Yes,-0.696488313,0.166666667,0,1,P_only,lab,AM,Single,Calopogonium,caeruleum,Fabaceae,N-fixing forb,Glomus,other,non,23.5
+Ikram,1987,Yes,Yes,Yes,Yes,Yes,0.078546042,0.166666667,0,1,P_only,lab,AM,Single,Calopogonium,caeruleum,Fabaceae,N-fixing forb,Glomus,other,non,23.8
+Ikram,1987,Yes,Yes,Yes,Yes,Yes,0.492519921,0.166666667,0,1,P_only,lab,AM,Single,Calopogonium,caeruleum,Fabaceae,N-fixing forb,Glomus,other,non,24.3
+Ikram,1987,Yes,Yes,Yes,Yes,Yes,0.045351558,0.5,0,1,P_only,lab,AM,Single,Calopogonium,caeruleum,Fabaceae,N-fixing forb,Glomus,other,non,25.3
+Ikram,1987,Yes,Yes,Yes,Yes,Yes,0.045182223,0.166666667,0,1,P_only,lab,AM,Single,Calopogonium,caeruleum,Fabaceae,N-fixing forb,Glomus,other,non,25.6
+Ikram,1987,Yes,Yes,Yes,Yes,Yes,0.299487624,0.166666667,0,1,P_only,lab,AM,Single,Calopogonium,caeruleum,Fabaceae,N-fixing forb,Glomus,other,non,25.9
+Ikram,1987,Yes,Yes,Yes,Yes,Yes,1.002156126,0.166666667,0,1,P_only,lab,AM,Single,Calopogonium,caeruleum,Fabaceae,N-fixing forb,Glomus,other,non,26.375
+Ikram,1987,Yes,Yes,Yes,Yes,Yes,0.223065209,0.166666667,0,1,P_only,lab,AM,Single,Calopogonium,caeruleum,Fabaceae,N-fixing forb,Glomus,other,non,27.875
+Ikram,1987,Yes,Yes,Yes,Yes,Yes,0.29169161,0.166666667,0,1,P_only,lab,AM,Single,Calopogonium,caeruleum,Fabaceae,N-fixing forb,Glomus,other,non,28.41666667
+Ikram,1987,Yes,Yes,Yes,Yes,Yes,0.29845344,0.166666667,0,1,P_only,lab,AM,Single,Calopogonium,caeruleum,Fabaceae,N-fixing forb,Glomus,other,non,29.25
+Ikram,1987,Yes,Yes,Yes,Yes,Yes,1.108641871,0.166666667,0,1,P_only,lab,AM,Single,Calopogonium,caeruleum,Fabaceae,N-fixing forb,Glomus,other,non,29.625
+Ikram,1987,Yes,Yes,Yes,Yes,Yes,-0.087025461,0.166666667,0,1,P_only,lab,AM,Single,Calopogonium,caeruleum,Fabaceae,N-fixing forb,Glomus,other,non,30
+Ikram,1987,Yes,Yes,Yes,Yes,Yes,0.245145162,0.5,0,1,P_only,lab,AM,Single,Calopogonium,caeruleum,Fabaceae,N-fixing forb,Glomus,other,non,33
+Ikram,1987,Yes,Yes,Yes,Yes,Yes,0.672248587,0.166666667,0,1,P_only,lab,AM,Single,Calopogonium,caeruleum,Fabaceae,N-fixing forb,Glomus,other,non,34.14285714
+Ikram,1987,Yes,Yes,Yes,Yes,Yes,0.993424023,0.166666667,0,1,P_only,lab,AM,Single,Calopogonium,caeruleum,Fabaceae,N-fixing forb,Glomus,other,non,34.27272727
+Ikram,1987,Yes,Yes,Yes,Yes,Yes,0.567747962,0.166666667,0,1,P_only,lab,AM,Single,Calopogonium,caeruleum,Fabaceae,N-fixing forb,Glomus,other,non,35
+Ikram,1987,Yes,Yes,Yes,Yes,Yes,0.828763776,0.166666667,0,1,P_only,lab,AM,Single,Calopogonium,caeruleum,Fabaceae,N-fixing forb,Glomus,other,non,37
+Ikram,1987,Yes,Yes,Yes,Yes,Yes,0.820348219,0.166666667,0,1,P_only,lab,AM,Single,Calopogonium,caeruleum,Fabaceae,N-fixing forb,Glomus,other,non,37.22222222
+Ikram,1987,Yes,Yes,Yes,Yes,Yes,1.958018167,0.166666667,0,1,P_only,lab,AM,Single,Calopogonium,caeruleum,Fabaceae,N-fixing forb,Glomus,other,non,38.55555556
+Ikram,1987,Yes,Yes,Yes,Yes,Yes,0.618837025,0.166666667,0,1,P_only,lab,AM,Single,Calopogonium,caeruleum,Fabaceae,N-fixing forb,Glomus,other,non,38.85714286
+Ikram,1987,Yes,Yes,Yes,Yes,Yes,1.075192014,0.166666667,0,1,P_only,lab,AM,Single,Calopogonium,caeruleum,Fabaceae,N-fixing forb,Glomus,other,non,39
+Ikram,1987,Yes,Yes,Yes,Yes,Yes,1.348687943,0.166666667,0,1,P_only,lab,AM,Single,Calopogonium,caeruleum,Fabaceae,N-fixing forb,Glomus,other,non,39.25
+Ikram,1987,Yes,Yes,Yes,Yes,Yes,1.599915302,0.166666667,0,1,P_only,lab,AM,Single,Calopogonium,caeruleum,Fabaceae,N-fixing forb,Glomus,other,non,39.3
+Ikram,1987,Yes,Yes,Yes,Yes,Yes,1.585633855,0.166666667,0,1,P_only,lab,AM,Single,Calopogonium,caeruleum,Fabaceae,N-fixing forb,Glomus,other,non,57.14285714
+Ikram,1987,Yes,Yes,Yes,Yes,No,2.178297668,0.166666667,0,1,P_only,lab,AM,Single,Calopogonium,caeruleum,Fabaceae,N-fixing forb,Glomus,other,non,
+Ikram,1987,Yes,Yes,Yes,Yes,No,2.233370024,0.166666667,0,1,P_only,lab,AM,Single,Calopogonium,caeruleum,Fabaceae,N-fixing forb,Glomus,other,non,
+Ikram,1987,Yes,Yes,Yes,Yes,No,1.734674262,0.166666667,0,1,P_only,lab,AM,Single,Calopogonium,caeruleum,Fabaceae,N-fixing forb,Glomus,other,non,
+Ikram,1987,Yes,Yes,Yes,Yes,No,2.22850789,0.166666667,0,1,P_only,lab,AM,Single,Calopogonium,caeruleum,Fabaceae,N-fixing forb,Glomus,other,non,
+Ikram,1987,Yes,Yes,Yes,Yes,No,2.335455206,0.166666667,0,1,P_only,lab,AM,Single,Calopogonium,caeruleum,Fabaceae,N-fixing forb,Glomus,other,non,
+Ikram,1987,Yes,Yes,Yes,Yes,No,1.057227073,0.166666667,0,1,P_only,lab,AM,Single,Calopogonium,caeruleum,Fabaceae,N-fixing forb,Glomus,other,non,
+Jakobsen,1983,Yes,Yes,Yes,No,No,0.059600556,0.5,1,0,N_only,field,AM,Single,Hordeum,vulgare,Poaceae,C3 grass,Glomus,none,sterile,
+Jakobsen,1983,Yes,Yes,Yes,No,No,0.337403986,0.5,1,0,N_only,field,AM,Single,Hordeum,vulgare,Poaceae,C3 grass,Glomus,none,sterile,
+Joner,1994,Yes,Yes,Yes,Yes,No,-0.274901179,0.125,1,1,both,lab,AM,Single,Cucumis,sativus,Cucurbitaceae,non-N-fixing forb,Glomus,microbial wash,sterile,
+Jongen,1996,Yes,Yes,Yes,Yes,Yes,0.146273698,0.041666667,1,1,both,lab,AM,Single,Trifolium,repens,Fabaceae,N-fixing forb,Glomus,microbial wash,sterile,0.848
+Jongen,1996,Yes,Yes,Yes,Yes,Yes,0.139987193,0.041666667,1,1,both,lab,AM,Single,Trifolium,repens,Fabaceae,N-fixing forb,Glomus,microbial wash,sterile,1.019230769
+Kapoor,2002,Yes,Yes,Yes,No,No,0.444380524,0.0625,0,0,neither,field,AM,Single,Anethum,graveolens,Apiaceae,non-N-fixing forb,Glomus,other,sterile,
+Kapoor,2002,Yes,Yes,Yes,No,No,0.028987537,0.0625,0,0,neither,field,AM,Single,Trachyspermum,ammi,Apiaceae,non-N-fixing forb,Glomus,other,sterile,
+Kashyap,2004,Yes,Yes,No,No,No,0.045500688,0.05,0,0,neither,field,AM,Multiple,Morus,alba,Moraceae,non-N-fixing woody,.,none,non,
+Kashyap,2004,Yes,Yes,No,No,No,0.091998919,0.05,0,0,neither,field,AM,Multiple,Morus,alba,Moraceae,non-N-fixing woody,.,none,non,
+Khasa,2001,Yes,No,Yes,No,No,0.862045717,0.05,0,0,neither,lab,EM,Single,Pinus,contorta,Pinaceae,non-N-fixing woody,Pisolithus,none,Unknown,
+Khasa,2001,Yes,No,Yes,No,No,0.014388737,0.05,0,0,neither,lab,EM,Single,Pinus,contorta,Pinaceae,non-N-fixing woody,Suillus,none,Unknown,
+Khasa,2001,Yes,No,Yes,No,No,0.661760867,0.05,0,0,neither,lab,EM,Single,Pinus,contorta,Pinaceae,non-N-fixing woody,Pisolithus,none,Unknown,
+Khasa,2001,Yes,No,Yes,No,No,1.217473492,0.05,0,0,neither,lab,EM,Single,Picea,mariana,Pinaceae,non-N-fixing woody,Pisolithus,none,Unknown,
+Khasa,2001,Yes,No,Yes,No,No,0.297834444,0.05,0,0,neither,lab,EM,Single,Picea,mariana,Pinaceae,non-N-fixing woody,Rhizopogon,none,Unknown,
+Khasa,2001,Yes,No,Yes,No,No,0.608247737,0.05,0,0,neither,lab,EM,Single,Picea,mariana,Pinaceae,non-N-fixing woody,Laccaria,none,Unknown,
+Kim,2002,Yes,Yes,Yes,Yes,Yes,0.991738913,0.166666667,1,1,both,lab,AM,Single,Capsicum,annuum,Solanaceae,non-N-fixing forb,Glomus,none,sterile,5.515625
+Lamhamedi,1990,Yes,No,Yes,No,No,-0.42300731,0.05,1,1,both,lab,EM,Single,Pinus,pinaster,Pinaceae,non-N-fixing woody,Pisolithus,none,Unknown,
+Lamhamedi,1990,Yes,No,Yes,No,No,-0.574253122,0.05,1,1,both,lab,EM,Single,Pinus,pinaster,Pinaceae,non-N-fixing woody,Pisolithus,none,Unknown,
+Lamhamedi,1990,Yes,No,Yes,No,No,-0.479096776,0.05,1,1,both,lab,EM,Single,Pinus,pinaster,Pinaceae,non-N-fixing woody,Pisolithus,none,Unknown,
+Lamhamedi,1990,Yes,No,Yes,No,No,-0.60867993,0.05,1,1,both,lab,EM,Single,Pinus,pinaster,Pinaceae,non-N-fixing woody,Pisolithus,none,Unknown,
+Lamhamedi,1990,Yes,No,Yes,No,No,-0.021671929,0.05,1,1,both,lab,EM,Single,Pinus,pinaster,Pinaceae,non-N-fixing woody,Pisolithus,none,Unknown,
+Lamhamedi,1990,Yes,No,Yes,No,No,-0.299771156,0.05,1,1,both,lab,EM,Single,Pinus,pinaster,Pinaceae,non-N-fixing woody,Pisolithus,none,Unknown,
+Lamhamedi,1990,Yes,No,Yes,No,No,0.140514261,0.05,1,1,both,lab,EM,Single,Pinus,pinaster,Pinaceae,non-N-fixing woody,Pisolithus,none,Unknown,
+Lamhamedi,1990,Yes,No,Yes,No,No,-0.172366509,0.05,1,1,both,lab,EM,Single,Pinus,pinaster,Pinaceae,non-N-fixing woody,Pisolithus,none,Unknown,
+Lamhamedi,1990,Yes,No,Yes,No,No,-0.136052775,0.05,1,1,both,lab,EM,Single,Pinus,pinaster,Pinaceae,non-N-fixing woody,Pisolithus,none,Unknown,
+Lamhamedi,1990,Yes,No,Yes,No,No,-0.333776176,0.05,1,1,both,lab,EM,Single,Pinus,pinaster,Pinaceae,non-N-fixing woody,Pisolithus,none,Unknown,
+Lamhamedi,1990,Yes,No,Yes,No,No,-0.039023813,0.05,1,1,both,lab,EM,Single,Pinus,pinaster,Pinaceae,non-N-fixing woody,Pisolithus,none,Unknown,
+Lamhamedi,1990,Yes,No,Yes,No,No,-0.318156015,0.05,1,1,both,lab,EM,Single,Pinus,pinaster,Pinaceae,non-N-fixing woody,Pisolithus,none,Unknown,
+Lamhamedi,1990,Yes,No,Yes,No,No,-0.025411467,0.05,1,1,both,lab,EM,Single,Pinus,pinaster,Pinaceae,non-N-fixing woody,Pisolithus,none,Unknown,
+Liu,2003,Yes,Yes,Yes,Yes,No,0.110168217,0.125,1,0,N_only,lab,AM,Single,Zea,mays,Poaceae,C4 grass,Glomus,none,sterile,
+Liu,2003,Yes,Yes,Yes,Yes,No,0.15267684,0.125,1,0,N_only,lab,AM,Single,Zea,mays,Poaceae,C4 grass,Glomus,none,sterile,
+Liu,2003,Yes,Yes,Yes,Yes,No,0.040821995,0.125,1,0,N_only,lab,AM,Single,Zea,mays,Poaceae,C4 grass,Glomus,none,sterile,
+Lu,1998,Yes,No,Yes,No,No,0.205852054,0.166666667,1,1,both,lab,EM,Single,Eucalyptus,globulus,Myrtaceae,non-N-fixing woody,Boletus,none,sterile,
+Lu,1998,Yes,No,Yes,No,No,0.414943852,0.166666667,1,1,both,lab,EM,Single,Eucalyptus,globulus,Myrtaceae,non-N-fixing woody,Laccaria,none,sterile,
+Lu,1998,Yes,No,Yes,No,No,0.336472237,0.166666667,1,1,both,lab,EM,Single,Eucalyptus,globulus,Myrtaceae,non-N-fixing woody,Pisolithus,none,sterile,
+Lu,1998,Yes,No,Yes,No,No,-0.0588405,0.166666667,1,1,both,lab,EM,Single,Eucalyptus,globulus,Myrtaceae,non-N-fixing woody,Scleroderma,none,sterile,
+Lu,1998,Yes,No,Yes,No,No,0.395895657,0.166666667,1,1,both,lab,EM,Single,Eucalyptus,globulus,Myrtaceae,non-N-fixing woody,Tricholoma,none,sterile,
+MacFall,1991,Yes,No,Yes,No,No,0.293912622,0.083333333,1,1,both,lab,EM,Single,Pinus,resinosa,Pinaceae,non-N-fixing woody,Hebeloma,none,non,
+Mahmood,2003,Yes,No,Yes,No,Yes,0.434021241,0.1,0,0,neither,lab,EM,Single,Picea,abies,Pinaceae,non-N-fixing woody,Piloderma,none,non,5.538461538
+Mahmood,2003,Yes,No,Yes,No,Yes,0.795319935,0.1,0,0,neither,lab,EM,Single,Picea,abies,Pinaceae,non-N-fixing woody,Piloderma,none,non,52.85714286
+Mahmood,2003,Yes,No,Yes,No,No,0.095102631,0.1,0,0,neither,lab,EM,Single,Picea,abies,Pinaceae,non-N-fixing woody,Piloderma,none,non,
+Mahmood,2003,Yes,No,Yes,No,No,0.689380698,0.1,0,0,neither,lab,EM,Single,Picea,abies,Pinaceae,non-N-fixing woody,Piloderma,none,non,
+Martin,2002,Yes,Yes,Yes,Yes,No,-0.393904286,0.1,0,0,neither,lab,AM,Single,Glycine,max,Fabaceae,N-fixing forb,Glomus,microbial wash,sterile,
+Martin,2002,Yes,Yes,Yes,Yes,No,0,0.1,0,0,neither,lab,AM,Single,Glycine,max,Fabaceae,N-fixing forb,Glomus,microbial wash,sterile,
+Martin,2002,Yes,Yes,Yes,Yes,No,0.468978514,0.1,0,0,neither,lab,AM,Single,Glycine,max,Fabaceae,N-fixing forb,Glomus,microbial wash,sterile,
+Martin,2002,Yes,Yes,Yes,Yes,No,0.444251133,0.1,0,0,neither,lab,AM,Single,Glycine,max,Fabaceae,N-fixing forb,Glomus,microbial wash,sterile,
+Martin,2002,Yes,Yes,Yes,Yes,No,0.586049045,0.1,0,0,neither,lab,AM,Single,Glycine,max,Fabaceae,N-fixing forb,Glomus,microbial wash,sterile,
+Martin,2002,Yes,Yes,Yes,Yes,No,-1.041453875,0.5,0,0,neither,lab,AM,Single,Lactuca,sativa,Asteraceae,non-N-fixing forb,Glomus,microbial wash,sterile,
+Martin,2002,Yes,Yes,Yes,Yes,No,-0.097374164,0.1,0,0,neither,lab,AM,Single,Lactuca,sativa,Asteraceae,non-N-fixing forb,Glomus,microbial wash,sterile,
+Martin,2002,Yes,Yes,Yes,Yes,No,0.366549692,0.1,0,0,neither,lab,AM,Single,Lactuca,sativa,Asteraceae,non-N-fixing forb,Glomus,microbial wash,sterile,
+Martin,2002,Yes,Yes,Yes,Yes,No,0.494296322,0.1,0,0,neither,lab,AM,Single,Lactuca,sativa,Asteraceae,non-N-fixing forb,Glomus,microbial wash,sterile,
+Martin,2002,Yes,Yes,Yes,Yes,No,0.664976304,0.1,0,0,neither,lab,AM,Single,Lactuca,sativa,Asteraceae,non-N-fixing forb,Glomus,microbial wash,sterile,
+Martin,2002,Yes,Yes,Yes,Yes,No,0.882047708,0.1,0,0,neither,lab,AM,Single,Glycine,max,Fabaceae,N-fixing forb,Glomus,microbial wash,sterile,
+Martin,2002,Yes,Yes,Yes,Yes,No,0.744440475,0.1,0,0,neither,lab,AM,Single,Glycine,max,Fabaceae,N-fixing forb,Glomus,microbial wash,sterile,
+Martin,2002,Yes,Yes,Yes,Yes,No,0.72775271,0.1,0,0,neither,lab,AM,Single,Glycine,max,Fabaceae,N-fixing forb,Glomus,microbial wash,sterile,
+Martin,2002,Yes,Yes,Yes,Yes,No,1.03861498,0.1,0,0,neither,lab,AM,Single,Glycine,max,Fabaceae,N-fixing forb,Glomus,microbial wash,sterile,
+Martin,2002,Yes,Yes,Yes,Yes,No,0.765588331,0.1,0,0,neither,lab,AM,Single,Glycine,max,Fabaceae,N-fixing forb,Glomus,microbial wash,sterile,
+Martin,2002,Yes,Yes,Yes,Yes,No,0.999459929,0.1,0,0,neither,lab,AM,Single,Lactuca,sativa,Asteraceae,non-N-fixing forb,Glomus,microbial wash,sterile,
+Martin,2002,Yes,Yes,Yes,Yes,No,-0.221900543,0.1,0,0,neither,lab,AM,Single,Lactuca,sativa,Asteraceae,non-N-fixing forb,Glomus,microbial wash,sterile,
+Martin,2002,Yes,Yes,Yes,Yes,No,0.340373643,0.1,0,0,neither,lab,AM,Single,Lactuca,sativa,Asteraceae,non-N-fixing forb,Glomus,microbial wash,sterile,
+Martin,2002,Yes,Yes,Yes,Yes,No,0.459049354,0.1,0,0,neither,lab,AM,Single,Lactuca,sativa,Asteraceae,non-N-fixing forb,Glomus,microbial wash,sterile,
+Martin,2002,Yes,Yes,Yes,Yes,No,0.480271831,0.1,0,0,neither,lab,AM,Single,Lactuca,sativa,Asteraceae,non-N-fixing forb,Glomus,microbial wash,sterile,
+Martin,2004,Yes,Yes,No,Yes,No,0.395895657,0.1,1,1,both,lab,AM,Multiple,Capsicum,annuum,Solanaceae,non-N-fixing forb,Glomus,microbial wash,sterile,
+Martin,2004,Yes,Yes,Yes,Yes,No,-0.228841572,0.1,1,1,both,lab,AM,Single,Capsicum,annuum,Solanaceae,non-N-fixing forb,Glomus,microbial wash,sterile,
+Marx,1976,Yes,No,Yes,No,No,0.062738341,0.166666667,1,1,both,lab,EM,Single,Pinus,taeda,Pinaceae,non-N-fixing woody,Pisolithus,Unknown,sterile,
+Mason,2000,Yes,No,Yes,No,No,-0.768017058,0.083333333,1,1,both,lab,EM,Single,Eucalyptus,globulus,Myrtaceae,non-N-fixing woody,Laccaria,none,sterile,
+Mason,2000,Yes,No,Yes,No,No,-0.084706697,0.083333333,1,1,both,lab,EM,Single,Eucalyptus,globulus,Myrtaceae,non-N-fixing woody,Pisolithus,none,sterile,
+McGee,1990,Yes,Yes,Yes,Yes,No,-0.080042708,0.5,0,0,neither,lab,AM,Single,Ceratopetalum,apetalum,Cunoniaceae,non-N-fixing woody,Glomus,none,sterile,
+McGee,1990,Yes,Yes,Yes,Yes,No,-0.15415068,0.5,0,0,neither,lab,AM,Single,Ceratopetalum,apetalum,Cunoniaceae,non-N-fixing woody,Glomus,none,sterile,
+McGee,1990,Yes,Yes,Yes,Yes,No,-0.276253377,0.0625,0,0,neither,lab,AM,Single,Ceratopetalum,apetalum,Cunoniaceae,non-N-fixing woody,Glomus,none,sterile,
+McGee,1990,Yes,Yes,Yes,Yes,No,0.277631737,0.5,0,0,neither,lab,AM,Single,Trifolium,pratense,Fabaceae,N-fixing forb,Glomus,none,sterile,
+McGee,1990,Yes,Yes,Yes,Yes,No,0.303186259,0.5,0,0,neither,lab,AM,Single,Trifolium,pratense,Fabaceae,N-fixing forb,Glomus,none,sterile,
+McGonigle,2003,Yes,Yes,No,Yes,No,0.291706223,0.1,1,0,N_only,lab,AM,Multiple,Sorghum,sudanese,Poaceae,C4 grass,Glomus,none,sterile,
+Medina,2003,Yes,Yes,Yes,Yes,No,1.953157057,0.1,0,0,neither,lab,AM,Single,Medicago,sativa,Fabaceae,N-fixing forb,Glomus,microbial wash,sterile,
+Medina,2003,Yes,Yes,Yes,Yes,No,1.880163204,0.1,0,0,neither,lab,AM,Single,Medicago,sativa,Fabaceae,N-fixing forb,Glomus,microbial wash,sterile,
+Medina,2003,Yes,Yes,Yes,Yes,No,2.230723704,0.1,0,0,neither,lab,AM,Single,Medicago,sativa,Fabaceae,N-fixing forb,Glomus,microbial wash,sterile,
+Medina,2004,Yes,Yes,No,No,No,-0.252324693,0.1,0,0,neither,lab,AM,Multiple,Dorycnium,pentaphyllum,Fabaceae,N-fixing woody,Glomus,other,Unknown,
+Medina,2004,Yes,Yes,No,No,No,0.408865646,0.1,0,0,neither,lab,AM,Multiple,Dorycnium,pentaphyllum,Fabaceae,N-fixing woody,Glomus,other,Unknown,
+Medina,2004,Yes,Yes,No,No,No,-0.662812737,0.1,0,0,neither,lab,AM,Multiple,Dorycnium,pentaphyllum,Fabaceae,N-fixing woody,Glomus,other,Unknown,
+Medina,2004,Yes,Yes,No,No,No,-0.275953356,0.1,0,0,neither,lab,AM,Multiple,Dorycnium,pentaphyllum,Fabaceae,N-fixing woody,Glomus,other,Unknown,
+Medina,2004,Yes,Yes,No,No,No,0.005339041,0.1,0,0,neither,lab,AM,Multiple,Dorycnium,pentaphyllum,Fabaceae,N-fixing woody,Glomus,other,Unknown,
+Medina,2004,Yes,Yes,No,No,No,-0.188863533,0.1,0,0,neither,lab,AM,Multiple,Dorycnium,pentaphyllum,Fabaceae,N-fixing woody,Glomus,other,Unknown,
+Medina,2004,Yes,Yes,No,No,No,0.589258203,0.1,0,0,neither,lab,AM,Multiple,Dorycnium,pentaphyllum,Fabaceae,N-fixing woody,Glomus,other,Unknown,
+Medina,2004,Yes,Yes,No,No,No,0.328643248,0.1,0,0,neither,lab,AM,Multiple,Dorycnium,pentaphyllum,Fabaceae,N-fixing woody,Glomus,other,Unknown,
+Meyer,1986,Yes,Yes,No,Yes,Yes,0.963817543,0.041666667,1,1,both,lab,AM,Multiple,Trifolium,subterraneum,Fabaceae,N-fixing forb,.,microbial wash,non,22.71428571
+Meyer,1986,Yes,Yes,No,Yes,Yes,0.432864082,0.041666667,1,1,both,lab,AM,Multiple,Trifolium,subterraneum,Fabaceae,N-fixing forb,.,microbial wash,non,30.5
+Moora,1996,Yes,Yes,No,Yes,No,0.628373542,0.038461538,0,0,neither,lab,AM,Whole,Prunella,vulgaris,Lamiaceae,non-N-fixing forb,.,none,sterile,
+Moora,1996,Yes,Yes,No,Yes,No,-0.147776409,0.038461538,0,0,neither,lab,AM,Whole,Prunella,vulgaris,Lamiaceae,non-N-fixing forb,.,none,sterile,
+Moora,1996,Yes,Yes,No,Yes,No,0.21161373,0.038461538,0,0,neither,lab,AM,Whole,Prunella,vulgaris,Lamiaceae,non-N-fixing forb,.,none,sterile,
+Moora,2004,Yes,Yes,No,Yes,No,1.862349785,0.05,0,0,neither,lab,AM,Whole,Pulsatilla,patens,Ranunculaceae,non-N-fixing forb,.,microbial wash,sterile,
+Moora,2004,Yes,Yes,No,Yes,No,1.682109103,0.05,0,0,neither,lab,AM,Whole,Pulsatilla,pratensis,Ranunculaceae,non-N-fixing forb,.,microbial wash,sterile,
+Moora,2004,Yes,Yes,No,Yes,No,4.055219768,0.05,0,0,neither,lab,AM,Whole,Pulsatilla,patens,Ranunculaceae,non-N-fixing forb,.,microbial wash,sterile,
+Moora,2004,Yes,Yes,No,Yes,No,4.558362979,0.05,0,0,neither,lab,AM,Whole,Pulsatilla,pratensis,Ranunculaceae,non-N-fixing forb,.,microbial wash,sterile,
+Moraes,2004,Yes,Yes,Yes,Yes,No,0.613104473,0.016666667,0,0,neither,lab,AM,Single,Podophyllum,peltatum,Berberidaceae,non-N-fixing forb,Scutellospora,none,sterile,
+Morte,2001,Yes,No,Yes,No,Yes,0.087011377,0.033333333,1,1,both,lab,EM,Single,Pinus,halepensis,Pinaceae,non-N-fixing woody,Suillus,none,sterile,2.678571429
+Morte,2001,Yes,No,Yes,No,Yes,0.105360516,0.033333333,1,1,both,lab,EM,Single,Pinus,halepensis,Pinaceae,non-N-fixing woody,Suillus,none,sterile,3.181818182
+Mosse,1977,Yes,Yes,Yes,Yes,No,2.549445171,0.166666667,0,0,neither,lab,AM,Single,Stylosanthes,guyanensis,Fabaceae,N-fixing forb,Glomus,other,non,
+Mosse,1977,Yes,Yes,Yes,Yes,No,2.188640834,0.166666667,0,0,neither,lab,AM,Single,Stylosanthes,guyanensis,Fabaceae,N-fixing forb,Glomus,other,non,
+Mosse,1977,Yes,Yes,Yes,Yes,No,2.335374916,0.166666667,0,0,neither,lab,AM,Single,Stylosanthes,guyanensis,Fabaceae,N-fixing forb,Glomus,other,non,
+Mosse,1977,Yes,Yes,Yes,Yes,No,2.174751721,0.166666667,0,0,neither,lab,AM,Single,Stylosanthes,guyanensis,Fabaceae,N-fixing forb,Glomus,other,non,
+Mosse,1977,Yes,Yes,Yes,Yes,No,1.722766598,0.166666667,0,0,neither,lab,AM,Single,Stylosanthes,guyanensis,Fabaceae,N-fixing forb,Glomus,other,non,
+Mosse,1977,Yes,Yes,Yes,Yes,No,1.53532994,0.166666667,0,0,neither,lab,AM,Single,Stylosanthes,guyanensis,Fabaceae,N-fixing forb,Glomus,other,non,
+Mosse,1977,Yes,Yes,No,Yes,No,0.526093096,0.166666667,0,0,neither,lab,AM,Single,Stylosanthes,guyanensis,Fabaceae,N-fixing forb,.,other,non,
+Mosse,1977,Yes,Yes,No,Yes,No,0.675128675,0.166666667,0,0,neither,lab,AM,Single,Stylosanthes,guyanensis,Fabaceae,N-fixing forb,.,other,non,
+Mosse,1977,Yes,Yes,Yes,Yes,No,0.772215704,0.166666667,0,0,neither,lab,AM,Single,Stylosanthes,guyanensis,Fabaceae,N-fixing forb,Glomus,other,non,
+Mosse,1977,Yes,Yes,Yes,Yes,No,0.61698582,0.166666667,0,0,neither,lab,AM,Single,Stylosanthes,guyanensis,Fabaceae,N-fixing forb,Glomus,other,non,
+Mosse,1977,Yes,Yes,Yes,Yes,No,1.308907698,0.166666667,0,0,neither,lab,AM,Single,Stylosanthes,guyanensis,Fabaceae,N-fixing forb,Glomus,other,non,
+Mosse,1977,Yes,Yes,Yes,Yes,No,0.405465108,0.166666667,0,0,neither,lab,AM,Single,Stylosanthes,guyanensis,Fabaceae,N-fixing forb,Glomus,other,non,
+Mosse,1977,Yes,Yes,Yes,Yes,No,-0.024097552,0.166666667,0,0,neither,lab,AM,Single,Stylosanthes,guyanensis,Fabaceae,N-fixing forb,Glomus,other,non,
+Mosse,1977,Yes,Yes,Yes,Yes,No,0.297251523,0.166666667,0,0,neither,lab,AM,Single,Stylosanthes,guyanensis,Fabaceae,N-fixing forb,Glomus,other,non,
+Mosse,1977,Yes,Yes,Yes,Yes,No,0.7282385,0.166666667,0,0,neither,lab,AM,Single,Stylosanthes,guyanensis,Fabaceae,N-fixing forb,Glomus,other,non,
+Mosse,1977,Yes,Yes,Yes,Yes,No,0.745790914,0.166666667,0,0,neither,lab,AM,Single,Stylosanthes,guyanensis,Fabaceae,N-fixing forb,Glomus,other,non,
+Mosse,1977,Yes,Yes,Yes,Yes,No,0.359141036,0.166666667,0,0,neither,lab,AM,Single,Stylosanthes,guyanensis,Fabaceae,N-fixing forb,Glomus,other,non,
+Mosse,1977,Yes,Yes,Yes,Yes,No,0.178248231,0.166666667,0,0,neither,lab,AM,Single,Stylosanthes,guyanensis,Fabaceae,N-fixing forb,Glomus,other,non,
+Mosse,1977,Yes,Yes,Yes,Yes,No,0.279584862,0.166666667,0,0,neither,lab,AM,Single,Stylosanthes,guyanensis,Fabaceae,N-fixing forb,Glomus,other,non,
+Mosse,1977,Yes,Yes,Yes,Yes,No,-0.075507553,0.166666667,0,0,neither,lab,AM,Single,Stylosanthes,guyanensis,Fabaceae,N-fixing forb,Glomus,other,non,
+Mosse,1977,Yes,Yes,Yes,Yes,No,1.145132304,0.166666667,0,0,neither,lab,AM,Single,Stylosanthes,guyanensis,Fabaceae,N-fixing forb,Glomus,other,non,
+Mosse,1977,Yes,Yes,Yes,Yes,No,0.09237332,0.166666667,0,0,neither,lab,AM,Single,Stylosanthes,guyanensis,Fabaceae,N-fixing forb,Glomus,other,non,
+Mosse,1977,Yes,Yes,Yes,Yes,No,1.323341883,0.166666667,0,0,neither,lab,AM,Single,Zea,mays,Poaceae,C4 grass,Glomus,other,non,
+Mosse,1977,Yes,Yes,Yes,Yes,No,0.187462956,0.166666667,0,0,neither,lab,AM,Single,Zea,mays,Poaceae,C4 grass,Glomus,other,non,
+Mosse,1977,Yes,Yes,Yes,Yes,No,0.117230091,0.5,0,1,P_only,lab,AM,Single,Zea,mays,Poaceae,C4 grass,Glomus,other,non,
+Muhsin,2002,Yes,No,Yes,No,Yes,0.149531734,0.05,1,1,both,lab,EM,Single,Picea,glauca,Pinaceae,non-N-fixing woody,Hebeloma,none,non,5.130434783
+Muhsin,2002,Yes,No,Yes,No,Yes,0.125163143,0.05,1,1,both,lab,EM,Single,Picea,glauca,Pinaceae,non-N-fixing woody,Hebeloma,none,non,5.181818182
+Naik,1995,Yes,Yes,Yes,No,No,0.111225635,0.166666667,1,0,N_only,field,AM,Single,Callistephus,chinensis,Asteraceae,non-N-fixing forb,Glomus,none,non,
+Naik,1995,Yes,Yes,Yes,No,No,0.174353387,0.166666667,1,0,N_only,field,AM,Single,Callistephus,chinensis,Asteraceae,non-N-fixing forb,Acaulospora,none,non,
+Naik,1995,Yes,Yes,Yes,No,No,0.09531018,0.166666667,1,0,N_only,field,AM,Single,Callistephus,chinensis,Asteraceae,non-N-fixing forb,Glomus,none,non,
+Naik,1995,Yes,Yes,Yes,No,No,0.392042088,0.166666667,1,0,N_only,field,AM,Single,Callistephus,chinensis,Asteraceae,non-N-fixing forb,Glomus,none,non,
+Niemi,1992,Yes,Yes,Yes,No,No,-0.200955636,0.125,1,1,both,field,AM,Single,Fragaria,x ananassa,Rosaceae,non-N-fixing forb,Glomus,none,non,
+Niemi,1992,Yes,Yes,Yes,Yes,No,-0.117783036,0.05,1,1,both,lab,AM,Single,Fragaria,x ananassa,Rosaceae,non-N-fixing forb,Glomus,none,non,
+Niemi,1992,Yes,Yes,Yes,Yes,No,-0.040821995,0.05,1,1,both,lab,AM,Single,Fragaria,x ananassa,Rosaceae,non-N-fixing forb,Glomus,none,non,
+Niemi,1992,Yes,Yes,Yes,Yes,No,4.256400422,0.05,1,1,both,lab,AM,Single,Fragaria,x ananassa,Rosaceae,non-N-fixing forb,Glomus,none,non,
+Niemi,1992,Yes,Yes,Yes,Yes,No,0.295117051,0.083333333,1,1,both,lab,AM,Single,Fragaria,x ananassa,Rosaceae,non-N-fixing forb,Glomus,none,non,
+Niemi,1992,Yes,Yes,Yes,Yes,No,-0.089948237,0.083333333,1,1,both,lab,AM,Single,Fragaria,x ananassa,Rosaceae,non-N-fixing forb,Glomus,none,non,
+Nurlaeny,1996,Yes,Yes,Yes,Yes,No,0.336915794,0.125,0,0,neither,lab,AM,Single,Zea,mays,Poaceae,C4 grass,Glomus,other,sterile,
+Nurlaeny,1996,Yes,Yes,Yes,Yes,No,0.369097464,0.125,0,0,neither,lab,AM,Single,Zea,mays,Poaceae,C4 grass,Glomus,other,sterile,
+Nurlaeny,1996,Yes,Yes,Yes,Yes,No,0,0.125,0,0,neither,lab,AM,Single,Zea,mays,Poaceae,C4 grass,Glomus,other,sterile,
+Nurlaeny,1996,Yes,Yes,Yes,Yes,No,0.36746399,0.125,0,0,neither,lab,AM,Single,Glycine,max,Fabaceae,N-fixing forb,Glomus,other,sterile,
+Nurlaeny,1996,Yes,Yes,Yes,Yes,No,0.400323709,0.125,0,0,neither,lab,AM,Single,Glycine,max,Fabaceae,N-fixing forb,Glomus,other,sterile,
+Nurlaeny,1996,Yes,Yes,Yes,Yes,No,0.427812407,0.125,0,0,neither,lab,AM,Single,Glycine,max,Fabaceae,N-fixing forb,Glomus,other,sterile,
+Nurlaeny,1996,Yes,Yes,Yes,Yes,No,0.294182637,0.125,0,0,neither,lab,AM,Single,Zea,mays,Poaceae,C4 grass,Glomus,other,sterile,
+Nurlaeny,1996,Yes,Yes,Yes,Yes,No,0.431733035,0.125,0,0,neither,lab,AM,Single,Zea,mays,Poaceae,C4 grass,Glomus,other,sterile,
+Nurlaeny,1996,Yes,Yes,Yes,Yes,No,0.339867826,0.125,0,0,neither,lab,AM,Single,Zea,mays,Poaceae,C4 grass,Glomus,other,sterile,
+Nurlaeny,1996,Yes,Yes,Yes,Yes,No,0.245879632,0.125,0,0,neither,lab,AM,Single,Glycine,max,Fabaceae,N-fixing forb,Glomus,other,sterile,
+Nurlaeny,1996,Yes,Yes,Yes,Yes,No,0.494592888,0.125,0,0,neither,lab,AM,Single,Glycine,max,Fabaceae,N-fixing forb,Glomus,other,sterile,
+Nurlaeny,1996,Yes,Yes,Yes,Yes,No,0.361947364,0.125,0,0,neither,lab,AM,Single,Glycine,max,Fabaceae,N-fixing forb,Glomus,other,sterile,
+Nylund,1989,Yes,No,Yes,No,No,-0.487856416,0.033333333,1,1,both,lab,EM,Single,Pinus,sylvestris,Pinaceae,non-N-fixing woody,Hebeloma,none,Unknown,
+Nylund,1989,Yes,No,Yes,No,No,-0.335484257,0.034482759,1,1,both,lab,EM,Single,Pinus,sylvestris,Pinaceae,non-N-fixing woody,Hebeloma,none,Unknown,
+Nylund,1989,Yes,No,Yes,No,No,-0.655104555,0.034482759,1,1,both,lab,EM,Single,Pinus,sylvestris,Pinaceae,non-N-fixing woody,Laccaria,none,Unknown,
+Nylund,1989,Yes,No,Yes,No,No,-0.110814366,0.055555556,1,1,both,lab,EM,Single,Pinus,sylvestris,Pinaceae,non-N-fixing woody,Laccaria,none,Unknown,
+Nylund,1989,Yes,No,Yes,No,No,-0.455475529,0.055555556,1,1,both,lab,EM,Single,Pinus,sylvestris,Pinaceae,non-N-fixing woody,Laccaria,none,Unknown,
+Nylund,1989,Yes,No,Yes,No,No,-0.30742131,0.1,1,1,both,lab,EM,Single,Pinus,sylvestris,Pinaceae,non-N-fixing woody,Laccaria,none,Unknown,
+Nylund,1989,Yes,No,Yes,No,No,-0.874464217,0.1,1,1,both,lab,EM,Single,Pinus,sylvestris,Pinaceae,non-N-fixing woody,Laccaria,none,Unknown,
+Ortas,2003,Yes,Yes,Yes,Yes,No,0.361471116,0.166666667,0,0,neither,lab,AM,Single,Zea,mays,Poaceae,C4 grass,Glomus,microbial wash,non,
+Ortas,2003,Yes,Yes,Yes,Yes,No,0.358276867,0.166666667,0,0,neither,lab,AM,Single,Zea,mays,Poaceae,C4 grass,Glomus,microbial wash,non,
+Ortas,2003,Yes,Yes,Yes,Yes,No,0.465296034,0.166666667,0,0,neither,lab,AM,Single,Zea,mays,Poaceae,C4 grass,Glomus,microbial wash,non,
+Ortas,2003,Yes,Yes,Yes,Yes,No,1.712343805,0.166666667,0,0,neither,lab,AM,Single,Zea,mays,Poaceae,C4 grass,Glomus,microbial wash,sterile,
+Ortas,2003,Yes,Yes,Yes,Yes,No,0.684891974,0.166666667,0,0,neither,lab,AM,Single,Zea,mays,Poaceae,C4 grass,Glomus,microbial wash,sterile,
+Ortas,2003,Yes,Yes,Yes,Yes,No,0.803179546,0.166666667,0,0,neither,lab,AM,Single,Zea,mays,Poaceae,C4 grass,Glomus,microbial wash,sterile,
+Paradis,1995,Yes,Yes,Yes,Yes,No,-0.041385216,0.5,1,1,both,lab,AM,Single,Triticum,aestivum,Poaceae,C3 grass,Glomus,none,sterile,
+Paradis,1995,Yes,Yes,Yes,Yes,No,0.218088781,0.5,1,1,both,lab,AM,Single,Triticum,aestivum,Poaceae,C3 grass,Glomus,none,sterile,
+Paradis,1995,Yes,Yes,Yes,Yes,No,-0.068992871,0.125,1,1,both,lab,AM,Single,Triticum,aestivum,Poaceae,C3 grass,Glomus,none,sterile,
+Paradis,1995,Yes,Yes,Yes,Yes,No,0.189242,0.125,1,1,both,lab,AM,Single,Triticum,aestivum,Poaceae,C3 grass,Glomus,none,sterile,
+Posta,1994,Yes,Yes,Yes,Yes,No,-0.008032172,0.5,1,1,both,lab,AM,Single,Zea,mays,Poaceae,C4 grass,Glomus,none,sterile,
+Quoreshi,2000,Yes,No,Yes,No,Yes,0.223143551,0.03125,0,0,neither,lab,EM,Single,Picea,mariana,Pinaceae,non-N-fixing woody,Laccaria,none,non,4.83713355
+Quoreshi,2000,Yes,No,Yes,No,Yes,0.274436846,0.03125,0,0,neither,lab,EM,Single,Picea,mariana,Pinaceae,non-N-fixing woody,Laccaria,none,non,5.182481752
+Quoreshi,2000,Yes,No,Yes,No,Yes,0.262364264,0.03125,0,0,neither,lab,EM,Single,Picea,mariana,Pinaceae,non-N-fixing woody,Laccaria,none,non,5.192563081
+Quoreshi,2000,Yes,No,Yes,No,Yes,0.139761942,0.03125,0,0,neither,lab,EM,Single,Picea,mariana,Pinaceae,non-N-fixing woody,Laccaria,none,non,5.760368664
+Quoreshi,2000,Yes,No,Yes,No,Yes,0.223143551,0.03125,0,0,neither,lab,EM,Single,Picea,mariana,Pinaceae,non-N-fixing woody,Laccaria,none,non,6.372881356
+Quoreshi,2000,Yes,No,Yes,No,Yes,0.245122458,0.03125,0,0,neither,lab,EM,Single,Picea,mariana,Pinaceae,non-N-fixing woody,Laccaria,none,non,7.209302326
+Quoreshi,2000,Yes,No,Yes,No,Yes,0.15415068,0.03125,0,0,neither,lab,EM,Single,Picea,mariana,Pinaceae,non-N-fixing woody,Laccaria,none,non,7.274939173
+Quoreshi,2000,Yes,No,Yes,No,Yes,0.223143551,0.03125,0,0,neither,lab,EM,Single,Picea,mariana,Pinaceae,non-N-fixing woody,Laccaria,none,non,7.456896552
+Rajan,2000,Yes,Yes,Yes,Yes,No,0.306092634,0.05,1,0,N_only,lab,AM,Single,Tectona,grandis,Verbenaceae,non-N-fixing woody,Glomus,none,non,
+Rangeley,1982,Yes,Yes,Yes,No,No,-0.04184711,0.166666667,0,0,neither,field,AM,Single,Trifolium,repens,Fabaceae,N-fixing forb,Glomus,none,non,
+Rangeley,1982,Yes,Yes,Yes,No,No,-0.106222213,0.166666667,0,0,neither,field,AM,Single,Trifolium,repens,Fabaceae,N-fixing forb,Glomus,none,non,
+Rangeley,1982,Yes,Yes,Yes,No,No,0,0.166666667,0,0,neither,field,AM,Single,Trifolium,repens,Fabaceae,N-fixing forb,Glomus,none,non,
+Rangeley,1982,Yes,Yes,Yes,No,No,0.017251722,0.166666667,0,0,neither,field,AM,Single,Trifolium,repens,Fabaceae,N-fixing forb,Glomus,none,non,
+Rangeley,1982,Yes,Yes,Yes,No,No,-0.262096204,0.166666667,0,0,neither,field,AM,Single,Trifolium,repens,Fabaceae,N-fixing forb,Glomus,none,non,
+Rangeley,1982,Yes,Yes,Yes,No,No,-1.098612289,0.166666667,0,0,neither,field,AM,Single,Trifolium,repens,Fabaceae,N-fixing forb,Glomus,none,non,
+Rangeley,1982,Yes,Yes,Yes,No,No,0.830683622,0.125,0,0,neither,field,AM,Single,Trifolium,repens,Fabaceae,N-fixing forb,Glomus,none,non,
+Rangeley,1982,Yes,Yes,Yes,No,No,-0.581823174,0.125,0,0,neither,field,AM,Single,Trifolium,repens,Fabaceae,N-fixing forb,Glomus,none,non,
+Rangeley,1982,Yes,Yes,No,No,No,-0.21253304,0.5,0,0,neither,lab,AM,Multiple,Trifolium,repens,Fabaceae,N-fixing forb,Glomus,microbial wash,Unknown,
+Rangeley,1982,Yes,Yes,No,No,No,0.10610003,0.5,0,0,neither,lab,AM,Multiple,Trifolium,repens,Fabaceae,N-fixing forb,Glomus,microbial wash,Unknown,
+Rangeley,1982,Yes,Yes,No,No,No,0.421354221,0.5,0,0,neither,lab,AM,Multiple,Trifolium,repens,Fabaceae,N-fixing forb,Glomus,microbial wash,Unknown,
+Rangeley,1982,Yes,Yes,No,No,No,0.033142308,0.5,0,0,neither,lab,AM,Multiple,Trifolium,repens,Fabaceae,N-fixing forb,Glomus,microbial wash,Unknown,
+Rangeley,1982,Yes,Yes,No,No,No,0.131706043,0.5,0,0,neither,lab,AM,Multiple,Trifolium,repens,Fabaceae,N-fixing forb,Glomus,microbial wash,Unknown,
+Requena,1996,Yes,Yes,Yes,Yes,No,-0.14678312,0.05,0,0,neither,lab,AM,Single,Anthyllis,cytisoides,Fabaceae,N-fixing woody,Glomus,microbial wash,non,
+Requena,1996,Yes,Yes,Yes,Yes,No,0.257222865,0.05,0,0,neither,lab,AM,Single,Anthyllis,cytisoides,Fabaceae,N-fixing woody,Glomus,microbial wash,sterile,
+Rice,2002,Yes,Yes,Yes,Yes,Yes,0.272831785,0.083333333,1,1,both,lab,AM,Single,Apium,graveolens,Apiaceae,non-N-fixing forb,Glomus,none,non,20.71005917
+Rice,2002,Yes,Yes,Yes,Yes,Yes,0.451985124,0.083333333,1,1,both,lab,AM,Single,Apium,graveolens,Apiaceae,non-N-fixing forb,Glomus,none,non,33.55704698
+Rincon,2001,Yes,No,Yes,No,No,-0.060624622,0.03125,1,1,both,lab,EM,Single,Pinus,pinea,Pinaceae,non-N-fixing woody,Hebeloma,none,sterile,
+Rincon,2001,Yes,No,Yes,No,No,0,0.03125,1,1,both,lab,EM,Single,Pinus,pinea,Pinaceae,non-N-fixing woody,Laccaria,none,sterile,
+Rincon,2001,Yes,No,Yes,No,No,-0.121360857,0.03125,1,1,both,lab,EM,Single,Pinus,pinea,Pinaceae,non-N-fixing woody,Pisolithus,none,sterile,
+Rincon,2001,Yes,No,Yes,No,No,-0.042559614,0.03125,1,1,both,lab,EM,Single,Pinus,pinea,Pinaceae,non-N-fixing woody,Melanogaster,none,sterile,
+Rincon,2001,Yes,No,Yes,No,No,-0.048790164,0.03125,1,1,both,lab,EM,Single,Pinus,pinea,Pinaceae,non-N-fixing woody,Pisolithus,none,sterile,
+Rincon,2001,Yes,No,Yes,No,No,-0.108213585,0.03125,1,1,both,lab,EM,Single,Pinus,pinea,Pinaceae,non-N-fixing woody,Rhizopogon,none,sterile,
+Rincon,2001,Yes,No,Yes,No,No,-0.303682414,0.03125,1,1,both,lab,EM,Single,Pinus,pinea,Pinaceae,non-N-fixing woody,Rhizopogon,none,sterile,
+Rincon,2001,Yes,No,Yes,No,No,-0.384411699,0.03125,1,1,both,lab,EM,Single,Pinus,pinea,Pinaceae,non-N-fixing woody,Scleroderma,none,sterile,
+Rincon,2005,Yes,No,Yes,No,Yes,-0.362905494,0.02,1,1,both,lab,EM,Single,Pinus,pinea,Pinaceae,non-N-fixing woody,Rhizopogon,none,sterile,4.8125
+Rouhier,1998,Yes,No,Yes,No,Yes,-0.395895657,0.125,1,1,both,lab,EM,Single,Pinus,sylvestris,Pinaceae,non-N-fixing woody,Suillus,none,sterile,4
+Rouhier,1998,Yes,No,Yes,No,Yes,-0.049190244,0.125,1,1,both,lab,EM,Single,Pinus,sylvestris,Pinaceae,non-N-fixing woody,Paxillus,none,sterile,4.818181818
+Rubio,2003,Yes,Yes,Yes,No,No,0.175946571,0.1,1,0,N_only,lab,AM,Single,Triticum,aestivum,Poaceae,C3 grass,Glomus,none,Unknown,
+Rubio,2003,Yes,Yes,Yes,No,No,0.430350857,0.1,1,0,N_only,lab,AM,Single,Triticum,aestivum,Poaceae,C3 grass,Glomus,none,Unknown,
+Rubio,2003,Yes,Yes,Yes,No,No,-0.003738322,0.1,1,0,N_only,lab,AM,Single,Triticum,aestivum,Poaceae,C3 grass,Glomus,none,Unknown,
+Rubio,2003,Yes,Yes,Yes,No,No,-0.125859037,0.1,1,0,N_only,lab,AM,Single,Triticum,aestivum,Poaceae,C3 grass,Glomus,none,Unknown,
+Russo,1989,Yes,Yes,Yes,Yes,No,-0.368646767,0.041666667,1,1,both,lab,AM,Single,Alnus,acuminata,Betulaceae,N-fixing woody,Glomus,other,sterile,
+Russo,1989,Yes,Yes,Yes,Yes,No,0.019002665,0.041666667,1,1,both,lab,AM,Single,Alnus,acuminata,Betulaceae,N-fixing woody,Glomus,other,sterile,
+Russo,1989,Yes,Yes,Yes,Yes,No,0.627934519,0.041666667,1,1,both,lab,AM,Single,Alnus,acuminata,Betulaceae,N-fixing woody,Glomus,other,sterile,
+Saxena,1997,Yes,Yes,Yes,Yes,No,0.54476928,0.166666667,0,0,neither,lab,AM,Single,Vigna,radiata,Fabaceae,N-fixing forb,Gigaspora,none,non,
+Schier,1995,Yes,No,Yes,No,No,0.507964391,0.166666667,1,1,both,lab,EM,Single,Pinus,strobus,Pinaceae,non-N-fixing woody,Pisolithus,none,Unknown,
+Schier,1995,Yes,No,Yes,No,No,1.116794608,0.142857143,1,1,both,lab,EM,Single,Pinus,strobus,Pinaceae,non-N-fixing woody,Pisolithus,none,Unknown,
+Schier,1995,Yes,No,Yes,No,No,1.483081646,0.166666667,1,1,both,lab,EM,Single,Pinus,strobus,Pinaceae,non-N-fixing woody,Pisolithus,none,Unknown,
+Schier,1995,Yes,No,Yes,No,No,0.98394938,0.083333333,1,1,both,lab,EM,Single,Pinus,strobus,Pinaceae,non-N-fixing woody,Pisolithus,none,Unknown,
+Schier,1995,Yes,No,Yes,No,No,0.898158584,0.083333333,1,1,both,lab,EM,Single,Pinus,strobus,Pinaceae,non-N-fixing woody,Pisolithus,none,Unknown,
+Schier,1995,Yes,No,Yes,No,No,0.303658816,0.083333333,1,1,both,lab,EM,Single,Pinus,strobus,Pinaceae,non-N-fixing woody,Pisolithus,none,Unknown,
+Schier,1996,Yes,No,Yes,No,No,0.714006203,0.083333333,0,0,neither,lab,EM,Single,Pinus,rigida,Pinaceae,non-N-fixing woody,Pisolithus,none,Unknown,
+Schier,1996,Yes,No,Yes,No,No,0.455107653,0.083333333,0,0,neither,lab,EM,Single,Pinus,rigida,Pinaceae,non-N-fixing woody,Pisolithus,none,Unknown,
+Schier,1996,Yes,No,Yes,No,No,0.246320149,0.083333333,0,0,neither,lab,EM,Single,Pinus,rigida,Pinaceae,non-N-fixing woody,Pisolithus,none,Unknown,
+Schier,1996,Yes,No,Yes,No,No,0.971288241,0.083333333,0,0,neither,lab,EM,Single,Pinus,rigida,Pinaceae,non-N-fixing woody,Pisolithus,none,Unknown,
+Schier,1996,Yes,No,Yes,No,No,0.909949557,0.083333333,0,0,neither,lab,EM,Single,Pinus,rigida,Pinaceae,non-N-fixing woody,Pisolithus,none,Unknown,
+Schier,1996,Yes,No,Yes,No,No,0.523218537,0.083333333,0,0,neither,lab,EM,Single,Pinus,rigida,Pinaceae,non-N-fixing woody,Pisolithus,none,Unknown,
+Schwob,1998,Yes,Yes,Yes,No,No,0.162518929,0.166666667,1,1,both,lab,AM,Single,Hevea,brasiliensis,Euphorbiaceae,non-N-fixing woody,Glomus,none,Unknown,
+Shaul-Keinan,2002,Yes,Yes,Yes,No,No,-0.054067221,0.125,1,1,both,lab,AM,Single,Nicotiana,tabacum,Solanaceae,non-N-fixing forb,Glomus,Unknown,sterile,
+Shetty,1994,Yes,Yes,No,Yes,No,3.862323337,0.5,0,0,neither,lab,AM,Multiple,Andropogon,gerardii,Poaceae,C4 grass,.,microbial wash,sterile,
+Shetty,1994,Yes,Yes,No,Yes,No,2.911609283,0.5,0,0,neither,lab,AM,Multiple,Andropogon,gerardii,Poaceae,C4 grass,.,microbial wash,sterile,
+Shetty,1994,Yes,Yes,No,Yes,No,3.586781584,0.5,0,0,neither,lab,AM,Multiple,Andropogon,gerardii,Poaceae,C4 grass,.,microbial wash,sterile,
+Shetty,1994,Yes,Yes,No,Yes,No,-0.182321557,0.5,0,0,neither,lab,AM,Multiple,Andropogon,gerardii,Poaceae,C4 grass,.,none,sterile,
+Shetty,1994,Yes,Yes,No,Yes,No,-0.207639365,0.5,0,0,neither,lab,AM,Multiple,Andropogon,gerardii,Poaceae,C4 grass,.,none,sterile,
+Shetty,1994,Yes,Yes,No,Yes,No,0.328504067,0.5,0,0,neither,lab,AM,Multiple,Andropogon,gerardii,Poaceae,C4 grass,.,none,sterile,
+Shetty,1994,Yes,Yes,No,Yes,No,0.232450754,0.5,0,0,neither,lab,AM,Multiple,Festuca,arundinacea,Poaceae,C3 grass,.,none,sterile,
+Shetty,1994,Yes,Yes,No,Yes,No,-0.106894258,0.5,0,0,neither,lab,AM,Multiple,Festuca,arundinacea,Poaceae,C3 grass,.,none,sterile,
+Shetty,1994,Yes,Yes,No,Yes,No,0.230583559,0.5,0,0,neither,lab,AM,Multiple,Festuca,arundinacea,Poaceae,C3 grass,.,none,sterile,
+Shetty,1994,Yes,Yes,No,Yes,No,-0.104093891,0.5,0,0,neither,lab,AM,Multiple,Festuca,arundinacea,Poaceae,C3 grass,.,none,sterile,
+Shetty,1994,Yes,Yes,No,Yes,No,0.05167996,0.5,0,0,neither,lab,AM,Multiple,Festuca,arundinacea,Poaceae,C3 grass,.,none,sterile,
+Shetty,1994,Yes,Yes,No,Yes,No,0.156201468,0.5,0,0,neither,lab,AM,Multiple,Festuca,arundinacea,Poaceae,C3 grass,.,none,sterile,
+Shetty,1994,Yes,Yes,No,Yes,No,0.262364264,0.5,0,0,neither,lab,AM,Multiple,Festuca,arundinacea,Poaceae,C3 grass,.,none,sterile,
+Shetty,1994,Yes,Yes,No,Yes,No,-0.916290732,0.5,0,0,neither,lab,AM,Multiple,Festuca,arundinacea,Poaceae,C3 grass,.,none,sterile,
+Siddiqui,1998,Yes,Yes,Yes,No,No,0.086029896,0.1,1,1,both,lab,AM,Single,Lycopersicon,esculentum,Solanaceae,non-N-fixing forb,Glomus,Unknown,sterile,
+Siddiqui,1998,Yes,Yes,Yes,No,No,0.149357381,0.1,1,1,both,lab,AM,Single,Lycopersicon,esculentum,Solanaceae,non-N-fixing forb,Glomus,Unknown,sterile,
+Siddiqui,1998,Yes,Yes,Yes,No,No,0.098069705,0.1,1,1,both,lab,AM,Single,Lycopersicon,esculentum,Solanaceae,non-N-fixing forb,Glomus,Unknown,sterile,
+Siddiqui,1998,Yes,Yes,Yes,No,No,0.210136245,0.1,1,1,both,lab,AM,Single,Lycopersicon,esculentum,Solanaceae,non-N-fixing forb,Glomus,Unknown,sterile,
+Siddiqui,1998,Yes,Yes,Yes,No,No,0.087494197,0.1,1,1,both,lab,AM,Single,Lycopersicon,esculentum,Solanaceae,non-N-fixing forb,Glomus,Unknown,sterile,
+Siddiqui,1998,Yes,Yes,Yes,No,No,0.130879575,0.1,1,1,both,lab,AM,Single,Lycopersicon,esculentum,Solanaceae,non-N-fixing forb,Glomus,Unknown,sterile,
+Siddiqui,1998,Yes,Yes,Yes,No,No,0.11563573,0.1,1,1,both,lab,AM,Single,Lycopersicon,esculentum,Solanaceae,non-N-fixing forb,Glomus,Unknown,sterile,
+Siddiqui,1998,Yes,Yes,Yes,No,No,0.075252464,0.1,1,1,both,lab,AM,Single,Lycopersicon,esculentum,Solanaceae,non-N-fixing forb,Glomus,Unknown,sterile,
+Siddiqui,1998,Yes,Yes,Yes,No,No,0.181599796,0.1,1,1,both,lab,AM,Single,Lycopersicon,esculentum,Solanaceae,non-N-fixing forb,Glomus,Unknown,sterile,
+Siddiqui,1998,Yes,Yes,Yes,No,No,0.13587606,0.1,1,1,both,lab,AM,Single,Lycopersicon,esculentum,Solanaceae,non-N-fixing forb,Glomus,Unknown,sterile,
+Singh,1996,Yes,Yes,Yes,No,No,-0.264953821,0.125,1,1,both,lab,AM,Single,Cajanus,cajan,Fabaceae,N-fixing forb,Glomus,Unknown,non,
+Singh,1996,Yes,Yes,Yes,No,No,-0.947885097,0.125,1,1,both,lab,AM,Single,Cajanus,cajan,Fabaceae,N-fixing forb,Glomus,Unknown,non,
+Singh,1996,Yes,Yes,Yes,No,No,-0.819126983,0.125,1,1,both,lab,AM,Single,Cajanus,cajan,Fabaceae,N-fixing forb,Glomus,Unknown,non,
+Singh,1996,Yes,Yes,Yes,No,No,-0.91228271,0.125,1,1,both,lab,AM,Single,Cajanus,cajan,Fabaceae,N-fixing forb,Glomus,Unknown,non,
+Singh,1996,Yes,Yes,Yes,No,No,-0.764243102,0.125,1,1,both,lab,AM,Single,Cajanus,cajan,Fabaceae,N-fixing forb,Glomus,Unknown,non,
+Singh,1996,Yes,Yes,Yes,No,No,-1.178654996,0.125,1,1,both,lab,AM,Single,Cajanus,cajan,Fabaceae,N-fixing forb,Glomus,Unknown,non,
+Singh,1996,Yes,Yes,Yes,No,No,-1.080777421,0.125,1,1,both,lab,AM,Single,Cajanus,cajan,Fabaceae,N-fixing forb,Glomus,Unknown,non,
+Singh,1996,Yes,Yes,Yes,No,No,-1.226329711,0.125,1,1,both,lab,AM,Single,Cajanus,cajan,Fabaceae,N-fixing forb,Glomus,Unknown,non,
+Sreenivasa,1993,Yes,Yes,Yes,Yes,No,0.693147181,0.125,1,0,N_only,lab,AM,Single,Capsicum,annuum,Solanaceae,non-N-fixing forb,Glomus,none,non,
+Sreenivasa,1993,Yes,Yes,Yes,Yes,No,0.875468737,0.125,1,0,N_only,lab,AM,Single,Capsicum,annuum,Solanaceae,non-N-fixing forb,Glomus,none,non,
+Sreenivasa,1993,Yes,Yes,Yes,Yes,No,0.167054085,0.125,1,0,N_only,lab,AM,Single,Capsicum,annuum,Solanaceae,non-N-fixing forb,Glomus,none,non,
+Sreenivasa,1993,Yes,Yes,Yes,Yes,No,0.762140052,0.125,1,0,N_only,lab,AM,Single,Capsicum,annuum,Solanaceae,non-N-fixing forb,Glomus,none,non,
+Sreenivasa,1993,Yes,Yes,Yes,Yes,No,0.693147181,0.125,1,0,N_only,lab,AM,Single,Capsicum,annuum,Solanaceae,non-N-fixing forb,Glomus,none,non,
+Sreenivasa,1993,Yes,Yes,Yes,Yes,No,0.441832752,0.125,1,0,N_only,lab,AM,Single,Capsicum,annuum,Solanaceae,non-N-fixing forb,Glomus,none,non,
+Sreenivasa,1993,Yes,Yes,Yes,Yes,No,0.510825624,0.125,1,0,N_only,lab,AM,Single,Capsicum,annuum,Solanaceae,non-N-fixing forb,Glomus,none,non,
+Staley,1992,Yes,Yes,Yes,Yes,No,-0.002578593,0.05,0,0,neither,lab,AM,Single,Medicago,sativa,Fabaceae,N-fixing forb,Glomus,microbial wash,sterile,
+Staley,1992,Yes,Yes,Yes,Yes,No,-0.012863776,0.05,0,0,neither,lab,AM,Single,Medicago,sativa,Fabaceae,N-fixing forb,Glomus,microbial wash,sterile,
+Staley,1992,Yes,Yes,Yes,Yes,No,-0.094451214,0.05,0,0,neither,lab,AM,Single,Lotus,corniculatus,Fabaceae,N-fixing forb,Glomus,microbial wash,sterile,
+Staley,1992,Yes,Yes,Yes,Yes,No,0.097314124,0.05,0,0,neither,lab,AM,Single,Lotus,corniculatus,Fabaceae,N-fixing forb,Glomus,microbial wash,sterile,
+Tarafdar,1985,Yes,Yes,Yes,Yes,No,0.12095261,0.125,1,1,both,lab,AM,Single,Triticum,aestivum,Poaceae,C3 grass,Glomus,none,sterile,
+Tarafdar,1985,Yes,Yes,Yes,Yes,No,0.233614851,0.125,1,1,both,lab,AM,Single,Triticum,aestivum,Poaceae,C3 grass,Glomus,none,sterile,
+Tarafdar,1985,Yes,Yes,Yes,Yes,No,0.12095261,0.125,1,1,both,lab,AM,Single,Triticum,aestivum,Poaceae,C3 grass,Glomus,none,sterile,
+Tarafdar,1985,Yes,Yes,Yes,Yes,No,0.117783036,0.125,1,1,both,lab,AM,Single,Triticum,aestivum,Poaceae,C3 grass,Glomus,none,sterile,
+Tarafdar,1985,Yes,Yes,Yes,Yes,No,0.19948936,0.125,1,1,both,lab,AM,Single,Triticum,aestivum,Poaceae,C3 grass,Glomus,none,sterile,
+Tarafdar,1985,Yes,Yes,Yes,Yes,No,0.149940147,0.125,1,1,both,lab,AM,Single,Triticum,aestivum,Poaceae,C3 grass,Glomus,none,sterile,
+Tarafdar,1985,Yes,Yes,Yes,Yes,No,0.19948936,0.125,1,1,both,lab,AM,Single,Triticum,aestivum,Poaceae,C3 grass,Glomus,none,sterile,
+Tarafdar,1985,Yes,Yes,Yes,Yes,No,0.038714512,0.125,1,1,both,lab,AM,Single,Triticum,aestivum,Poaceae,C3 grass,Glomus,none,sterile,
+Thompson,1994,Yes,No,Yes,No,No,-0.2135741,0.166666667,1,1,both,lab,EM,Single,Eucalyptus,globulus,Myrtaceae,non-N-fixing woody,Cortinarius,none,sterile,
+Thompson,1994,Yes,No,Yes,No,No,0.175890666,0.166666667,1,1,both,lab,EM,Single,Eucalyptus,globulus,Myrtaceae,non-N-fixing woody,Hysterangium,none,sterile,
+Thompson,1994,Yes,No,Yes,No,No,0.526093096,0.166666667,1,1,both,lab,EM,Single,Eucalyptus,globulus,Myrtaceae,non-N-fixing woody,Hymenogaster,none,sterile,
+Thompson,1994,Yes,No,Yes,No,No,0.379489622,0.166666667,1,1,both,lab,EM,Single,Eucalyptus,globulus,Myrtaceae,non-N-fixing woody,Scleroderma,none,sterile,
+Thompson,1994,Yes,No,Yes,No,No,1.004583339,0.166666667,1,1,both,lab,EM,Single,Eucalyptus,globulus,Myrtaceae,non-N-fixing woody,Laccaria,none,sterile,
+Thompson,1994,Yes,No,Yes,No,No,1.123930097,0.166666667,1,1,both,lab,EM,Single,Eucalyptus,globulus,Myrtaceae,non-N-fixing woody,Descolea,none,sterile,
+Tian,2004,Yes,Yes,Yes,Yes,No,0.166301498,0.166666667,1,1,both,lab,AM,Single,Gossypium,arboreum,Malvaceae,non-N-fixing woody,Glomus,none,sterile,
+Tian,2004,Yes,Yes,Yes,Yes,No,0.181776746,0.166666667,1,1,both,lab,AM,Single,Gossypium,arboreum,Malvaceae,non-N-fixing woody,Glomus,none,sterile,
+Tian,2004,Yes,Yes,Yes,Yes,No,0.030944804,0.166666667,1,1,both,lab,AM,Single,Gossypium,arboreum,Malvaceae,non-N-fixing woody,Glomus,none,sterile,
+Tian,2004,Yes,Yes,Yes,Yes,No,0.043429558,0.166666667,1,1,both,lab,AM,Single,Gossypium,arboreum,Malvaceae,non-N-fixing woody,Glomus,none,sterile,
+Tiwari,2003,Yes,Yes,No,Yes,No,0.59754284,0.1,0,0,neither,lab,AM,Multiple,Coriaria,nepalensis,Coriariaceae,N-fixing woody,.,none,sterile,
+Tiwari,2003,Yes,Yes,No,Yes,No,0.462160452,0.1,0,0,neither,lab,AM,Multiple,Coriaria,nepalensis,Coriariaceae,N-fixing woody,.,none,sterile,
+Tiwari,2003,Yes,Yes,No,Yes,No,0.255105902,0.1,0,0,neither,lab,AM,Multiple,Coriaria,nepalensis,Coriariaceae,N-fixing woody,.,none,sterile,
+Tiwari,2003,Yes,Yes,No,Yes,No,0.265334774,0.1,0,0,neither,lab,AM,Multiple,Coriaria,nepalensis,Coriariaceae,N-fixing woody,.,none,sterile,
+Tiwari,2003,Yes,Yes,No,Yes,No,0.433411038,0.1,0,0,neither,lab,AM,Multiple,Coriaria,nepalensis,Coriariaceae,N-fixing woody,.,none,sterile,
+Tiwari,2003,Yes,Yes,No,Yes,No,0.308735482,0.1,0,0,neither,lab,AM,Multiple,Coriaria,nepalensis,Coriariaceae,N-fixing woody,.,none,sterile,
+Turjaman,2005,Yes,No,Yes,No,No,1.098612289,0.166666667,1,1,both,lab,EM,Single,Shorea,pinanga,Dipterocarpaceae,non-N-fixing woody,Pisolithus,none,sterile,
+Turnau,2003,Yes,Yes,Yes,Yes,No,0.510825624,0.013888889,0,0,neither,lab,AM,Single,Berkheya,coddii,Asteraceae,non-N-fixing forb,Glomus,none,sterile,
+van der Heijden,2003,Yes,Yes,Yes,Yes,Yes,2.285777975,0.055555556,0,0,neither,lab,AM,Single,Brachypodium,pinnatum,Poaceae,C3 grass,Glomus,microbial wash,sterile,8.706624606
+van der Heijden,2003,Yes,Yes,Yes,Yes,Yes,1.658228077,0.055555556,0,0,neither,lab,AM,Single,Prunella,vulgaris,Lamiaceae,non-N-fixing forb,Glomus,microbial wash,sterile,8.936170213
+Varma,1994,Yes,Yes,Yes,No,No,-0.840518173,0.5,1,0,N_only,lab,AM,Single,Fragaria,sp. var. avanta,Rosaceae,non-N-fixing forb,Glomus,none,Unknown,
+Varma,1994,Yes,Yes,Yes,No,No,-1.163941636,0.5,1,0,N_only,lab,AM,Single,Fragaria,sp. var. Elsanta,Rosaceae,non-N-fixing forb,Glomus,none,Unknown,
+Vivas,2003,Yes,Yes,Yes,No,Yes,0.376051223,0.083333333,1,0,N_only,lab,AM,Single,Lactuca,sativa,Asteraceae,non-N-fixing forb,Glomus,other,Unknown,12.36
+Vivas,2003,Yes,Yes,Yes,No,Yes,0.106684143,0.083333333,1,1,both,lab,AM,Single,Lactuca,sativa,Asteraceae,non-N-fixing forb,Glomus,other,Unknown,15.4375
+Vivas,2003,Yes,Yes,Yes,No,Yes,0.52109529,0.083333333,1,0,N_only,lab,AM,Single,Lactuca,sativa,Asteraceae,non-N-fixing forb,Glomus,other,Unknown,15.71428571
+Vivas,2003,Yes,Yes,Yes,No,Yes,0.244824617,0.083333333,1,1,both,lab,AM,Single,Lactuca,sativa,Asteraceae,non-N-fixing forb,Glomus,other,Unknown,20.4516129
+Waceke,2002,Yes,Yes,Yes,No,No,0.302827128,0.083333333,1,1,both,lab,AM,Single,Chrysanthemum,cinerariefolium,Asteraceae,non-N-fixing forb,Glomus,Unknown,sterile,
+Waceke,2002,Yes,Yes,Yes,No,No,0.580070036,0.083333333,1,1,both,lab,AM,Single,Chrysanthemum,cinerariefolium,Asteraceae,non-N-fixing forb,Glomus,Unknown,sterile,
+Waceke,2002,Yes,Yes,Yes,No,No,0.150352073,0.083333333,1,1,both,lab,AM,Single,Chrysanthemum,cinerariefolium,Asteraceae,non-N-fixing forb,Glomus,Unknown,sterile,
+Waceke,2002,Yes,Yes,Yes,No,No,-0.050648156,0.083333333,1,1,both,lab,AM,Single,Chrysanthemum,cinerariefolium,Asteraceae,non-N-fixing forb,Glomus,Unknown,sterile,
+Waceke,2002,Yes,Yes,Yes,No,No,0.148675692,0.083333333,1,1,both,lab,AM,Single,Chrysanthemum,cinerariefolium,Asteraceae,non-N-fixing forb,Glomus,Unknown,sterile,
+Waceke,2002,Yes,Yes,Yes,No,No,-0.13760321,0.083333333,1,1,both,lab,AM,Single,Chrysanthemum,cinerariefolium,Asteraceae,non-N-fixing forb,Glomus,Unknown,sterile,
+Waceke,2002,Yes,Yes,Yes,No,No,-0.380501256,0.083333333,1,1,both,lab,AM,Single,Chrysanthemum,cinerariefolium,Asteraceae,non-N-fixing forb,Glomus,Unknown,sterile,
+Waceke,2002,Yes,Yes,Yes,No,No,-0.191331724,0.083333333,1,1,both,lab,AM,Single,Chrysanthemum,cinerariefolium,Asteraceae,non-N-fixing forb,Glomus,Unknown,sterile,
+Waceke,2002,Yes,Yes,Yes,No,No,-0.180369067,0.083333333,1,1,both,lab,AM,Single,Chrysanthemum,cinerariefolium,Asteraceae,non-N-fixing forb,Glomus,Unknown,sterile,
+Waceke,2002,Yes,Yes,Yes,No,No,-0.168686805,0.083333333,1,1,both,lab,AM,Single,Chrysanthemum,cinerariefolium,Asteraceae,non-N-fixing forb,Glomus,Unknown,sterile,
+Walker,2001,Yes,No,Yes,No,Yes,-0.102779869,0.1,0,0,neither,lab,EM,Single,Pinus,lambertiana,Pinaceae,non-N-fixing woody,Pisolithus,none,sterile,2.935483871
+Walker,2001,Yes,No,Yes,No,Yes,0.012195273,0.1,0,0,neither,lab,EM,Single,Pinus,lambertiana,Pinaceae,non-N-fixing woody,Pisolithus,none,sterile,4.674418605
+Walker,2001,Yes,No,Yes,No,Yes,0.052643733,0.1,0,0,neither,lab,EM,Single,Pinus,lambertiana,Pinaceae,non-N-fixing woody,Pisolithus,none,sterile,8.5
+Walker,2001,Yes,No,Yes,No,Yes,-0.144581229,0.1,0,0,neither,lab,EM,Single,Pinus,lambertiana,Pinaceae,non-N-fixing woody,Pisolithus,none,sterile,9.117647059
+Walker,2001,Yes,No,Yes,No,Yes,-0.196710294,0.1,0,0,neither,lab,EM,Single,Pinus,lambertiana,Pinaceae,non-N-fixing woody,Pisolithus,none,sterile,9.842105263
+Walker,2001,Yes,No,Yes,No,Yes,-0.036943515,0.1,0,0,neither,lab,EM,Single,Pinus,lambertiana,Pinaceae,non-N-fixing woody,Pisolithus,none,sterile,11.21428571
+Walker,2001,Yes,No,Yes,No,Yes,-0.037740328,0.1,0,0,neither,lab,EM,Single,Pinus,lambertiana,Pinaceae,non-N-fixing woody,Pisolithus,none,sterile,11.75
+Walker,2001,Yes,No,Yes,No,Yes,-0.147100122,0.1,0,0,neither,lab,EM,Single,Pinus,lambertiana,Pinaceae,non-N-fixing woody,Pisolithus,none,sterile,16.6
+Walker,2001,Yes,No,Yes,No,Yes,-0.413370288,0.1,0,0,neither,lab,EM,Single,Pinus,lambertiana,Pinaceae,non-N-fixing woody,Pisolithus,none,sterile,18.18181818
+Walker,2001,Yes,No,Yes,No,Yes,-0.074963038,0.1,0,0,neither,lab,EM,Single,Pinus,lambertiana,Pinaceae,non-N-fixing woody,Pisolithus,none,sterile,20.5
+Wallander,1997,Yes,No,Yes,No,No,-0.232622295,0.5,1,1,both,lab,EM,Single,Pinus,sylvestris,Pinaceae,non-N-fixing woody,Paxillus,none,Unknown,
+Wallander,2000,Yes,No,Yes,No,No,1.85629799,0.5,1,1,both,lab,EM,Single,Pinus,sylvestris,Pinaceae,non-N-fixing woody,Suillus,none,Unknown,
+Wallander,2000,Yes,No,Yes,No,No,0.426408282,0.5,1,1,both,lab,EM,Single,Pinus,sylvestris,Pinaceae,non-N-fixing woody,Suillus,none,Unknown,
+Waterer,1989,Yes,Yes,Yes,No,No,0.130691413,0.041666667,1,0,N_only,lab,AM,Single,Lactuca,sativa,Asteraceae,non-N-fixing forb,Glomus,microbial wash,Unknown,
+Waterer,1989,Yes,Yes,Yes,No,No,0.056856025,0.041666667,1,0,N_only,lab,AM,Single,Lactuca,sativa,Asteraceae,non-N-fixing forb,Glomus,microbial wash,Unknown,
+Weissenhorn,1995,Yes,Yes,Yes,No,No,0.00806456,0.1,1,1,both,field,AM,Single,Zea,mays,Poaceae,C4 grass,Glomus,none,sterile,
+Weissenhorn,1995,Yes,Yes,Yes,Yes,No,0.304962186,0.1,1,1,both,lab,AM,Single,Zea,mays,Poaceae,C4 grass,Glomus,microbial wash,sterile,
+Yamanaka,2003,Yes,No,Yes,No,No,0.684097345,0.05,0,0,neither,lab,EM,Single,Alnus,tenuifolia,Betulaceae,N-fixing woody,Alpova,none,Unknown,
+Yamanaka,2003,Yes,No,Yes,No,No,-0.223143551,0.05,0,0,neither,lab,EM,Single,Alnus,tenuifolia,Betulaceae,N-fixing woody,Alpova,none,Unknown,
+Yamanaka,2003,Yes,No,Yes,No,No,0.293761119,0.05,0,0,neither,lab,EM,Single,Alnus,tenuifolia,Betulaceae,N-fixing woody,Alpova,none,Unknown,
+Yamanaka,2003,Yes,No,Yes,No,No,0.916290732,0.05,0,0,neither,lab,EM,Single,Alnus,tenuifolia,Betulaceae,N-fixing woody,Alpova,none,Unknown,
+Yamanaka,2003,Yes,No,Yes,No,No,-0.510825624,0.05,0,0,neither,lab,EM,Single,Alnus,tenuifolia,Betulaceae,N-fixing woody,Alpova,none,Unknown,
+Yamanaka,2003,Yes,No,Yes,No,No,0,0.05,0,0,neither,lab,EM,Single,Alnus,tenuifolia,Betulaceae,N-fixing woody,Alpova,none,Unknown,
+,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,

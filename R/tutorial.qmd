@@ -51,7 +51,7 @@ rm(list = ls())
 
 pacman::p_load(brms, MCMCglmm, metafor, metadat, tidyverse, data.table, crayon, here, ape,
                dplyr, tidyr, purrr, stringr, readr, readxl, lubridate, magrittr, janitor, 
-               flextable, kableExtra, geosphere, rotl, databases)
+               flextable, kableExtra, geosphere, rotl, data.table, openxlsx)
 
 ```
 
@@ -392,7 +392,14 @@ HD_spatial <- rma.mv(d, var,
 summary(HD_spatial)
 
 ```
+The estimated variance for the phylogenetic effect is 2.55.
 
+$\rho$, the decay parameter of the exponential correlation function, is analogous to $1/\alpha$ in an OU model. A lower rho implies faster decay (stronger stabilising selection); a higher $\rho$ means slower decay (weaker pull).
+
+```{r}
+
+
+```
 ### Ornstein-Uhlenbeck model
 
 Using the rho parameter from the spatial exponential model, we can fit an Ornstein-Uhlenbeck model.
@@ -743,12 +750,13 @@ EXP_mod1 <- rma.mv(yi, vi,
                   random = list(
                         ~ 1|datapt_id,
                         ~ 1|study_id, 
-                        ~ datapt_id | const
+                        ~ lat + long | const
                       ), 
                     struct="SPEXP", 
-                    data = dat_coetzee, 
-                    dist=list(dist_matrix),
-                    control=list(rho.init = 10))
+                    data = dat_coetzee,
+                    # dist=list(dist_matrix),
+                    # control=list(rho.init = 10)
+                  )
 
 summary(EXP_mod1)
 ```
@@ -757,7 +765,27 @@ summary(EXP_mod1)
 
 ```{r}
 
+fit_1 <- bf(yi | se(sqrt(vi)) ~ 1 + 
+                        (1 | datapt_id) + 
+                        (1 | study_id) + 
+                        gp(long, lat, cov = "exponential"))
 
+prior <- get_prior(formula = fit_1,
+                   data = dat_coetzee1,
+  family = gaussian()
+  )
+
+m_exp <- brm(formula = fit_1,
+             data = dat_coetzee1,
+             family = gaussian(),
+             prior = prior,
+             iter = 8000,
+             warmup = 6000,
+             chain = 2, 
+             thin = 1
+             )
+
+summary(m_exp)
 ```
 
 ## spatial Gaussian process model
@@ -770,14 +798,35 @@ EXP_mod2 <- rma.mv(yi, vi,
                       random = list(
                         ~ 1|datapt_id,
                         ~ 1|study_id, 
-                        ~ datapt_id | const
+                        ~ lat + long | const
                       ), 
                       struct="SPGAU", 
-                      data = dat_coetzee, 
-                      dist=list(dist_matrix),
-                      control=list(rho.init=10))
+                      data = dat_coetzee)
 
 summary(EXP_mod2)
+```
+
+```{r}
+fit_2 <- bf(yi | se(sqrt(vi)) ~ 1 + 
+                        (1 | datapt_id) + 
+                        (1 | study_id) + 
+                        gp(long, lat, cov = "exp_quad"))
+
+prior <- get_prior(formula = fit_2,
+                   data = dat_coetzee,
+  family = gaussian()
+  )
+
+m_exp <- brm(formula = fit_2,
+             data = dat_coetzee,
+             family = gaussian(),
+             prior = prior,
+             iter = 10000,
+             warmup = 8000,
+             chain = 2, 
+             thin = 1
+             )
+
 ```
 
 ## spatial linear model
