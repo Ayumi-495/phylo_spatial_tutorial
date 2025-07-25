@@ -194,7 +194,7 @@ HubDen_tree_pruned <- drop.tip(HubDen_tree, setdiff(tip_labels, tips_to_keep))
 
 setdiff(HubDen_tree_pruned$tip.label, Huberty_Denno_2004$Herbivore)
 
-# make variance covariance matrix
+# make correlation matrix
 HubDen_vcv <- vcv.phylo(HubDen_tree_pruned, corr = TRUE)
 
 # make sure the herbivore names in the data match the tree
@@ -381,8 +381,8 @@ D_HD <- I - HubDen_vcv
 
 HD_spatial <- rma.mv(d, var,
                      random = list(~ 1 | Reference,  # random effect for study
-                                   ~ 1 | effect_id, #  random effect for each effect size
-                                   ~ 1 | Herbivore, #  random effect for species
+                                   ~ 1 | effect_id, # random effect for each effect size
+                                   ~ 1 | Herbivore, # random effect for species
                                    ~ Phylo | Const), # random effect for phylogeny
                      dist=list(D_HD),  # phylogenetic distance matrix
                      struct = "SPEXP", # use patial exponential correlation structure
@@ -400,9 +400,10 @@ $\rho$, the decay parameter of the exponential correlation function, is analogou
 
 
 ```
+
 ### Ornstein-Uhlenbeck model
 
-Using the rho parameter from the spatial exponential model, we can fit an Ornstein-Uhlenbeck model.
+Using the rho parameter from the spatial exponential model, we can fit the Ornstein-Uhlenbeck model.
 
 ```{r}
 #| label: phylo_ornstein - metafor
@@ -812,21 +813,21 @@ fit_2 <- bf(yi | se(sqrt(vi)) ~ 1 +
                         (1 | study_id) + 
                         gp(long, lat, cov = "exp_quad"))
 
-prior <- get_prior(formula = fit_2,
+prior2 <- get_prior(formula = fit_2,
                    data = dat_coetzee,
   family = gaussian()
   )
 
-m_exp <- brm(formula = fit_2,
+m_gp <- brm(formula = fit_2,
              data = dat_coetzee,
              family = gaussian(),
-             prior = prior,
-             iter = 10000,
-             warmup = 8000,
+             prior = prior2,
+             iter = 15000,
+             warmup = 13000,
              chain = 2, 
              thin = 1
              )
-
+summary(m_gp)
 ```
 
 ## spatial linear model
