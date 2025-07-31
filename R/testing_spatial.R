@@ -63,6 +63,23 @@ EXP_m1 <- rma.mv(yi, vi,
    
 summary(EXP_m1)
 
+# scale to [0,1] to match metefor internal
+dist_matrix_scaled <- dist_matrix_euclid / max(dist_matrix_euclid)
+
+# rerun model
+EXP_m1_scaled <- rma.mv(yi, vi, 
+                        random = list(
+                          ~ 1|datapt_id,
+                          ~ 1|study_id, 
+                          ~ datapt_id|const
+                        ), 
+                        struct = "SPEXP", 
+                        data = dat_coetzee,
+                        dist = list(datapt_id = dist_matrix_scaled)
+)
+
+summary(EXP_m1_scaled)
+
 # spherical
 EXP_m2 <- rma.mv(yi, vi, 
                  random = list(
@@ -89,8 +106,31 @@ EXP_m3 <- rma.mv(yi, vi,
                    )
 summary(EXP_m3)
 
-204766.3216 
-22097415.7402
+EXP_m3.1 <- rma.mv(yi, vi, 
+                 random = list(
+                   ~ 1|datapt_id,
+                   ~ 1|study_id, 
+                   ~ long + lat | const
+                 ), 
+                 struct = "SPEXP", 
+                 data = dat_coetzee
+)
+summary(EXP_m3.1)
+
+
+EXP_m3_2 <- rma.mv(
+  yi, vi,
+  random = list(
+    ~ 1|datapt_id,
+    ~ 1|study_id,
+    ~ x_km + y_km | const
+  ),
+  struct = "SPEXP",
+  data = dat_coetzee
+)
+
+summary(EXP_m3_2)
+
 # use dist = "gcd" for the great-circle distance (WGS84 ellipsoid method)
 EXP_m4 <- rma.mv(yi, vi, 
                    random = list(
@@ -104,7 +144,6 @@ EXP_m4 <- rma.mv(yi, vi,
                  )
 
 summary(EXP_m4)
-
 
 # brms
 fit_1 <- bf(yi | se(sqrt(vi)) ~ 1 + 
@@ -132,10 +171,57 @@ fit_1 <- bf(yi | se(sqrt(vi)) ~ 1 +
 m_exp <- brm(formula = fit_1,
              data = dat_coetzee,
              family = gaussian(),
-             prior = prior,
-             iter = 2000,
-             warmup = 1000,
+             # prior = prior,
+             iter = 8000,
+             warmup = 6000,
              chain = 2, 
              thin = 1
 )
 
+summary(m_exp)
+Warning messages:
+  1: In pgamma(1/q, shape, rate = rate, lower.tail = !lower.tail, log.p = log.p) :
+  NaNs produced
+2: In pgamma(1/q, shape, rate = rate, lower.tail = !lower.tail, log.p = log.p) :
+  NaNs produced
+3: There were 61 divergent transitions after warmup. See
+https://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup
+to find out why this is a problem and how to eliminate them. 
+4: Examine the pairs() plot to diagnose sampling problems
+
+
+> summary(m_exp)
+# Family: gaussian 
+# Links: mu = identity; sigma = identity 
+# Formula: yi | se(sqrt(vi)) ~ 1 + (1 | datapt_id) + (1 | study_id) + gp(y_km, x_km, cov = "exponential", scale = FALSE) 
+# Data: dat_coetzee (Number of observations: 1484) 
+# Draws: 2 chains, each with iter = 8000; warmup = 6000; thin = 1;
+# total post-warmup draws = 4000
+# 
+# Gaussian Process Hyperparameters:
+#   Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# sdgp(gpy_kmx_km)       0.15      0.12     0.01     0.43 1.00      459      600
+# lscale(gpy_kmx_km)  3850.51  10567.30   377.47 19974.97 1.00     1509     1720
+# 
+# Multilevel Hyperparameters:
+#   ~datapt_id (Number of levels: 1484) 
+# Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# sd(Intercept)     1.25      0.03     1.19     1.32 1.00      882     1819
+# 
+# ~study_id (Number of levels: 127) 
+# Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# sd(Intercept)     0.86      0.09     0.69     1.03 1.01      685     1365
+# 
+# Regression Coefficients:
+#   Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# Intercept     0.45      0.12     0.22     0.69 1.00      819      664
+# 
+# Further Distributional Parameters:
+#   Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# sigma     0.00      0.00     0.00     0.00   NA       NA       NA
+# 
+# Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
+# and Tail_ESS are effective sample size measures, and Rhat is the potential
+# scale reduction factor on split chains (at convergence, Rhat = 1).
+# Warning message:
+#   There were 61 divergent transitions after warmup. Increasing adapt_delta above 0.8 may help. See http://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup 
