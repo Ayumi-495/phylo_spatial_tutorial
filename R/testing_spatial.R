@@ -145,6 +145,20 @@ EXP_m4 <- rma.mv(yi, vi,
 
 summary(EXP_m4)
 
+
+EXP_m5 <- rma.mv(yi, vi, 
+                 random = list(
+                   ~ 1|datapt_id,
+                   ~ 1|study_id, 
+                   ~ x_km + y_km | const
+                 ), 
+                 struct = "SPEXP", 
+                 dist = "manhattan",
+                 data = dat_coetzee
+)
+
+summary(EXP_m5)
+
 # brms
 fit_1 <- bf(yi | se(sqrt(vi)) ~ 1 + 
               (1 | datapt_id) + 
