@@ -24,17 +24,29 @@ colnames(dist_matrix) <- dat_coetzee$datapt_id
 
 # metafor
 ### non-scaled
-EXP_mod2 <- rma.mv(yi, vi, 
+GAU_maximum <- rma.mv(yi, vi, 
                    random = list(
                      ~ 1|datapt_id,
                      ~ 1|study_id, 
                      ~ lat + long | const
                    ), 
                    struct="SPGAU", 
-                   dist = "gcd",
+                   dist = "maximum",
                    data = dat_coetzee)
 
-summary(EXP_mod2)
+summary(GAU_maximum)
+
+GAU_manhattan <- rma.mv(yi, vi, 
+                      random = list(
+                        ~ 1|datapt_id,
+                        ~ 1|study_id, 
+                        ~ lat + long | const
+                      ), 
+                      struct="SPGAU", 
+                      dist = "manhattan",
+                      data = dat_coetzee)
+
+summary(GAU_manhattan)
 
 
 ### scaled
@@ -106,3 +118,20 @@ m_exp1.1 <- brm(formula = fit_2.1,
 )
 
 summary(m_exp1.1)
+
+
+library(sf)
+pts <- st_as_sf(dat_coetzee, coords = c("long", "lat"), crs = 4326)     # WGS-84
+pts <- st_transform(pts, 3857)                                  # Web-Merc (m)
+dat_coetzee$x_km <- st_coordinates(pts)[,1] / 1000                      # km
+dat_coetzee$y_km <- st_coordinates(pts)[,2] / 1000
+
+fit <- brm( yi | se(sqrt(vi)) ~ 1 + (1|datapt_id) + (1|study_id) +
+              gp(x_km, y_km, cov = "exp_quad", scale = FALSE),
+            data = dat_coetzee,
+            prior = c(prior(student_t(3,0,5), class = "sdgp"),
+                      prior(gamma(2,0.002),   class = "lscale")),
+            iter = 6000,
+            warmup = 4000,
+            thin = 1)
+summary(fit)

@@ -207,67 +207,96 @@ HubDen_2004$effect_id <- seq_len(nrow(HubDen_2004))
 
 ```
 
-LEt's try to use `rotl` package
+Let's try to use `rotl` package
 
 ```{r}
 #| echo: false
 #| eval: false
+# 
+# species_names <- unique(Huberty_Denno_2004$Herbivore)
+# taxa <- tnrs_match_names(species_names,
+#                          context_name = "All life", 
+#                          do_approximate_matching = TRUE)
+# # Warning message:
+# # Semiothesia_sp, Neodiprion_fulviceps, Cameraria_sp, Multireoides_sp, Aphalara_sp, Tachardiella_larreae, Phytocoris_sp are not matched 
+# tnrs_match_names("Neodiprion fulviceps") 
+# #         search_string unique_name approximate_match score ott_id is_synonym flags number_matches
+# # 1 neodiprion fulviceps        <NA>                NA    NA     NA         NA    NA             NA
+# # Warning message:
+# # Neodiprion fulviceps are not matched 
+# 
+# tnrs_match_names("Tachardiella larreae")
+# # search_string        unique_name approximate_match     score  ott_id is_synonym flags number_matches
+# # 1 tachardiella larreae Tachardiella parva              TRUE 0.7777778 3445352      FALSE                    2
+# 
+# taxa$ott_id[taxa$search_string == "Tachardiella_larreae"] <- 3445352
+# 
+# # provided only sp 
+# sp_only <- c("Semiothesia", "Cameraria", "Multireoides", 
+#              "Aphalara", "Parthenicus", "Phytocoris")
+# tnrs_match_names(sp_only, context_name = "All life")
+# #   search_string                                 unique_name approximate_match     score  ott_id is_synonym          flags number_matches
+# # 1   semiothesia                                 Demiothecia              TRUE 0.8181818 4116721      FALSE hidden, barren              2
+# # 2     cameraria Cameraria (genus in kingdom Archaeplastida)             FALSE 1.0000000 1086195      FALSE                             2
+# # 3  multireoides                                Multareoides              TRUE 0.9166667  250857      FALSE                             1
+# # 4      aphalara                                    Aphalara             FALSE 1.0000000 3450985      FALSE                             1
+# # 5   parthenicus                                 Parthenicus             FALSE 1.0000000  625583      FALSE                             1
+# # 6    phytocoris                                  Phytocoris             FALSE 1.0000000  170631      FALSE                             1
+# 
+# taxa$ott_id[taxa$search_string == "Semiothesia_sp"] <- 4116721
+# taxa$ott_id[taxa$search_string == "Cameraria_sp"] <- 1086195
+# taxa$ott_id[taxa$search_string == "Multareoides_sp"] <- 250857
+# taxa$ott_id[taxa$search_string == "Aphalara_sp"] <- 3450985
+# taxa$ott_id[taxa$search_string == "Parthenicus_sp"] <- 625583
+# taxa$ott_id[taxa$search_string == "Phytocoris_sp"] <- 170631
+# 
+# taxon_map <- structure(taxa$search_string, names = taxa$unique_name)
+# valid_taxa <- taxa[!is.na(taxa$unique_name), ]
+# taxon_map <- structure(valid_taxa$search_string, names = valid_taxa$unique_name)
+# 
+# tr <- tol_induced_subtree(ott_ids = ott_id(taxa)[is_in_tree(ott_id(taxa))])
+# 
+# otl_tips <- strip_ott_ids(tr$tip.label, remove_underscores = TRUE)
+# 
+# tr$tip.label <- taxon_map[otl_tips]
+# 
+# tr <- compute.brlen(tr)
+# 
+# A <- vcv(tr, corr = TRUE)
+# 
+# plot(tr)
+```
 
-species_names <- unique(Huberty_Denno_2004$Herbivore)
-taxa <- tnrs_match_names(species_names,
-                         context_name = "All life", 
-                         do_approximate_matching = TRUE)
-# Warning message:
-# Semiothesia_sp, Neodiprion_fulviceps, Cameraria_sp, Multireoides_sp, Aphalara_sp, Tachardiella_larreae, Phytocoris_sp are not matched 
-tnrs_match_names("Neodiprion fulviceps") 
-#         search_string unique_name approximate_match score ott_id is_synonym flags number_matches
-# 1 neodiprion fulviceps        <NA>                NA    NA     NA         NA    NA             NA
-# Warning message:
-# Neodiprion fulviceps are not matched 
+```{r}
 
-tnrs_match_names("Tachardiella larreae")
-# search_string        unique_name approximate_match     score  ott_id is_synonym flags number_matches
-# 1 tachardiella larreae Tachardiella parva              TRUE 0.7777778 3445352      FALSE                    2
+set.seed(42)
+tr_bin <- multi2di(HubDen_tree_pruned, random = TRUE)
 
-taxa$ott_id[taxa$search_string == "Tachardiella_larreae"] <- 3445352
+if (is.null(tr_bin$edge.length)) {
+  tr_bin$edge.length <- rep(1, nrow(tr_bin$edge))
+}
 
-# provided only sp 
-sp_only <- c("Semiothesia", "Cameraria", "Multireoides", 
-             "Aphalara", "Parthenicus", "Phytocoris")
-tnrs_match_names(sp_only, context_name = "All life")
-#   search_string                                 unique_name approximate_match     score  ott_id is_synonym          flags number_matches
-# 1   semiothesia                                 Demiothecia              TRUE 0.8181818 4116721      FALSE hidden, barren              2
-# 2     cameraria Cameraria (genus in kingdom Archaeplastida)             FALSE 1.0000000 1086195      FALSE                             2
-# 3  multireoides                                Multareoides              TRUE 0.9166667  250857      FALSE                             1
-# 4      aphalara                                    Aphalara             FALSE 1.0000000 3450985      FALSE                             1
-# 5   parthenicus                                 Parthenicus             FALSE 1.0000000  625583      FALSE                             1
-# 6    phytocoris                                  Phytocoris             FALSE 1.0000000  170631      FALSE                             1
+pos_min <- min(tr_bin$edge.length[tr_bin$edge.length > 0], na.rm = TRUE)
+if (!is.finite(pos_min)) pos_min <- 1
+tr_bin$edge.length[is.na(tr_bin$edge.length) | tr_bin$edge.length == 0] <- pos_min * 1e-6
 
-taxa$ott_id[taxa$search_string == "Semiothesia_sp"] <- 4116721
-taxa$ott_id[taxa$search_string == "Cameraria_sp"] <- 1086195
-taxa$ott_id[taxa$search_string == "Multareoides_sp"] <- 250857
-taxa$ott_id[taxa$search_string == "Aphalara_sp"] <- 3450985
-taxa$ott_id[taxa$search_string == "Parthenicus_sp"] <- 625583
-taxa$ott_id[taxa$search_string == "Phytocoris_sp"] <- 170631
+is.ultrametric(tr_bin)
 
-taxon_map <- structure(taxa$search_string, names = taxa$unique_name)
-valid_taxa <- taxa[!is.na(taxa$unique_name), ]
-taxon_map <- structure(valid_taxa$search_string, names = valid_taxa$unique_name)
+## ultrametric
+tr_um <- compute.brlen(tr_bin, method = "Grafen")
+any(tr_um$edge.length <= 0, na.rm = TRUE) 
 
-tr <- tol_induced_subtree(ott_ids = ott_id(taxa)[is_in_tree(ott_id(taxa))])
+## check
+is.binary(tr_um)
+is.ultrametric(tr_um)
+plot(tr_um)
 
-otl_tips <- strip_ott_ids(tr$tip.label, remove_underscores = TRUE)
-
-tr$tip.label <- taxon_map[otl_tips]
-
-tr <- compute.brlen(tr)
-
-A <- vcv(tr, corr = TRUE)
-
-plot(tr)
+A <- vcv(tr_um, corr = TRUE)
 ```
 
 ### model fitting
+
+<!-- model can actually run with ploytomy? -->
 
 ::: panel-tabset
 ## Brownian motion model and spatial linear model
@@ -287,13 +316,91 @@ HD_BM <- rma.mv(d, var,
                                ~ 1 | effect_id, 
                                ~ 1 | Herbivore, 
                                ~ 1 | Phylo),
-                 R = list(Phylo = HubDen_vcv), 
+                 R = list(Phylo = A), 
                  data = HubDen_2004)
 
 summary(HD_BM)
+
+# Multivariate Meta-Analysis Model (k = 85; method: REML)
+# 
+#    logLik   Deviance        AIC        BIC       AICc   
+# -161.2370   322.4741   332.4741   344.6282   333.2433   
+# 
+# Variance Components:
+# 
+#             estim    sqrt  nlvls  fixed     factor    R 
+# sigma^2.1  0.8191  0.9051     45     no  Reference   no 
+# sigma^2.2  0.2244  0.4737     85     no  effect_id   no 
+# sigma^2.3  1.1564  1.0754     54     no  Herbivore   no 
+# sigma^2.4  2.0725  1.4396     54     no      Phylo  yes 
+# 
+# Test for Heterogeneity:
+# Q(df = 84) = 706.6128, p-val < .0001
+# 
+# Model Results:
+# 
+# estimate      se     zval    pval    ci.lb   ci.ub    
+#  -0.5027  0.8614  -0.5835  0.5595  -2.1910  1.1857    
+
+# phylogenetic heritability
+
+phylo <- HD_BM$sigma2[4]/ (HD_BM$sigma2[3]+HD_BM$sigma2[4]) 
+phylo*100
+
+# change the variable name (sub-guild) to sub_guild using data.table package
+
+setDT(HubDen_2004)
+setnames(HubDen_2004, old = "Sub-guild", new = "Sub_guild")
+
+HD_BM_2 <- rma.mv(yi = d,
+                    V = var,      
+                    mods  = ~ -1 + Sub_guild,
+                    random = list(
+                      ~ 1 | Reference,
+                      ~ 1 | effect_id,
+                      ~ 1 | Herbivore,
+                      ~ 1 | Phylo
+                      ),
+                    R = list(Phylo = A),
+                    data  = HubDen_2004
+                    )
+
+summary(HD_BM_2)
+# Multivariate Meta-Analysis Model (k = 85; method: REML)
+# 
+#    logLik   Deviance        AIC        BIC       AICc   
+# -144.5514   289.1028   311.1028   337.0266   315.1028   
+# 
+# Variance Components:
+# 
+#             estim    sqrt  nlvls  fixed     factor    R 
+# sigma^2.1  1.0431  1.0213     45     no  Reference   no 
+# sigma^2.2  0.1866  0.4320     85     no  effect_id   no 
+# sigma^2.3  0.8676  0.9315     54     no  Herbivore   no 
+# sigma^2.4  1.8756  1.3695     54     no      Phylo  yes 
+# 
+# Test for Residual Heterogeneity:
+# QE(df = 78) = 618.0104, p-val < .0001
+# 
+# Test of Moderators (coefficients 1:7):
+# QM(df = 7) = 13.8791, p-val = 0.0534
+# 
+# Model Results:
+# 
+#                       estimate      se     zval    pval    ci.lb   ci.ub    
+# Sub_guildBorer          0.8938  1.1735   0.7617  0.4462  -1.4061  3.1938    
+# Sub_guildFree-living   -0.3839  0.9614  -0.3993  0.6897  -2.2682  1.5005    
+# Sub_guildGall Former   -1.8786  1.1051  -1.6999  0.0892  -4.0446  0.2874  . 
+# Sub_guildMesophyll     -1.1245  1.2825  -0.8768  0.3806  -3.6381  1.3892    
+# Sub_guildMiner          1.4165  1.1358   1.2471  0.2124  -0.8097  3.6427    
+# Sub_guildPhloem        -1.3502  1.0540  -1.2810  0.2002  -3.4159  0.7156    
+# Sub_guildXylem         -1.0210  1.8943  -0.5390  0.5899  -4.7337  2.6917    
+# 
+# ---
 ```
 
 In `brms`, variance is specified using the `se()` function, and we need to specify the phylogenetic covariance matrix using the `data2` argument. The `gr()` function is used to specify the phylogenetic random effect. Do not forget to specify `|a|`- it means that correlation is allowed between the phylogenetic random effects.
+
 
 ```{r}
 #| label: dat1 - phylo_brownian - brms
@@ -303,13 +410,13 @@ formula_dat1_BM <- bf(d | se(sqrt(var)) ~ 1 +
                         (1 | Reference) + 
                         (1 | effect_id) + 
                         (1 | Herbivore) +  # non-phylogenetic random effect
-                        (1 |a| gr(Phylo, cov = HubDen_vcv))
+                        (1 |a| gr(Phylo, cov = A))
                       )
 
 prior_dat1_BM <- get_prior(
   formula = formula_dat1_BM,
   data = HubDen_2004,
-  data2 = list(HubDen_vcv = HubDen_vcv),
+  data2 = list(A = A),
   family = gaussian()
 )
 
@@ -317,14 +424,13 @@ dat1_BM_brms <- brm(
   formula = formula_dat1_BM,
   family = gaussian(),
   data = HubDen_2004,
-  data2 = list(HubDen_vcv = HubDen_vcv),
+  data2 = list(A = A),
   prior = prior_dat1_BM,
   iter = 6000, 
   warmup = 4000,  
   thin = 1,
   chains = 2, 
   control = list(adapt_delta = 0.95)
-  
 )
 summary(dat1_BM_brms)
 
@@ -336,8 +442,28 @@ Both the Bayesian model (`brms`) and the frequentist model (`metafor`) consisten
 
 ```{r}
 
+# add a constant column for specifying a shared correlation structure
+HubDen_2004$Const <- 1
 
+#  make distance matrix
+## by subtracting the correlation matrix from the identity matrix (i.e., distance = 1 - correlation)
+I <- matrix(1, nrow = 54, ncol = 54)
 
+## convert the phylogenetic correlation matrix into a distance matrix
+D_HD <- I - A 
+
+HD_spatial_lin <- rma.mv(d, var,
+                     random = list(~ 1 | Reference,  # random effect for study
+                                   ~ 1 | effect_id, # random effect for each effect size
+                                   ~ 1 | Herbivore, # random effect for species
+                                   ~ Phylo | Const), # random effect for phylogeny
+                     dist=list(D_HD),  # phylogenetic distance matrix
+                     struct = "SPEXP", # use spatial exponential correlation structure
+                     control=list(rho.init = 1), 
+                     data = HubDen_2004)
+
+summary(HD_spatial_lin)
+summary(HD_BM)
 ```
 
 ## Ornstein-Uhlenbeck model
@@ -369,14 +495,6 @@ This allows us to incorporate more realistic assumptions, such as stabilising se
 #| label: phylo_spatialEXP - metafor
 #| eval: false
 
-# add a constant column for specifying a shared correlation structure
-HubDen_2004$Const <- 1
-
-#  make distance matrix
-## by subtracting the correlation matrix from the identity matrix (i.e., distance = 1 - correlation)
-I <- matrix(1, nrow = 54, ncol = 54)
-
-## convert the phylogenetic correlation matrix into a distance matrix
 D_HD <- I - HubDen_vcv 
 
 HD_spatial <- rma.mv(d, var,
@@ -385,8 +503,8 @@ HD_spatial <- rma.mv(d, var,
                                    ~ 1 | Herbivore, # random effect for species
                                    ~ Phylo | Const), # random effect for phylogeny
                      dist=list(D_HD),  # phylogenetic distance matrix
-                     struct = "SPEXP", # use patial exponential correlation structure
-                     control=list(rho.init=1), 
+                     struct = "SPEXP", # use spatial exponential correlation structure
+                     control=list(rho.init = 1), 
                      data = HubDen_2004)
 
 summary(HD_spatial)

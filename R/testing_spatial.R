@@ -193,18 +193,18 @@ m_exp <- brm(formula = fit_1,
 )
 
 summary(m_exp)
-Warning messages:
-  1: In pgamma(1/q, shape, rate = rate, lower.tail = !lower.tail, log.p = log.p) :
-  NaNs produced
-2: In pgamma(1/q, shape, rate = rate, lower.tail = !lower.tail, log.p = log.p) :
-  NaNs produced
-3: There were 61 divergent transitions after warmup. See
-https://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup
-to find out why this is a problem and how to eliminate them. 
-4: Examine the pairs() plot to diagnose sampling problems
-
-
-> summary(m_exp)
+# Warning messages:
+#   1: In pgamma(1/q, shape, rate = rate, lower.tail = !lower.tail, log.p = log.p) :
+#   NaNs produced
+# 2: In pgamma(1/q, shape, rate = rate, lower.tail = !lower.tail, log.p = log.p) :
+#   NaNs produced
+# 3: There were 61 divergent transitions after warmup. See
+# https://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup
+# to find out why this is a problem and how to eliminate them. 
+# 4: Examine the pairs() plot to diagnose sampling problems
+# 
+# 
+# > summary(m_exp)
 # Family: gaussian 
 # Links: mu = identity; sigma = identity 
 # Formula: yi | se(sqrt(vi)) ~ 1 + (1 | datapt_id) + (1 | study_id) + gp(y_km, x_km, cov = "exponential", scale = FALSE) 
