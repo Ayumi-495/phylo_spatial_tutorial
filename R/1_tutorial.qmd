@@ -51,7 +51,7 @@ rm(list = ls())
 
 pacman::p_load(brms, MCMCglmm, metafor, metadat, tidyverse, data.table, crayon, here, ape,
                dplyr, tidyr, purrr, stringr, readr, readxl, lubridate, magrittr, janitor, 
-               flextable, kableExtra, geosphere, rotl, data.table, openxlsx)
+               flextable, kableExtra, geosphere, rotl, data.table, openxlsx, cmdstanr, rstan)
 
 ```
 
@@ -434,6 +434,9 @@ dat1_BM_brms <- brm(
 )
 summary(dat1_BM_brms)
 
+phylo_BM <- 1.52^2/(1.53^2+0.96^2)
+phylo_BM*100
+
 ```
 
 Both the Bayesian model (`brms`) and the frequentist model (`metafor`) consistently showed strong phylogenetic signal, with the phylogenetic variance component being the largest among all random effects. The estimates of random effect magnitudes were broadly similar between the two models.
@@ -495,8 +498,6 @@ This allows us to incorporate more realistic assumptions, such as stabilising se
 #| label: phylo_spatialEXP - metafor
 #| eval: false
 
-D_HD <- I - HubDen_vcv 
-
 HD_spatial <- rma.mv(d, var,
                      random = list(~ 1 | Reference,  # random effect for study
                                    ~ 1 | effect_id, # random effect for each effect size
@@ -510,11 +511,39 @@ HD_spatial <- rma.mv(d, var,
 summary(HD_spatial)
 
 ```
-The estimated variance for the phylogenetic effect is 2.55.
+The estimated variance for the phylogenetic effect is 1.3492
 
 $\rho$, the decay parameter of the exponential correlation function, is analogous to $1/\alpha$ in an OU model. A lower rho implies faster decay (stronger stabilising selection); a higher $\rho$ means slower decay (weaker pull).
 
 ```{r}
+
+formula_dat1_OU <- bf(d | se(sqrt(var)) ~ 1 + 
+                        (1 | Reference) + 
+                        (1 | effect_id) + 
+                        (1 | Herbivore) +  # non-phylogenetic random effect
+                        (1 |a| gr(Phylo, cov = A))
+                      )
+
+prior_dat1_BM <- get_prior(
+  formula = formula_dat1_BM,
+  data = HubDen_2004,
+  data2 = list(A = A),
+  family = gaussian()
+)
+
+dat1_BM_brms <- brm(
+  formula = formula_dat1_BM,
+  family = gaussian(),
+  data = HubDen_2004,
+  data2 = list(A = A),
+  prior = prior_dat1_BM,
+  iter = 6000, 
+  warmup = 4000,  
+  thin = 1,
+  chains = 2, 
+  control = list(adapt_delta = 0.95)
+)
+summary(dat1_BM_brms)
 
 
 ```
@@ -546,27 +575,6 @@ summary(HD_OU)
 
 You can see that the estimate of the Ornstein-Uhlenbeck model is the same to the spatial exponential model, but the AIC is lower for the Ornstein-Uhlenbeck model.
 
-## Gaussian phylogenetic process model
-
-Actually, we can fit the Gaussian phylogenetic process model using spatial Gaussian process model.
-
-```{r}
-#| label: phylo_gaussian - metafor
-#| eval: false
-
-HD_GP <- rma.mv(d, var,
-                random = list(~ 1 | Reference, 
-                              ~ 1 | effect_id, 
-                              ~ 1 | Herbivore, 
-                          ~ Phylo | Const),
-                     dist=list(D_HD), 
-                     struct = "SPGAU",
-                     control=list(rho.init=1), 
-                     data = HubDen_2004)
-
-summary(HD_GP)
-
-```
 :::
 
 ## example 2
@@ -604,6 +612,29 @@ Then, we need to create the correlation matrix from the phylogenetic tree for ph
 #| eval: false
 
 # make variance covariance matrix
+plot(tree_dat2)
+
+set.seed(42)
+tree_dat2_1 <- multi2di(tree_dat2, random = TRUE)
+
+if (is.null(tree_dat2_1$edge.length)) {
+  tree_dat2_1$edge.length <- rep(1, nrow(tree_dat2_1$edge))
+}
+
+pos_min_dat2 <- min(tree_dat2_1$edge.length[tree_dat2_1$edge.length > 0], na.rm = TRUE)
+if (!is.finite(pos_min_dat2)) pos_min_dat2 <- 1
+tree_dat2_1$edge.length[is.na(tree_dat2_1$edge.length) | tree_dat2_1$edge.length == 0] <- pos_min_dat2 * 1e-6
+
+is.ultrametric(tree_dat2_1)
+
+## ultrametric
+tr_u_dat2 <- compute.brlen(tree_dat2_1, method = "Grafen")
+any(tr_u_dat2$edge.length <= 0, na.rm = TRUE) 
+
+## check
+is.binary(tr_u_dat2)
+is.ultrametric(tr_u_dat2)
+plot(tr_u_dat2)
 
 dat2_vcv <- vcv.phylo(tree_dat2, corr = TRUE) # make sure the `corr = TRUE`
 dat2_vcv[1:5, 1:5] # check the first few rows and columns
@@ -643,6 +674,9 @@ dat2_BM_metafor <- rma.mv(lnRR, var,
                  data = dat2)
 
 summary(dat2_BM_metafor)
+
+# convert log(0.459) to percentage
+(exp(0.4592)-1)*100
 
 ```
 
@@ -723,6 +757,7 @@ Then, we can extract the $\rho$ parameter and calculate the $\alpha$ parameter, 
 rho_dat2 <- dat2_spatial$rho
 alpha_dat2 <- 1/rho_dat2
 dat2_OU <- exp(-alpha_dat2 * D_dat2)
+runtime_results <- list()
 
 dat2_OU <- rma.mv(lnRR, var,
                 random = list(~ 1 | study_id, 
@@ -735,28 +770,29 @@ dat2_OU <- rma.mv(lnRR, var,
 
 summary(dat2_OU)
 
-```
-
-## Gaussian phylogenetic process model
-
-```{r}
-#| label: dat2 - phylo_gaussian - metafor
-#| eval: false
-
-dat2_GP <- rma.mv(lnRR, var,
-                     random = list(~ 1 | study_id, 
-                                   ~ 1 | effect_id, 
-                                   ~ 1 | species, 
-                                   ~ phylo | const),
-                     dist=list(D_dat2), 
-                     struct = "SPGAU",
-                     control=list(rho.init=1), 
-                     data = dat2)
-
-summary(dat2_GP)
-
 
 ```
+
+<!-- ## Gaussian phylogenetic process model -->
+
+<!-- ```{r} -->
+<!-- #| label: dat2 - phylo_gaussian - metafor -->
+<!-- #| eval: false -->
+
+<!-- dat2_GP <- rma.mv(lnRR, var, -->
+<!--                      random = list(~ 1 | study_id,  -->
+<!--                                    ~ 1 | effect_id,  -->
+<!--                                    ~ 1 | species,  -->
+<!--                                    ~ phylo | const), -->
+<!--                      dist=list(D_dat2),  -->
+<!--                      struct = "SPGAU", -->
+<!--                      control=list(rho.init=1),  -->
+<!--                      data = dat2) -->
+
+<!-- summary(dat2_GP) -->
+
+
+<!-- ``` -->
 
 Let's compare the all results. You can find the estimates are the same, but the AIC is lower for the OU model..
 
@@ -767,7 +803,7 @@ Let's compare the all results. You can find the estimates are the same, but the 
 summary(dat2_spatial)
 summary(dat2_OU)
 summary(dat2_BM_metafor)
-summary(dat2_GP)
+# summary(dat2_GP)
 
 
 ## make summary table ----
@@ -777,7 +813,7 @@ model_list <- list(
   "BM_metafor" = dat2_BM_metafor,
   "OU_metafor" = dat2_OU,
   "Spatial_EXP_metafor" = dat2_spatial,
-  "GP_metafor" = dat2_GP
+  # "GP_metafor" = dat2_GP
 )
 
 m <- dat2_BM_metafor
