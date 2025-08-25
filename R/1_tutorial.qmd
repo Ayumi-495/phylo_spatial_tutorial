@@ -49,7 +49,7 @@ execute:
 # Load required packages
 rm(list = ls())
 
-pacman::p_load(brms, MCMCglmm, metafor, metadat, tidyverse, data.table, crayon, here, ape,
+pacman::p_load(brms, MCMCglmm, metafor, metadat, tidyverse, data.table, crayon, here, ape, glmmTMB,
                dplyr, tidyr, purrr, stringr, readr, readxl, lubridate, magrittr, janitor, 
                flextable, kableExtra, geosphere, rotl, data.table, openxlsx, cmdstanr, rstan)
 
@@ -441,6 +441,21 @@ phylo_BM*100
 
 Both the Bayesian model (`brms`) and the frequentist model (`metafor`) consistently showed strong phylogenetic signal, with the phylogenetic variance component being the largest among all random effects. The estimates of random effect magnitudes were broadly similar between the two models.
 
+We can also fit phylogenetic meta-analysis models using the `glmmTMB` package.
+
+```{r}
+
+dat1_BM_tmb <- glmmTMB(d ~ 1 + equalto(0 + id|g, var) + 
+                       (1|Reference) + 
+                       (1|effect_id) +
+                       (1|Herbivore) +
+                       propto(0 + species|g, A),
+                       data = HubDen_2004,
+                       REML = T)
+
+
+
+```
 ### Spatial linear model
 
 ```{r}

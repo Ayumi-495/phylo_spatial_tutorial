@@ -1,6 +1,6 @@
-pacman::p_load(brms, MCMCglmm, metafor, metadat, tidyverse, data.table, crayon, here, ape,
-               dplyr, tidyr, purrr, stringr, readr, readxl, lubridate, magrittr, janitor, 
-               flextable, kableExtra, geosphere, rotl, data.table, openxlsx)
+pacman::p_load(brms, metafor, metadat, tidyverse, data.table, crayon, here, ape, sf,
+               purrr, stringr, readr, lubridate, magrittr, janitor, openxlsx,
+               geosphere, rotl)
 
 
 dat_coetzee <- read.xlsx(here("data", "examples", "Coetzee_2014.xlsx"), sheet = 2)
@@ -160,82 +160,109 @@ EXP_m5 <- rma.mv(yi, vi,
 summary(EXP_m5)
 
 # brms
-fit_1 <- bf(yi | se(sqrt(vi)) ~ 1 + 
-              (1 | datapt_id) + 
-              (1 | study_id) + 
-              gp(y_km, x_km, 
-                 cov = "exponential",
-                 scale = FALSE))
-
+# fit_1 <- bf(yi | se(sqrt(vi)) ~ 1 + 
+#               (1 | datapt_id) + 
+#               (1 | study_id) + 
+#               gp(y_km, x_km, 
+#                  cov = "exponential",
+#                  scale = FALSE))
+# 
 # prior <- get_prior(formula = fit_1,
 #                    data = dat_coetzee,
 #                    family = gaussian()
 # )
-
+# 
+# hist(dat_coetzee$x_km)
+# 
 # prior <- c(
-#   prior(normal(0, 1), class = "Intercept"),
-#   prior(exponential(1), class = "sdgp"),
-#   prior(lognormal(log(1000), 0.5), class = "lscale")
+#   prior(normal(0, 5), class = "Intercept"),
+#   prior(student_t(3, 0, 2.5), class = "sd", group = "datapt_id"),
+#   prior(student_t(3, 0, 2.5), class = "sd", group = "study_id"),
+#   prior(exponential(0.001), class = "lscale"),  
+#   prior(exponential(1), class = "sdgp")
+# )
 
-  prior <- c(
-    prior(exponential(1), class = "sdgp", coef = "gpy_kmx_km"),
-    prior(lognormal(log(1000), 0.5), class = "lscale", coef = "gpy_kmx_km")
+
+max_cores <- 10
+num_chains <- 2
+threads_per_chain <- floor(max_cores / num_chains)
+options(mc.cores = num_chains) 
+
+fit_1 <- bf(
+  yi | se(sqrt(vi)) ~ 1 + 
+    (1 | datapt_id) + 
+    (1 | study_id) + 
+    gp(y_km, x_km, cov = "exponential", scale = FALSE)
+  )
+
+prior <- c(
+    prior(normal(0, 5), class = "Intercept"),
+    prior(student_t(3, 0, 2.5), class = "sd", group = "datapt_id"),
+    prior(student_t(3, 0, 2.5), class = "sd", group = "study_id"),
+    prior(lognormal(9, 1), class = "lscale"),   
+    prior(student_t(3, 0, 0.5), class = "sdgp")
   )
 
 m_exp <- brm(formula = fit_1,
              data = dat_coetzee,
              family = gaussian(),
-             # prior = prior,
-             iter = 8000,
-             warmup = 6000,
-             chain = 2, 
-             thin = 1
+            # prior = prior,
+             iter = 11000,
+             warmup = 9000,
+             chains = num_chains,
+             backend = "cmdstanr",
+             threads = threading(threads_per_chain),
+             control = list(adapt_delta = 0.95, max_treedepth = 15)
 )
 
 summary(m_exp)
-# Warning messages:
-#   1: In pgamma(1/q, shape, rate = rate, lower.tail = !lower.tail, log.p = log.p) :
-#   NaNs produced
-# 2: In pgamma(1/q, shape, rate = rate, lower.tail = !lower.tail, log.p = log.p) :
-#   NaNs produced
-# 3: There were 61 divergent transitions after warmup. See
-# https://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup
-# to find out why this is a problem and how to eliminate them. 
-# 4: Examine the pairs() plot to diagnose sampling problems
-# 
-# 
-# > summary(m_exp)
-# Family: gaussian 
-# Links: mu = identity; sigma = identity 
-# Formula: yi | se(sqrt(vi)) ~ 1 + (1 | datapt_id) + (1 | study_id) + gp(y_km, x_km, cov = "exponential", scale = FALSE) 
-# Data: dat_coetzee (Number of observations: 1484) 
-# Draws: 2 chains, each with iter = 8000; warmup = 6000; thin = 1;
-# total post-warmup draws = 4000
-# 
-# Gaussian Process Hyperparameters:
-#   Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sdgp(gpy_kmx_km)       0.15      0.12     0.01     0.43 1.00      459      600
-# lscale(gpy_kmx_km)  3850.51  10567.30   377.47 19974.97 1.00     1509     1720
-# 
-# Multilevel Hyperparameters:
-#   ~datapt_id (Number of levels: 1484) 
-# Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sd(Intercept)     1.25      0.03     1.19     1.32 1.00      882     1819
-# 
-# ~study_id (Number of levels: 127) 
-# Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sd(Intercept)     0.86      0.09     0.69     1.03 1.01      685     1365
-# 
-# Regression Coefficients:
-#   Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# Intercept     0.45      0.12     0.22     0.69 1.00      819      664
-# 
-# Further Distributional Parameters:
-#   Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sigma     0.00      0.00     0.00     0.00   NA       NA       NA
-# 
-# Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
-# and Tail_ESS are effective sample size measures, and Rhat is the potential
-# scale reduction factor on split chains (at convergence, Rhat = 1).
-# Warning message:
-#   There were 61 divergent transitions after warmup. Increasing adapt_delta above 0.8 may help. See http://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup 
+
+
+# Gaussian process model with square-exponential covariance function
+fit_2 <- bf(
+  yi | se(sqrt(vi)) ~ 1 + 
+    (1 | datapt_id) + 
+    (1 | study_id) + 
+    gp(y_km, x_km, cov = "exp_quad", scale = FALSE)
+)
+
+m_gau <- brm(formula = fit_2,
+             data = dat_coetzee,
+             family = gaussian(),
+             # prior = prior,
+             iter = 11000,
+             warmup = 9000,
+             chains = num_chains,
+             backend = "cmdstanr",
+             threads = threading(threads_per_chain),
+             control = list(adapt_delta = 0.95, max_treedepth = 15)
+)
+
+summary(m_gau)
+
+GAU_1 <-  rma.mv(yi, vi, 
+                   random = list(
+                     ~ 1|datapt_id,
+                     ~ 1|study_id, 
+                     ~ datapt_id|const
+                   ), 
+                   struct = "SPGAU", 
+                   data = dat_coetzee,
+                   dist = list(datapt_id = dist_matrix_euclid)
+  )
+
+summary(GAU_1)
+
+
+GAU_2 <- rma.mv(
+  yi, vi,
+  random = list(
+    ~ 1|datapt_id,
+    ~ 1|study_id,
+    ~ x_km + y_km | const
+  ),
+  struct = "SPGAU",
+  data = dat_coetzee
+)
+
+summary(GAU_2)

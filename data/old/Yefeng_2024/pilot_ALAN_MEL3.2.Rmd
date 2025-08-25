@@ -1,0 +1,4085 @@
+---
+title: "The impact of ALAN on melatonin levels in wild vertebrates: a pilot analysis"
+subtitle: "A pilot analysis for personal communicaiton with Shinichi"
+author: "Yefeng Yang"
+output:
+#  # https://github.com/juba/rmdformats
+  rmdformats::material:
+    code_folding: hide
+    code_download: false
+    highlight: tango
+    lightbox: true
+editor_options:
+  chunk_output_type: console
+#bibliography: "references.bib"
+#csl: "environmental-evidence.csl"
+link-citations: yes  
+---
+
+```{r global options, include=FALSE}
+library(knitr)
+library(rmdformats)
+library(palmerpenguins)
+# Global options
+# options(max.print = "75")
+knitr::opts_chunk$set(
+  message = FALSE,
+  warning = FALSE, 
+  tidy = TRUE,
+  cache = TRUE,
+  echo=TRUE)
+
+#opts_knit$set(width = 75)
+
+```
+
+# Prerequisite
+
+Install and load necessary libraries.
+
+```{r load packages, cache = FALSE}
+# tidy
+# rm(list=ls())
+# Install and load necessary library
+pacman::p_load(tidyverse, 
+               here,
+               DT,
+               janitor,
+               ggpubr,
+               readxl, 
+               metafor,
+               car,
+               clubSandwich,
+               MuMIn,
+               glmulti,
+               metagear,
+               patchwork,
+               stringr,
+               mice,
+               GoodmanKruskal,
+               networkD3,
+               ggplot2,
+               plotly,
+               ggsignif,
+               visdat,
+               ggalluvial,
+               ggthemr, 
+               cowplot,
+               grDevices,
+               png,
+               grid,
+               gridGraphics,
+               pander,
+               formatR,
+               rotl,
+               ape,
+               metagear,
+               ggstance,
+               ggtree,
+               multcomp,
+               ggsankey,
+               flextable,
+               visdat,
+               naniar
+               )
+```
+
+# Custom function
+
+```{r}
+# custom function
+source("./custom_function.R")
+eval(metafor:::.MuMIn)
+eval(metafor:::.glmulti)
+
+# calculate full set of effect size measures
+yicalc <- function(estype,data) {
+yi <- escalc(measure = estype, m1i = Exp_Mean, m2i = Con_Mean, sd1i = Exp_SD, sd2i = Con_SD, n1i = Exp_N, n2i = Con_N, data = data, append = F, digits = 4)
+return(yi)
+}
+
+# shorthand of rma.mv with desired model structure
+MLMA.func <- function(formula,vcv,A, data) {
+  rma.obj <- rma.mv(formula, V = vcv, random = list(~ 1 | Spp, ~1 | Phy, ~1 | StudyID, ~1 | obs_ID), method = "REML", test = "t", data = data, sparse = T, R = list(Phy=A)) %>% suppressWarnings() # MLMA
+  rma.rob <- robust(rma.obj, cluster = data$StudyID) #RVE
+  # alternative
+  # coef_test(rma.obj, vcov = "CR2", cluster = data$StudyID)
+  return(rma.rob)
+} 
+
+# count the levels of random effects
+count.lvl(mod_results(MLMR_4N_lnRR,mod = "Species_diurnal_nocturnal",group = "Spp", data = dat_N))
+
+count.lvl <- function(object)
+{
+  results <- object
+  mod_table <- results$mod_table
+  
+  data_trim <- results$data
+  data_trim$moderator <- factor(data_trim$moderator, levels = mod_table$name, labels = mod_table$name)
+  
+  
+  # Add in total effect sizes for each level
+  mod_table$K <- as.vector(by(data_trim, data_trim[,"moderator"], function(x) length(x[,"yi"])))
+  
+  # Add in total levels of a grouping variable (e.g., study ID) within each moderator level.
+  mod_table$g <- as.vector(num_studies(data_trim, moderator, stdy)[,2])
+  
+  # the number of groups in a moderator & data points
+  group_no <- length(unique(mod_table[, "name"]))
+  
+  # putting k and g in
+  mod_table$K[1:group_no]
+  mod_table$g[1:group_no]
+  mod_table2 <- mod_table[,c(1,7,8)]
+  return(mod_table2)  
+                
+}
+
+# summary of intercept-only model
+MLMA_table <- function(mod){
+  beta <- data.frame(round(mod$b,3),row.names = row.names(mod$b))
+  CI <- data.frame(sprintf("[%0.3f, %0.3f]", mod$ci.lb, mod$ci.ub))
+  t <- data.frame(round(mod$zval,2))
+  p <- data.frame(round(mod$pval,3))
+  N_species <- data.frame(mod$s.nlevels[1])
+  N_obs <- data.frame(mod$s.nlevels[4])
+  df <- cbind(beta,CI,t,p,N_species,N_obs)
+  
+  names(df) <- c("Estimate","95% CI","t","p","N_species","N_obs")
+  return(df)
+  
+}
+
+# heterogeneity summary
+h.calc <- function(mod){
+  # sigma2
+  sigma2_total <- sum(mod$sigma2)
+  sigma2_each <- mod$sigma2
+  sigma2s <- c(sigma2_total, sigma2_each)
+   # I2
+  # sigma2_v = typical sampling error variance
+  sigma2_v <- sum(1 / mod$vi) * (mod$k - 1) /
+    (sum(1 / mod$vi)^2 - sum((1 / mod$vi)^2))
+  # s^2_t = total variance
+  I2_total <- 100 * (sum(mod$sigma2) / (sum(mod$sigma2) + sigma2_v))
+  I2_each <- 100 * (mod$sigma2 / (sum(mod$sigma2) + sigma2_v))
+  #names(I2_each) <- paste0("I2_", model$s.names)
+  #names(I2_total) <- "I2_Total"
+  I2s_Shinichi <- c(I2_total, I2_each)
+  
+# matrix version  
+  W <- solve(mod$V)
+  X <- model.matrix(mod)
+  P <- W - W %*% X %*% solve(t(X) %*% W %*% X) %*% t(X) %*% W
+  I2_total2 <- 100* (sum(mod$sigma2) / (sum(mod$sigma2) + (mod$k - mod$p) / sum(diag(P))))
+  I2_each2 <- 100* (mod$sigma2 / (sum(mod$sigma2) + (mod$k - mod$p) / sum(diag(P))))
+  #names(I2_each2) <- paste0("I2_", model$s.names)
+  #names(I2_total2) <- "I2_Total2"
+  I2s_Wolfgang <- c(I2_total2, I2_each2)
+  
+  # CVB
+  CVB_total <- (sqrt(sum(mod$sigma2)) / abs(mod$beta[1]))
+  CVB_each <- (sqrt(mod$sigma2) / abs(mod$beta[1]))
+  #names(CVB_each) <- paste0("CVB_", mod$s.names)
+  #names(CVB_total) <- "CVB_total"
+  CVBs <- c(CVB_total, CVB_each)
+  # M1
+  M1_total <- (sqrt(sum(mod$sigma2)) / (sqrt(sum(mod$sigma2)) + abs(mod$beta[1])))
+  M1_each <- (sqrt(mod$sigma2) / (sqrt(mod$sigma2) + abs(mod$beta[1])))
+  #names(M1_each) <- paste0("CVB_", mod$s.names)
+  #names(M1_total) <- "M1_total"
+  M1s <- c(M1_total, M1_each)
+  
+  hs <- data.frame(sigma2s,I2s_Shinichi,CVBs,M1s)
+  rownames(hs) <- c("Total", mod$s.names)
+  return(hs)
+
+}
+
+# summary of predictor model
+# meta-regression
+MLMR_table <- function(mod,mod2,moderator,group,data){
+  #beta <- paste("beta", 1:length(c(row.names(mod$b),row.names(mod2$b)[-1])),sep = "")
+  est <- data.frame(c(mod$b,mod2$b[-1]),row.names = c(row.names(mod$b),row.names(mod2$b)[-1]))
+  CI <- data.frame(sprintf("[%0.2f, %0.2f]", c(mod$ci.lb,mod2$ci.lb[-1]), c(mod$ci.ub,mod2$ci.ub[-1])))
+  t <- data.frame(c(mod$zval,mod2$zval[-1]))
+  p <- data.frame(c(mod$pval,mod2$pval[-1]))
+  # add N of obs and species
+  count.results <- count.lvl(mod_results(mod,mod = moderator,group = group, data = data))
+  N_species <- data.frame(c(count.results$g,count.results$g[-1]))
+  
+  N_obs <- data.frame(c(count.results$K,count.results$K[-1]))
+  
+  df <- cbind(est,CI,t,p,N_species,N_obs)
+  
+  names(df) <- c("Estimate","95% CI","t","p","N_species","N_obs")
+  return(df)
+  
+}
+
+# summary of predictor model2
+# meta-regression with continuous moderator variables
+MLMR_table2 <- function(mod){
+  est <- data.frame(c(mod$b),row.names = c(row.names(mod$b)))
+  CI <- data.frame(sprintf("[%0.2f, %0.2f]", c(mod$ci.lb), c(mod$ci.ub)))
+  t <- data.frame(c(mod$zval))
+  p <- data.frame(c(mod$pval))
+  # add N of obs and species
+  N_species <- data.frame(mod$s.nlevels[1])
+  N_obs <- data.frame(mod$s.nlevels[4])
+  
+  df <- cbind(est,CI,t,p,N_species,N_obs)
+  
+  names(df) <- c("Estimate","95% CI","t","p","N_species","N_obs")
+  return(df)
+  
+}
+
+
+
+```
+
+
+# Questions
+
+We have 9 mean-related questions and variance-related questions, respectively.
+
+**Mean-related questions:**
+
+- Question 1
+
+Is there an overall effect of artificial light at night (ALAN) on melatonin levels in wild vertebrate species?
+
+- Question2
+
+Is the nighttime melatonin level more sensitive to ALAN than the daytime melatonin level (e.g., melatonin sampled at nighttime vs. daytime)?
+
+- Question 3
+
+Does ALAN affect central organs more than peripheral organs (e.g., pineal vs. blood)?
+
+- Question 4
+
+Are nocturnal species more vulnerable to ALAN than diurnal species (e.g., birds vs. rodents)?
+
+- Question 5
+
+Are captive populations more affected by ALAN than free-living populations?
+
+- Question 6
+
+Is there a dose-response relationship between the ALAN intensity and the magnitude of suppression of melatonin?
+
+- Question 7
+
+Is there a relationship between ALAN spectral properties and the magnitude of suppression of melatonin and ALAN?
+
+- Question 8
+
+Does a long-term exposure to ALAN have a greater effect than short-term exposure?
+
+- Question 9
+
+Is the magnitude of suppression of melatonin dependent on the timing (window/phase) of exposure to ALAN (e.g., early night vs. midnight vs. late night vs. whole night)- Question 6
+
+**Variance-related questions:**
+
+- Question 1
+
+whether ALAN exposure shows consistent (low response variability) or selective (high response variability) effects on the suppression of melatonin in a wild population of animals?
+
+- Question 2
+
+whether response variability of melatonin differs between nighttime level and daytime level (e.g., melatonin sampled at nighttime vs. daytime)? 
+
+- Question 3
+
+whether response variability of melatonin differs between central organs and peripheral organs (e.g., pineal vs. blood)?
+
+- Question 4
+
+whether response variability of melatonin differs between nocturnal species diurnal species (e.g., birds vs. rodents)?
+
+- Question 5
+
+whether response variability of melatonin differs between captive populations and free-living populations?
+
+- Question 6
+
+Is there a dose-response relationship between the ALAN intensity and the variation of suppression of melatonin?
+
+- Question 7
+
+Is there a relationship between ALAN spectral properties and the variability of suppression of melatonin and ALAN?
+
+- Question 8
+
+whether response variability of melatonin differs between long-term exposure and short-term exposure?
+
+- Question 9
+
+Is the variation of suppression of melatonin dependent on the timing (window/phase) of exposure to ALAN (e.g., early night vs. midnight vs. late night vs. whole night)
+
+# Dataset
+
+Load dataset, and have a glimpse of the data. See below for the brief explanations of the focal variables.
+
+__Table S1__  
+The extracted variables for the meta-analysis of melatonin.
+
+```{r datset}
+# load data
+dat_raw <- read_xlsx(path = "MEL_data_merge.xlsx")
+
+# show data in a data
+t1 <- dat_raw %>% DT::datatable()
+t1
+
+```
+
+- *Species_diurnal_nocturnal*: Did the paper use diurnal or nocturnal species? Coded levels: Diurnal, Nocturnal. This variable is used to test **hypothesis 2**.
+
+- *Captive_or_Free_living*: Did the paper use captive or free-living populations?  Coded levels: Captive, Free-living, Unclear/Other. This variable is used to test **hypothesis 3**.
+
+- *Tissues_measured*: What tissue was used for measurement of melatonin levels: Blood, Pineal, SCN (Suprachiasmatic Nucleus), Urinary, Retina (ocular), Water (if melatonin in tank water was measured). This variable is used to test **hypothesis 4**.
+
+- *Daytime_or_nighttime_melatonin*: The phase of the day at which melatonin samples were taken, with three options: Daytime (daytime sampling, i.e., lights on in the Control group), Nighttime (nighttime sampling, i.e., lights off/low in the Control group), and Unclear/other (e.g., not mentioned or with transition phase). This variable is used to test **hypothesis 5**.
+
+- *Night_light_intensity_exp*: The light intensity at night of the ALAN group (light intensity during the extended photoperiod in the ALAN group, e.g., ZT12 – ZT15). This variable is used to test **hypothesis 6**.
+
+- *Light_colour*, *Light_CT*, *Light_wavelength*, and *Spectral_characteristics*: The colour, colour temperature, wavelength and spectral characteristics of the light sources used in the paper. Given that light spectra are multi-dimensional, all the four variables are used to test **hypothesis 7**.
+
+- *Extended_hours* and *Exposure_duration*: Duration of exposure to ALAN per day (hours) and duration of the entire ALAN exposure experiment (days). The two variables are used to test **hypothesis 8**.
+
+- *Night_Phase_category*: Broad categories  the different exposure windows of light at night when ALAN is applied. Coding options: All night (light ON throughout the night), Early night (light ON during the first third of the night), Midnight (light ON between the first and last third of the night), Late night (light ON during the last third of the night), and Unclear/other (e.g., not mentioned or with transition phase). This variable is used to test **hypothesis 9**.
+
+
+# Study characteristics
+
+Below we give a brief summary of the dataset showing the characteristics of the included studies.
+
+In total, our dataset inluded 38 primary studies consisting of unique 437 observations.
+
+```{r N}
+# checking included studies
+length(unique(dat_raw$StudyID)) # 38 included studies
+# checking included observations
+nrow(dat_raw) # 437
+```
+
+Our dataset included 274 diurnal vertebrates and 163 nocturnal vertebrates.
+
+```{r}
+tabyl(dat_raw, Species_diurnal_nocturnal)
+
+```
+
+429 (98%) vertebrates were captive, while 8 (2%) were Free-living.
+
+```{r}
+tabyl(dat_raw, Outdoor_or_Indoor) # change it to captive and free-living
+
+```
+
+Only 1% of the studies did not report the sampled tissues for melatonin measurements. Most of the melatonin were sampled from blood (188; 43%), and urinary (108; 24%), then followed by pineal (80; 18%), Eye (37; 8%), and Water (24; 5%).
+
+```{r}
+tabyl(dat_raw, Tissues_measured)
+
+```
+
+13 (3%) the studies did not report when the melatonin was measured. 284 (63%) studies measured nighttime melatonin, while 152 (34%) measured daytime melatonin.
+
+```{r}
+tabyl(dat_raw, Daytime_or_nighttime_melatonin)
+
+```
+
+Primary studies mainly used three types of unit to measure light intensity: lux, W/m2, and  μM/m2/s. We used the most commonly used lux (203;45%) and W/m2 (189; 43%) as our focal units. The light intensity measured as lux and W/m2 were both (right) skewed; median = 2, mean = 114, sd = 283 for lux, median = 200, mean = 247, sd = 363 for W/m2.
+
+```{r}
+# different types of unit
+tabyl(dat_raw, Light_intensity_unit)
+# summary
+dat_raw %>% group_by(Light_intensity_unit) %>% summarize(median = quantile(Night_light_intensity_exp,probs=0.5,na.rm = T), mean = mean(Night_light_intensity_exp,na.rm = T), sd = stats::sd(Night_light_intensity_exp,na.rm = T))
+
+# visualize
+par(mfrow = c(2,1))
+hist(dat_raw[dat$Light_intensity_unit == "lux",]$Night_light_intensity_exp, main = "Distribution of light intensity using lux as unit")
+hist(dat_raw[dat$Light_intensity_unit == "W/m2",]$Night_light_intensity_exp, main = "Distribution of light intensity using lux as unit")
+
+```
+
+Primary studies mainly focused on 7 types of light color: White (163; 36%), Cool white (70; 16%), Warm white (42; 9%), Red (44; 10%), Blue (44; 10%), yELLOW (36; 8%) and Amber (1; 0.2%).
+
+```{r}
+tabyl(dat_raw, Light_colour)
+```
+
+417 (93%) studies did not report colour temperature of the ALAN. Among the remaining 7% of studies, colour temperature showed a normal distribution. 
+
+```{r}
+tabyl(dat_raw, Light_CT)
+hist(dat_raw$Light_CT)
+```
+
+324 (72%) studies did not report wavelength of the ALAN. Among the remaining 28 of studies, the minimum, mean and maximum wavelength were 450 nm, 582 nm, and 697 nm. 
+
+```{r}
+# summary
+length(which(is.na(dat_raw$Light_wavelength)))/nrow(dat_raw)
+
+dat_raw$Light_wavelength %>% summary()
+
+# visualize
+hist(dat_raw$Light_wavelength)
+
+```
+
+66 (15%) studies did not report whether a full-spectrum or monochromatic light was used. 256 (57%) studies used full-spectrum lamps as the sources of ALAN, while 127 (28%) studies used monochromatic lamps.
+```{r}
+
+tabyl(dat_raw, Spectral_characteristics)
+
+```
+
+The mean daily exposure of ALAN was 7 hours. 
+
+```{r}
+summary(dat_raw$Extended_hours)
+hist(dat_raw$Extended_hours)
+
+```
+
+The mean duration of the entire ALAN exposure experiment was 38 days.
+
+```{r}
+summary(dat_raw$Exposure_duration)
+hist(dat_raw$Exposure_duration)
+
+```
+
+Most of the studies placed ALAN all the night, followed by 
+All night
+
+The most common phase that ALAN was placed on was all night light (214; 48%), followed by mid night light (146; 32%), early night light (11; 2%) and late night light (3%).
+
+```{r}
+tabyl(dat_raw,Night_Phase_category)
+```
+ 
+ 
+```{r data summary}
+# TODO - investigate the package for visualization tables - library(reactable)
+# https://glin.github.io/reactable/articles/examples.html#basic-usage
+# https://rfortherestofus.com/2019/11/how-to-make-beautiful-tables-in-r/
+
+```
+
+
+# Effect size computation
+
+To measure mean differences in melatonin secretion between ALAN and control groups, we calculate lnRR. We also calculate SMD and SMDH for robust analysis. To measure variance differences in melatonin secretion between ALAN and control groups, we calculate lnVR and lnCVR. Have a glimpse of the calculated effect sizes.
+
+```{r es,warning=F}
+# total 5.9% of sd need imputation
+dat_raw %>% dplyr::select(Exp_SD, Con_SD) %>% impute_missingness()
+dat_impSD <- as.data.frame(dat_raw) # convert into dataframe
+dat_impSD <- impute_SD(dat_impSD, 
+                       columnSDnames = c("Exp_SD", "Con_SD"), 
+                       columnXnames = c("Exp_Mean", "Con_Mean"), 
+                       method = "Bracken1992") #HotDeck
+# all imputed
+dat_impSD %>% dplyr::select(Exp_SD, Con_SD) %>% impute_missingness()
+# label missing location
+dat_impSD$Exp_SD_imp <- ifelse(is.na(dat_raw$Exp_SD),"Yes","No")
+dat_impSD$Con_SD_imp <- ifelse(is.na(dat_raw$Con_SD),"Yes","No")
+
+# visual check                        
+dat_impSD %>%
+  ggplot(aes(x=Species,y=log(Exp_SD),col = Exp_SD_imp,show.legend=F)) + 
+  geom_point(size=2, alpha=0.5)
+  
+## lnRR
+lnRR <- yicalc("ROM",dat_impSD)
+
+## lnCVR
+lnCVR <- yicalc("CVR",dat_impSD)
+
+## lnVR - for sensitivity analysis
+lnVR <- yicalc("VR",dat_impSD)
+
+## alternative mean difference effect size measures for robust analysis
+## SMD
+SMD <- yicalc("SMD",dat_impSD)
+
+## SMDH
+SMDH <- yicalc("SMDH",dat_impSD)
+
+# merge
+metrics_set <- data.frame(lnRR = lnRR$yi, lnRRV = lnRR$vi, lnVR = lnVR$yi, lnVRV = lnVR$vi, lnCVR = lnCVR$yi, lnCVRV = lnCVR$vi, SMD = SMD$yi, SMDV = SMD$vi, SMDH = SMDH$yi, SMDHV = SMDH$vi)
+dat <- cbind(dat_raw, metrics_set) # bind_cols()
+
+# show effect sizes
+t2 <- dat[,which(colnames(dat) %in% c("StudyID", "Species", "lnRR", "lnRRV", "lnVR", "lnVRV", "lnCVR", "lnCVRV", "SMD", "SMDV", "SMDHV"))] %>% dfround(digits = 3)
+
+t2 %>% DT::datatable()
+
+```
+
+
+# Phylogenetic tree
+
+Build a phylogenetic tree to show the phylogenetic breadth of our dataset, and use it to approximate the phylogenetic relatedness. This three is built by combining taxonomic information and published phylogeneies in the Open Tree of Life (OTL) and NCBI Taxonomy database (Common Tree).
+
+```{r}
+# check species we have
+length(unique(dat$Species)) #31 unique species names, if no misspelling
+
+# find Open Tree Taxonomy (OTT) IDs for each species
+taxa <- tnrs_match_names(names = unique(dat$Species), context = "Animals")
+
+# AKR mice are not matched, replace it with a more general form Mus musculus
+dat$Species <- ifelse(dat$Species=="AKR mice","Mus musculus", dat$Species)
+
+# again
+taxa <- tnrs_match_names(names = unique(dat$Species)) # no warning
+length(taxa$unique_name) # 31 unique species names - all matched
+tabyl(taxa,approximate_match) # 2 approximate match
+taxa %>% filter(approximate_match == "TRUE") # "sigmodon bispidus" - seems a typo;Ploceus is a genus of birds in the weaver family, Ploceidae - so "ploceidae philippinus" does not have problem
+
+# fix the typo
+dat$Species <- ifelse(dat$Species=="Sigmodon bispidus","Sigmodon hispidus", dat$Species)
+taxa <- tnrs_match_names(names = unique(dat$Species), context = "Animals")
+taxa %>% filter(approximate_match == "TRUE") # all good
+
+# any flag
+tabyl(taxa,flags) # 1 infraspecific, 4 sibling_higher
+#filter(taxa, flags == "infraspecific")$ott_id
+#inspect(taxa, ott_id = "257736")
+
+# any synonym
+tabyl(taxa,is_synonym)
+taxa %>% filter(is_synonym == "TRUE") # this is problematic, causing problems, which were resolved below
+
+# check whether all otts occur in the synthetic tree
+ott_in_tree <- ott_id(taxa)[is_in_tree(ott_id(taxa))]  # all good
+length(ott_in_tree) # 31
+
+# trim tree corresponding to our taxa
+my.tr <- tol_induced_subtree(ott_ids=ott_in_tree)
+my.tr # 31 tips, but the dataset has 33 species. Seems that some species in the dataset (search_tring) were mapped as the same species in the synthetic tree (unique_name or tip.label)
+
+# find the duplicated species
+taxa[duplicated(taxa$unique_name) | duplicated(taxa$unique_name, fromLast=T),] # 4 duplicates need to resolve; https://stackoverflow.com/questions/16905425/find-duplicate-values-in-r
+
+# remove duplicates to see whether the number matches
+taxa %>%
+    distinct(unique_name, .keep_all = F) %>% nrow() # 31 - the number seems correct
+
+# fix the duplicates
+dat$Species <- ifelse(dat$Species=="Ploceidae philippinus","Ploceus philippinus", dat$Species)
+dat$Species <- ifelse(dat$Species=="Funambulus pennanti","Funambulus pennantii", dat$Species)
+dat$Species <- ifelse(dat$Species=="Trachydosaurus rugosus","Tiliqua rugosa", dat$Species)
+taxa <- tnrs_match_names(names = unique(dat$Species), context = "Animals")
+# duplicates resolved
+taxa[duplicated(taxa$unique_name) | duplicated(taxa$unique_name,fromLast=T),]
+
+# check whether the number of species match well
+length(unique(dat$Species)) == length(taxa$unique_name)
+
+# the tip labels contain OTTs, which means they will not perfectly match the species names in our dataset or the taxon map that we created earlier,
+my.tr$tip.label[1:2] # remove the extra information from the tip labels later; with the IDs removed, we can use our taxon map to replace the tip labels in the tree with the species names from dataset 
+my.tr$tip.label <- strip_ott_ids(my.tr$tip.label, remove_underscores = TRUE)
+
+# test whether a tree is binary
+is.binary(my.tr)  
+# my.tr <- multi2di(my.tr, random = T)  # set.seed(2023) set a seed to resolve politomies at random, and obtain similar results; resolve polytomies at random
+
+write.tree(my.tr, file = "my.tr.tre")  #save the tree
+# plot
+plot.phylo(my.tr, cex = 0.6, label.offset = 0.1, no.margin = T)
+
+
+# *NOTE:* underscores within species names on tree tip labals are added
+# automatically tree <- read.tree(file='plot_cooked_fish_MA.tre') #if you need
+# to read in the tree tree$tip.label <- gsub('_',' ', tree$tip.label) #get rid
+# of the underscores tree$node.label <- NULL #you can delete internal node labels
+
+
+# remove ott ID from species name to match it to the data set
+# my.tr$tip.label <- strip_ott_ids(my.tr$tip.label, remove_underscores = TRUE)
+
+
+# decapitalise species names to match with the search string names in taxa
+dat <- dat %>% mutate(search_string = tolower(Species))  
+
+# align data
+dat <- left_join(dat, dplyr::select(taxa, search_string, unique_name, ott_id), by = "search_string")  
+
+# create the variables of Phy and Spp
+dat <- dat %>% mutate(Spp = search_string, Phy = unique_name)
+
+# check that whether all species names are matched well
+# dat <- datw[dat$unique_name %in% my.tr$tip.label, ]  
+
+# check whether tips in the tree match well with species in dataset 
+intersect(as.character(my.tr$tip.label), unique(dat$Phy)) %>% length() # 31
+# setdiff(taxa$unique_name,tolower(my.tr$tip.label))
+
+```
+
+# Pre-process
+
+Before conducting statistical tests to test pre-defined our hypotheses, it is necessary to perform some pre-processing steps to make the analysis meaningful. These steps may include grouping variables into broad categories and splitting the dataset into appropriate subsets. This can help to ensure that the analysis is properly structured and that the hypotheses being tested are relevant to the data being analyzed.
+
+(1) first need to categorize *Blood*, *Eye*, *Urinary* into one group - *Peripheral*, and categorize *Pineal* into *Central* - used to test hypothesis 5
+
+```{r}
+# group peripheral organs
+grouped_tissue <- NA
+   
+# (1) Peripheral: Blood, Eye, Urinary
+grouped_tissue[dat$Tissues_measured == "Blood"|
+                dat$Tissues_measured == "Eye"|
+                dat$Tissues_measured == "Urinary"] <- c("Peripheral") 
+   
+# (2) Central: pineal
+grouped_tissue[dat$Tissues_measured == "Pineal"] <- c("Central") 
+   
+# add grouped_tissue
+dat$grouped_tissue <- as.factor(grouped_tissue)
+```
+
+(2) Split dataset according to melatonin sampling time
+
+Given that ALAN has opposite impacts on daytime and nighttime melatonin (see model results of Question 2), it is more reasonable to split the dataset according to it, and conduct downstream analyses (Quesitons 3 - 9). Daytime dataset included 21 studies and 146 observations, while nighttime dataset included 37 studies and 291 observations.
+
+```{r, warning=F}
+# daytime dataset
+dat_D <- dat %>% subset(Daytime_or_nighttime_melatonin == "Daytime")
+# nighttime dataset
+dat_N <- dat %>% subset(Daytime_or_nighttime_melatonin == "Nighttime")
+
+```
+
+(3) Split dataset according to light intensity unit
+
+It is important to note that studies measuring light intensity in different units are not directly comparable, as they represent different physical quantities. In your dataset, 44% of studies used *lux*, 43% used *W/m2*, and the remaining 13% used *μM/m2/s* or did not report units. It is important to use a consistent unit when comparing results from different studies.
+
+```{r}
+tabyl(dat,Light_intensity_unit)
+
+# subset lux
+dat_N_lux <- dat_N %>% subset(Light_intensity_unit == "lux")
+
+# subset W/m2
+dat_N_Wm2 <- dat_N %>% subset(Light_intensity_unit == "W/m2")
+```
+
+
+# Deal with dependent effect sizes {.tabset}
+
+We will use a multilevel model with a VCV matrix and phylogenetic matrix
+to account for non-independence. We assume that that effect sizes are correlated with $\rho$ = 0.5 within the same study. 
+
+## Multiple effect sizes
+
+```{r,warning=F}
+#------------------------------lnRR------------------------------#
+# account for observational residual
+dat$obs_ID <- paste("obs_", 1:nrow(dat), sep = "") # ave(dat$StudyID, dat$StudyID, FUN=seq)
+
+# account for sampling covariance, assuming effect size within studies are correlated with rho = 0.5
+lnRRVCV <- metafor::vcalc(vi = lnRRV, cluster = StudyID, obs = obs_ID, data = dat, rho = 0.5)
+
+# lnRRVCV2 <- impute_covariance_matrix(vi = dat$lnRRV, cluster = dat$StudyID, r = 0.5)
+
+#------------------------------lnVR------------------------------#
+lnVRVCV <- metafor::vcalc(vi = lnVRV, cluster = StudyID, obs = obs_ID, data = dat, rho = 0.5)
+
+#------------------------------lnCVR------------------------------#
+lnCVRVCV <- metafor::vcalc(vi = lnCVRV, cluster = StudyID, obs = obs_ID, data = dat, rho = 0.5)
+
+#------------------------------SMD------------------------------#
+SMDVCV <- metafor::vcalc(vi = SMDV, cluster = StudyID, obs = obs_ID, data = dat, rho = 0.5)
+
+#------------------------------SMDH------------------------------#
+SMDHVCV <- metafor::vcalc(vi = SMDHV, cluster = StudyID, obs = obs_ID, data = dat, rho = 0.5)
+
+
+# construct corresponding VCV matrices for daytime and nighttime datasets
+## daytime dataset
+dat_D$obs_ID <- paste("obs_", 1:nrow(dat_D), sep = "")
+lnRRVCV_D <- metafor::vcalc(vi = lnRRV, cluster = StudyID, obs = obs_ID, data = dat_D, rho = 0.5)
+lnVRVCV_D <- metafor::vcalc(vi = lnVRV, cluster = StudyID, obs = obs_ID, data = dat_D, rho = 0.5)
+lnCVRVCV_D <- metafor::vcalc(vi = lnCVRV, cluster = StudyID, obs = obs_ID, data = dat_D, rho = 0.5)
+SMDVCV_D <- metafor::vcalc(vi = SMDV, cluster = StudyID, obs = obs_ID, data = dat_D, rho = 0.5)
+SMDHVCV_D <- metafor::vcalc(vi = SMDHV, cluster = StudyID, obs = obs_ID, data = dat_D, rho = 0.5)
+
+
+## nighttime dataset
+dat_N$obs_ID <- paste("obs_", 1:nrow(dat_N), sep = "")
+lnRRVCV_N <- metafor::vcalc(vi = lnRRV, cluster = StudyID, obs = obs_ID, data = dat_N, rho = 0.5)
+lnVRVCV_N <- metafor::vcalc(vi = lnVRV, cluster = StudyID, obs = obs_ID, data = dat_N, rho = 0.5)
+lnCVRVCV_N <- metafor::vcalc(vi = lnCVRV, cluster = StudyID, obs = obs_ID, data = dat_N, rho = 0.5)
+SMDVCV_N <- metafor::vcalc(vi = SMDV, cluster = StudyID, obs = obs_ID, data = dat_N, rho = 0.5)
+SMDHVCV_N <- metafor::vcalc(vi = SMDHV, cluster = StudyID, obs = obs_ID, data = dat_N, rho = 0.5)
+
+# subset 
+dat_N_lux$obs_ID <- paste("obs_",1:nrow(dat_N_lux),sep = "")
+lnRRVCV_N_lux <- metafor::vcalc(vi = lnRRV, cluster = StudyID, obs = obs_ID, data = dat_N_lux, rho = 0.5)
+lnCVRVCV_N_lux <- metafor::vcalc(vi = lnCVRV, cluster = StudyID, obs = obs_ID, data = dat_N_lux, rho = 0.5)
+SMDVCV_N_lux <- metafor::vcalc(vi = SMDV, cluster = StudyID, obs = obs_ID, data = dat_N_lux, rho = 0.5)
+
+
+
+# subset W/m2
+dat_N_Wm2$obs_ID <- paste("obs_",1:nrow(dat_N_Wm2),sep = "")
+lnRRVCV_N_Wm2 <- metafor::vcalc(vi = lnRRV, cluster = StudyID, obs = obs_ID, data = dat_N_Wm2, rho = 0.5)
+lnCVRVCV_N_Wm2 <- metafor::vcalc(vi = lnCVRV, cluster = StudyID, obs = obs_ID, data = dat_N_Wm2, rho = 0.5)
+SMDVCV_N_Wm2 <- metafor::vcalc(vi = SMDV, cluster = StudyID, obs = obs_ID, data = dat_N_Wm2, rho = 0.5)
+
+```
+
+Have a look at the VCV matrix for the first two studies (a block diagonal matrix):
+
+```{r,warning=F}
+# look at the VCV matrix for studies Aulsebrook_2020 and Iigo_1997a
+lnRRVCV[dat$StudyID %in% c("Aulsebrook_2020", "Iigo_1997a"), dat$StudyID %in% c("Aulsebrook_2020", "Iigo_1997a")] %>% round(3)
+
+```
+
+We can also show the VCV matrix as a list of matrices:
+
+```{r}
+blsplit(lnRRVCV, dat$StudyID, round, 3)[c("Aulsebrook_2020","Iigo_1997a")]
+```
+
+## Autocorrelation - temporal trend
+
+We also account for autocorrelation arising from multiple times measurement of melatonin. But some of the block matrix are not positive definite.
+
+```{r, warning=T}
+# extract time
+dat$Melatonin_sample_time2 <- gsub("\\D","",dat$Melatonin_sample_time) %>% as.numeric()
+# account for autocorrelation
+lnRRVCV2 <- metafor::vcalc(vi = lnRRV, cluster = StudyID, obs = obs_ID, time1 = Melatonin_sample_time2, data = dat, phi = 0.5, rho = 0.5)
+
+# new zt
+dat <- dat %>% mutate(ZT = case_when(Melatonin_sample_time2<=4 ~ "1",
+                                     Melatonin_sample_time2>4 & Melatonin_sample_time2<=8 ~ "2",
+                                     Melatonin_sample_time2>8 & Melatonin_sample_time2<=12 ~ "3",
+                                     Melatonin_sample_time2>12 & Melatonin_sample_time2<=16 ~ "4",
+                                     Melatonin_sample_time2>16 & Melatonin_sample_time2<=20 ~ "5",
+                                     Melatonin_sample_time2>20 & Melatonin_sample_time2<=24 ~ "6"))
+dat$ZT <- as.numeric(dat$ZT)
+lnRRVCV3 <- metafor::vcalc(vi = lnRRV, cluster = StudyID, obs = obs_ID, time1 = ZT, data = dat, phi = 0.5, rho = 0.5)
+# plot data
+with(dat, interaction.plot(ZT, StudyID, lnRR, type="b", pch=19, lty="solid", xaxt="n", legend=FALSE, xlab="ZT", ylab="lnRR", bty="l"))
+
+
+# alternative way
+lnRRVCV4 <- impute_covariance_matrix(vi = dat$lnRRV, cluster = dat$StudyID, ar1 = 0.5, ti = dat$Melatonin_sample_time2, r = 0.5)
+
+
+cov2cor(lnRRVCV2)[dat$StudyID %in% c("Aulsebrook_2020"), dat$StudyID %in% c("Aulsebrook_2020")]
+
+cov2cor(lnRRVCV2)[dat$StudyID %in% c("Bishnupuri_2000"), dat$StudyID %in% c("Bishnupuri_2000")]
+
+# potential solution
+# https://stat.ethz.ch/pipermail/r-sig-meta-analysis/2019-September/001762.html
+# https://stats.stackexchange.com/questions/30465/what-does-a-non-positive-definite-covariance-matrix-tell-me-about-my-data#:~:text=The%20covariance%20matrix%20is%20not%20positive%20definite%20because,be%20determined%20from%20a%20subset%20of%20the%20others.
+
+```
+
+## Phylogenetic relatedness
+
+```{r}
+# copy tree to 'my.tr'
+my.tr <- read.tree("my.tr.tre")
+my.tr$tip.label <- gsub('_',' ', my.tr$tip.label) # _ is automatic after re-uploading
+
+# roughly approximate branch lengths using default method (Grafen's method with power = 1)
+my.tr <- compute.brlen(my.tr, method = "Grafen", power = 1)
+#my.tr0.5 <- compute.brlen(my.tr, method = "Grafen", power = 1)
+#my.tr2 <- compute.brlen(my.tr, method = "Grafen", power = 2)
+# test whether a tree is ultrametric, based on the distances from each tip to the root
+is.ultrametric(my.tr)
+
+# compute phylogenetic correlation matrix of the melatonin assuming it evolves under a Brownian model (Felsenstein 1985, Martins and Hansen 1997); https://rdrr.io/cran/ape/man/corBrownian.html
+# https://www.journals.uchicago.edu/doi/full/10.1086/303327
+tr_matrix <- vcv.phylo(my.tr, model = "Brownian", corr = T)   
+#tr_matrix0.5 <- vcv.phylo(my.tr0.5, model = "Brownian", corr = T)   
+#tr_matrix2 <- vcv.phylo(my.tr2, model = "Brownian", corr = T)  
+
+# subset of nighttime melatonin
+taxa_N <- tnrs_match_names(names = unique(dat_N$Species), context = "Animals")
+my.tr_N <- tol_induced_subtree(ott_ids=ott_id(taxa_N))
+my.tr_N$tip.label <- strip_ott_ids(my.tr_N$tip.label, remove_underscores = TRUE)
+is.binary(my.tr_N) 
+my.tr_N <- compute.brlen(my.tr_N, method = "Grafen", power = 1)
+is.ultrametric(my.tr_N)
+tr_matrix_N <- vcv.phylo(my.tr_N, model = "Brownian", corr = T)
+
+# visualize correlation
+ggcorrplot::ggcorrplot(tr_matrix_N, sig.level=0.05, lab_size = 4.5, p.mat = NULL, insig = c("pch", "blank"), pch = 1, pch.col = "black", pch.cex =1, tl.cex = 14) +
+  theme(axis.text.x = element_text(size = 10, margin=margin(-2,0,0,0)),
+        axis.text.y = element_text(size = 10, margin=margin(0,-2,0,0)),
+        panel.grid.minor = element_line(size=10)) + 
+  geom_tile(fill="white") +
+  geom_tile(height=0.8, width=0.8) +
+  scale_fill_gradient2(low = "#E69F00", mid = "white", high = "#56B4E9", midpoint = 0.5, breaks=c(0, 1), limit=c(0, 1)) + 
+ labs(fill = "Correlation")
+
+# plot tree
+plot.phylo(vcv2phylo(tr_matrix_N), cex = 0.6, label.offset = 0.1, no.margin = T)
+
+
+# ggcor::quickcor(tr_matrix_N, type = "lower") + geom_square()+ scale_fill_gradient2(high = 'orange', mid = 'white',low = 'navyblue') 
+
+
+# subset of nighttime melatonin using lux as units
+taxa_N_lux <- tnrs_match_names(names = unique(dat_N_lux$Species), context = "Animals")
+my.tr_N_lux <- tol_induced_subtree(ott_ids=ott_id(taxa_N_lux))
+my.tr_N_lux$tip.label <- strip_ott_ids(my.tr_N_lux$tip.label, remove_underscores = TRUE)
+is.binary(my.tr_N_lux) 
+my.tr_N_lux <- compute.brlen(my.tr_N_lux, method = "Grafen", power = 1)
+is.ultrametric(my.tr_N_lux)
+tr_matrix_N_lux <- vcv.phylo(my.tr_N_lux, model = "Brownian", corr = T)
+
+# visualize correlation
+ggcorrplot::ggcorrplot(tr_matrix_N_lux, sig.level=0.05, lab_size = 4.5, p.mat = NULL, insig = c("pch", "blank"), pch = 1, pch.col = "black", pch.cex =1, tl.cex = 14) +
+  theme(axis.text.x = element_text(size = 10, margin=margin(-2,0,0,0)),
+        axis.text.y = element_text(size = 10, margin=margin(0,-2,0,0)),
+        panel.grid.minor = element_line(size=10)) + 
+  geom_tile(fill="white") +
+  geom_tile(height=0.8, width=0.8) +
+  scale_fill_gradient2(low = "#E69F00", mid = "white", high = "#56B4E9", midpoint = 0.5, breaks=c(0, 1), limit=c(0, 1)) + 
+ labs(fill = "Correlation")
+
+# plot tree
+plot.phylo(vcv2phylo(tr_matrix_N_lux), cex = 0.6, label.offset = 0.1, no.margin = T)
+
+
+# subset of nighttime melatonin using W/m2 as units
+taxa_N_Wm2 <- tnrs_match_names(names = unique(dat_N_Wm2$Species), context = "Animals")
+my.tr_N_Wm2 <- tol_induced_subtree(ott_ids=ott_id(taxa_N_Wm2))
+my.tr_N_Wm2$tip.label <- strip_ott_ids(my.tr_N_Wm2$tip.label, remove_underscores = TRUE)
+is.binary(my.tr_N_Wm2) 
+my.tr_N_Wm2 <- compute.brlen(my.tr_N_Wm2, method = "Grafen", power = 1)
+is.ultrametric(my.tr_N_Wm2)
+tr_matrix_N_Wm2 <- vcv.phylo(my.tr_N_Wm2, model = "Brownian", corr = T)
+
+# visualize correlation
+ggcorrplot::ggcorrplot(tr_matrix_N_Wm2, sig.level=0.05, lab_size = 4.5, p.mat = NULL, insig = c("pch", "blank"), pch = 1, pch.col = "black", pch.cex =1, tl.cex = 14) +
+  theme(axis.text.x = element_text(size = 10, margin=margin(-2,0,0,0)),
+        axis.text.y = element_text(size = 10, margin=margin(0,-2,0,0)),
+        panel.grid.minor = element_line(size=10)) + 
+  geom_tile(fill="white") +
+  geom_tile(height=0.8, width=0.8) +
+  scale_fill_gradient2(low = "#E69F00", mid = "white", high = "#56B4E9", midpoint = 0.5, breaks=c(0, 1), limit=c(0, 1)) + 
+ labs(fill = "Correlation")
+
+# plot tree
+plot.phylo(vcv2phylo(tr_matrix_N_Wm2), cex = 0.6, label.offset = 0.1, no.margin = T)
+
+
+
+
+
+```
+
+# Select random-effect structure
+
+Select a "best" random-effect structure for the downstream statistical modelling. The random-effect candidates were: 
+
+- (1) Observation (*obs_ID*) - unique ID for each pairwise comparison for effect size calculation, which allows true effects to vary within primary studies.
+
+- (2) Study identity (*StudyID*) - unique ID for each included primary study, which allows true effects to vary among different primary studies.
+
+- (3) Species identity (*Species*) - name of species included in the primary studies, which allows true effect size to among different species.
+
+We start from fitting a null model without including the above random effects candidates as the default reduced model, and build upon more complex models by adding random-effects a candidate one time. We use the likelihood ratio test to compare the quality of two nested models in terms of information criteria indices (AIC, BIC, AICc). 
+
+```{r, warning=F}
+# fit a null model as default model
+null_mod_lnRR <- rma.mv(yi = lnRR, V = lnRRVCV, method = "ML", test = "t", data = dat, sparse = TRUE )
+summary(null_mod_lnRR)
+
+```
+
+Add *obs_ID* as a random effect and compare it to the null model. We found that adding *obs_ID* as a random effect could improve model quality in a large degree.
+
+```{r, warning=F}
+mod_lnRR.obsID <- rma.mv(yi = lnRR, V = lnRRVCV, random =  ~1 | obs_ID, method = "ML", test = "t", data = dat, sparse = T)
+summary(mod_lnRR.obsID)
+
+# compare
+anova(null_mod_lnRR,mod_lnRR.obsID)
+
+```
+
+Add *StudyID* as a random effect to the above better model (that used *obs_ID* a random effect), and we found *StudyID* could statistically significantly improve model quality. We also tried adding population identity (*PopID*) and experimental identity (*ExpID*) as the random effects. But they did not work well as *StudyID* did.
+
+```{r, warning=F}
+mod_lnRR.obsID.StudyID <- rma.mv(yi = lnRR, V = lnRRVCV, random = list(~1 | StudyID, ~1 | obs_ID), method = "ML", test = "t", data = dat, sparse = T)
+summary(mod_lnRR.obsID.StudyID)
+
+#mod_lnRR.obsID.Species <- rma.mv(yi = lnRR, V = lnRRVCV, random = list(~1 | Species, ~1 | obs_ID), method = "ML", test = "t", data = dat, sparse = T)
+
+# compare
+anova(mod_lnRR.obsID,mod_lnRR.obsID.StudyID)
+
+# population ID
+dat$PopID <- paste(dat$StudyID,dat$CohortID,sep = "_")
+mod_lnRR.obsID.PopID <- rma.mv(yi = lnRR, V = lnRRVCV, random = list(~1 | PopID, ~1 | obs_ID), method = "ML", test = "t", data = dat, sparse = T)
+fitstats(mod_lnRR.obsID.PopID)
+
+# experimental ID
+dat$ExpID <- paste(dat$StudyID,dat$Exp_groupID,sep = "_")
+mod_lnRR.obsID.ExpID <- rma.mv(yi = lnRR, V = lnRRVCV, random = list(~1 | ExpID, ~1 | obs_ID), method = "ML", test = "t", data = dat, sparse = T)
+fitstats(mod_lnRR.obsID.ExpID)
+
+```
+
+Add species identity *Spp* as a random effect to the above better model (that used *obs_ID* and *StudyID* random effects), and also account for phylogenetic relatedness (*Phy*). Although *Spp* and *Phy* did not account for a large number heterogeneity, we still use them as random effects because their variances are of interest. In the following analyses, we used *Spp*, *Phy*, *StudyID* and *obs_ID* our random effects structure for models with lnRR as effect sizes. 
+
+```{r, warning=F}
+mod_lnRR.obsID.StudyID.Spp <- rma.mv(yi = lnRR, V = lnRRVCV, random = list(~1 | Spp, ~1 | StudyID, ~1 | obs_ID), method = "ML", test = "t", data = dat, sparse = T)
+summary(mod_lnRR.obsID.StudyID.Spp)
+# compare
+fitstats(mod_lnRR.obsID.StudyID.Spp)
+
+mod_lnRR.obsID.StudyID.Spp.Phy <- rma.mv(yi = lnRR, V = lnRRVCV, random = list(~1 | Spp, ~1 | Phy, ~1 | StudyID, ~1 | obs_ID), method = "ML", test = "t", data = dat, sparse = T, R = list(Phy=tr_matrix))
+summary(mod_lnRR.obsID.StudyID.Spp.Phy)
+# compare
+fitstats(mod_lnRR.obsID.StudyID.Spp.Phy)
+
+
+#mod_lnRR.obsID.StudyID.Spp.Phy0.5 <- rma.mv(yi = lnRR, V = lnRRVCV, random = list(~1 | Spp, ~1 | Phy, ~1 | StudyID, ~1 | obs_ID), method = "ML", test = "t", data = dat, sparse = T, R = list(Phy=tr_matrix0.5))
+
+#mod_lnRR.obsID.StudyID.Spp.Phy2 <- rma.mv(yi = lnRR, V = lnRRVCV, random = list(~1 | Spp, ~1 | Phy, ~1 | StudyID, ~1 | obs_ID), method = "ML", test = "t", data = dat, sparse = T, R = list(Phy=tr_matrix2))
+```
+
+Optimization of random effects structure for lnCVR suggest *ExpID* is better than *StudyID* in terms of information criteria. But for the consistence, we still use *StudyID* as the random effect for the downstream analyses.
+
+```{r, warning=F}
+# null model
+null_mod_lnCVR <- rma.mv(yi = lnCVR, V = lnCVRVCV, method = "ML", test = "t", data = dat, sparse = TRUE)
+# obs ID
+mod_lnCVR.obsID <- rma.mv(yi = lnCVR, V = lnCVRVCV, random =  ~1 | obs_ID, method = "ML", test = "t", data = dat, sparse = T)
+# compare
+anova(null_mod_lnCVR,mod_lnCVR.obsID)
+# study ID
+mod_lnCVR.obsID.StudyID <- rma.mv(yi = lnCVR, V = lnCVRVCV, random = list(~1 | StudyID, ~1 | obs_ID), method = "ML", test = "t", data = dat, sparse = T)
+anova(mod_lnCVR.obsID,mod_lnCVR.obsID.StudyID)
+
+# population ID
+mod_lnCVR.obsID.PopID <- rma.mv(yi = lnCVR, V = lnCVRVCV, random = list(~1 | PopID, ~1 | obs_ID), method = "ML", test = "t", data = dat, sparse = T)
+fitstats(mod_lnCVR.obsID.PopID)
+
+# experimental ID
+mod_lnCVR.obsID.ExpID <- rma.mv(yi = lnCVR, V = lnCVRVCV, random = list(~1 | ExpID, ~1 | obs_ID), method = "ML", test = "t", data = dat, sparse = T)
+fitstats(mod_lnCVR.obsID.ExpID)
+
+# species
+mod_lnCVR.obsID.StudyID.Spp <- rma.mv(yi = lnCVR, V = lnCVRVCV, random = list(~1 | Spp, ~1 | StudyID, ~1 | obs_ID), method = "ML", test = "t", data = dat, sparse = T)
+# compare
+fitstats(mod_lnCVR.obsID.StudyID.Spp) 
+# phylogeny
+mod_lnCVR.obsID.StudyID.Spp.Phy <- rma.mv(yi = lnCVR, V = lnCVRVCV, random = list(~1 | Spp, ~1 | Phy, ~1 | StudyID, ~1 | obs_ID), method = "ML", test = "t", data = dat, sparse = T, R = list(Phy=tr_matrix))
+# compare
+fitstats(mod_lnCVR.obsID.StudyID.Spp.Phy)
+
+
+
+#rma.mv(yi = lnCVR, V = lnCVRVCV_N, random = list(~1 | Spp, ~1 | Phy, ~1 | ExpID, ~1 | obs_ID), method = "ML", test = "t", data = dat_N, sparse = T, R = list(Phy=tr_matrix))
+
+#rma.mv(yi = lnCVR, V = lnCVRVCV_N, random = list(~1 | Phy, ~1 | ExpID, ~1 | obs_ID), method = "ML", test = "t", mods = ~Spp -1, data = dat_N, sparse = T, R = list(Phy=tr_matrix))
+
+#rma.mv(yi = lnRR, V = lnRRVCV_N, random = list(~1 | Phy, ~1 | StudyID, ~1 | obs_ID), method = "ML", test = "t", mods = ~ I(Spp) -1, data = dat_N, sparse = T, R = list(Phy=tr_matrix))
+
+# RVE did not work when having crossed random effects - ask James and Wolfgang
+#coef_test(mod_lnCVR.obsID.StudyID.Spp,vcov = "CR2", cluster = dat$StudyID)
+#robust(mod_lnCVR.obsID.StudyID.Spp,cluster = dat$StudyID)
+
+```
+
+# Tree
+
+```{r}
+#library(ggtree)
+#library(treeio)
+# https://4va.github.io/biodatasci/r-ggtree.html
+# species-specific estimates as fixed effect
+## lnRR
+agg.lnRR <- escalc(yi=lnRR, vi=lnRRV, dat = dat) %>% aggregate(cluster=Phy, struct="CS",rho = 0.5,addk=TRUE)
+agg.lnRR <- agg.lnRR[c("Phy","yi","vi")]
+names(agg.lnRR) <- c("Species","Mean","SE")
+agg.lnRR <- agg.lnRR %>% mutate(Lower_bound = Mean - sqrt(SE)*qnorm(0.975),
+                      Upper_bound = Mean + sqrt(SE)*qnorm(0.975)) %>% arrange(Species)
+N_obs <- dat %>% group_by(Phy) %>% summarise(N_obs=n()) # calculate sample size
+names(N_obs)[1] <- "Species"
+fe.spp.lnRR <- left_join(agg.lnRR,N_obs,by = "Species")
+tip.label <- data.frame(Species = my.tr$tip.label) # extract tip label
+fe.spp.lnRR2 <- left_join(tip.label,fe.spp.lnRR,by = "Species") 
+
+fe.spp.lnRR2 <- fe.spp.lnRR2 %>% mutate(z = Mean/SE, p = pnorm(abs(z),lower.tail = F)*2)
+
+# how many species had significant mean
+fe.spp.lnRR2 %>% dplyr::filter(p<0.05) %>% nrow()
+
+
+# class-specific estimates as fixed effect
+## lnRR
+#agg.lnRR.Class <- escalc(yi=lnRR, vi=lnRRV, dat = dat) %>% aggregate(cluster=Class, struct="CS",rho = 0.5,addk=TRUE)
+#agg.lnRR.Class <- agg.lnRR.Class[c("Class","yi","vi")]
+#names(agg.lnRR.Class) <- c("Class","Mean","SE")
+
+
+
+## lnCVR
+agg.lnCVR <- escalc(yi=lnCVR, vi=lnCVRV, dat = dat) %>% aggregate(cluster=Phy, struct="CS",rho = 0.5,addk=TRUE)
+agg.lnCVR <- agg.lnCVR[c("Phy","yi","vi")]
+names(agg.lnCVR) <- c("Species","Mean","SE")
+agg.lnCVR <- agg.lnCVR %>% mutate(Lower_bound = Mean - sqrt(SE)*qnorm(0.975),
+                      Upper_bound = Mean + sqrt(SE)*qnorm(0.975)) %>% arrange(Species)
+N_obs <- dat %>% group_by(Phy) %>% summarise(N_obs=n()) # calculate sample size
+names(N_obs)[1] <- "Species"
+fe.spp.lnCVR <- left_join(agg.lnCVR,N_obs,by = "Species")
+tip.label <- data.frame(Species = my.tr$tip.label) # extract tip label
+fe.spp.lnCVR2 <- left_join(tip.label,fe.spp.lnCVR,by = "Species") 
+
+fe.spp.lnCVR2 <- fe.spp.lnCVR2 %>% mutate(z = Mean/SE, p = pnorm(abs(z),lower.tail = F)*2)
+
+# how many species had significant mean
+fe.spp.lnCVR2 %>% dplyr::filter(p<0.05) %>% nrow()
+
+
+# version 1
+#p1 <- ggtree(my.tr, branch.length = "branch.length") %<+% fe.spp.lnRR2 # the variable Species was deleted automatically, so use p1$data$label to indicate in the next step
+
+#p1 <- p1 + geom_tippoint(aes(color=label,size=Mean)) + guides(color = "none") + theme(legend.position = "right")
+
+#scale_fill_viridis_b(option = "plasma")
+
+# https://yulab-smu.top/treedata-book/chapter7.html  
+  
+
+#p1 %<+% fe.spp.lnRR2 + geom_tiplab(size=3,fontface = "italic") + geom_tippoint(aes(color=Species))
+
+
+# get class data
+spp.class <- dplyr::distinct(dat, Phy, .keep_all = TRUE) %>% dplyr::select(Class, Phy)
+names(spp.class)[2] <- "Species"
+
+spp.class2 <- left_join(tip.label,spp.class,by = "Species")
+
+# Actinopterygii and Osteichthyes all belong to fish, although there are differnt. In our dataset, only Actinopterygii only has one estimate. To make the figure easy, we change Actinopterygii to Osteichthyes 
+spp.class2$Class[spp.class2$Class == "Actinopterygii"] <- "Osteichthyes"
+
+# version 2
+p1 <- ggtree(my.tr, branch.length = "branch.length") 
+# https://yulab-smu.top/treedata-book/chapter7.html  
+p2 <- p1 %<+% spp.class2 + geom_tiplab(aes(color  = Class),size=3,fontface = "italic") + geom_tippoint(aes(color=Class)) + xlim_expand(c(0,3), panel = "Tree") + guides(color="none")  # xlim issue https://stackoverflow.com/questions/48928250/ggtreefacet-plot-second-panel-uses-xlim-parameter-from-first-one
+p3 <- facet_plot(p2, panel = 'N observations', data = fe.spp.lnRR2, 
+				geom = geom_barh, 
+				mapping = aes(x = N_obs,fill=Class,color=Class), alpha = 0.4, stat='identity') +  guides(fill="none",color="none") + # #0072B2 https://yulab-smu.top/treedata-book/chapter12.html,
+  geom_facet(panel = "Estimates of mean ratio (lnRR)", data = fe.spp.lnRR2,
+           geom = ggstance::geom_pointrangeh, # geom_pointrange
+           mapping = aes(x = Mean, xmin = Lower_bound, xmax = Upper_bound, color = Class)) + # #CC79A7
+  # add overall effect MLMA_lnRR$b
+  geom_facet(panel = "Estimates of mean ratio (lnRR)", data = fe.spp.lnRR2,
+           geom = geom_vline, 
+           mapping = aes(xintercept = -0.45),linetype="dashed",color="grey") +  # add multiple panels or multiple layers on the same panels (Figure 13.1) # https://yulab-smu.top/treedata-book/chapter7.html - at Chapter 13
+  geom_facet(panel = "Estimates of CV ratio (lnCVR)", data = fe.spp.lnCVR2,
+           geom = ggstance::geom_pointrangeh, 
+           mapping = aes(x = Mean, xmin = Lower_bound, xmax = Upper_bound, color = Class)) + 
+  # add overall effect MLMA_lnCVR$b
+  geom_facet(panel = "Estimates of CV ratio (lnCVR)", data = fe.spp.lnRR2,
+           geom = geom_vline, 
+           mapping = aes(xintercept = 0.21), linetype="dashed",color="grey") + 
+  theme_tree2() + theme(strip.background = element_rect(fill = "white"))
+
+# lbs <- c(Tree = "Phylogenetic tree") # change facet name # https://guangchuangyu.github.io/cn/2018/09/facet_labeller/
+# p3 <- ggtree::facet_labeller(p3,lbs)
+p4 <- facet_widths(p3, c(Tree=0.7,`N observations`=0.2,`Estimates of mean ratio (lnRR)`=0.4,`Estimates of CV ratio (lnCVR)`=0.4)) # set the widths of specific panels (it also supports using a name vector)
+
+png(filename = "Figure 3 (Phy_est).png", width = 8, height = 6, units = "in", type = "windows", res = 400)
+p4
+dev.off()
+
+```
+
+
+# Map
+
+```{r}
+# fix obviously wrong names 
+# tabyl(dat, Location)
+dat2 <- dat
+dat2$Location[dat2$Location == "Indian"] <- "India"
+dat2$Location[dat2$Location == "Radolfzell"] <- "Germany"
+dat2$Location[dat2$Location == "Skrylle Nature Reserve"] <- "Sweden"
+dat2$Location[dat2$Location == "Suruga Bay, Shizuoka Prefecture, Japan"] <- "Japan"
+dat2$Location[dat2$Location == "Varanasi"] <- "India"
+
+#https://www.riinu.me/2022/02/world-map-ggplot2/
+# map data
+world_map <- map_data("world") %>% 
+  filter(! long > 180) #remove countries with longitude >180 to make equal projection-like map without artifacts
+#table(world_map$region) #note that United Kingdom is UK here
+
+# check matching
+dat2$Location[!(dat2$Location %in% world_map$region)]
+# fix America to USA
+dat2$Location[dat2$Location == "America"] <- "USA"
+
+# check again
+dat2$Location[!(dat2$Location %in% world_map$region)] # mising data are fine
+
+# extract the number of species and the number of effect sizes in each country
+dat2 %>% group_by(Location) %>% 
+  summarise(n_species = length(unique(Phy)),
+            n_effects = n()) %>% ungroup %>% filter(!is.na(Location)) -> country_n
+
+country_n <- country_n %>% mutate(region = Location)
+
+## colour all regions on the map
+#emptymap <- tibble(region = unique(world_map$region),n = rep(0,length(unique(world_map$region)))) #create table with all counts as 0
+#create table with all counts as 0
+emptymap <- distinct(world_map,region, .keep_all = T) %>% mutate(n = 0) 
+#join with actual counts table
+
+fullmap <- left_join(emptymap, country_n, by = "region") 
+# make new column for fixed counts
+fullmap$n_species2 <- fullmap$n + fullmap$n_species
+fullmap$n_effects2 <- fullmap$n + fullmap$n_effects 
+# change NA to 0 for regions with no counts
+fullmap$n_species2[is.na(fullmap$n_species2)] <- 0 
+fullmap$n_effects2[is.na(fullmap$n_effects2)] <- 0 
+
+# https://datavizpyr.com/how-to-make-world-map-with-ggplot2-in-r/
+png(filename = "map_effect_size.png", width = 5, height = 3, units = "in", type = "windows", res = 400)
+fullmap %>% 
+  ggplot(aes(fill = n_effects2, map_id = region)) +
+  geom_map(map = world_map) +
+  expand_limits(x = world_map$long, y = world_map$lat) +
+  #coord_map("moll") +
+  theme_map(line_size = 0.5) + 
+  theme(legend.position="right") +
+  scale_fill_gradient(low = "lightgray", high = "#D53E4F", limits = c(0, 120),guide = guide_colorbar(direction = "vertical.")) +
+  guides(fill = guide_colourbar(barwidth = unit(15, units = "mm"), barheight = unit(20, units = "mm"))) +
+  labs(fill = "effect size") 
+dev.off()
+
+
+```
+
+# Contigency Table
+
+```{r}
+
+# new one - Bubbleheatmap
+# https://cran.r-project.org/web/packages/bubbleHeatmap/vignettes/Using_Bubbleheatmap.html
+
+
+# https://cran.r-project.org/web/packages/naniar/vignettes/getting-started-w-naniar.html
+# one way to report missness
+dat %>%
+  dplyr::select(grouped_tissue,Species_diurnal_nocturnal,Captive_or_Free_living,Light_colour,Night_Phase_category,Night_light_intensity_exp,Light_wavelength,Exposure_duration,Randomisation_animal,Blind_meansurement,Sex,Melatonin_sample_time,Melatonin_test_method,Class) -> df2
+
+names(df2) <- c("Melaotnin location", "Activity time", "Living conditions", "Light colour", "Light phase", "Light intensity", "Light wavelength", "ALAN duration", "Randomization", "Obs. blinding","Sex","Sampling time","Measurement method","Class")
+
+df2 %>% gg_miss_var() + theme_bw() +
+  labs(x = " ", y  = "Number of effect sizes with missing information") -> missness_plot
+
+# alternative way
+dat %>%
+  dplyr::select(grouped_tissue,Species_diurnal_nocturnal,Captive_or_Free_living,Light_colour,Night_Phase_category,Night_light_intensity_exp,Light_wavelength,Exposure_duration,Randomisation_animal,Blind_meansurement,Sex,Melatonin_sample_time,Melatonin_test_method,Class) -> df2
+
+names(df2) <- c("Melaotnin location", "Activity time", "Living conditions", "Light colour", "Light phase", "Light intensity", "Light wavelength", "ALAN duration", "Randomization", "Obs. blinding","Sex","Sampling time","Measurement method","Class")
+
+df2 %>% gg_miss_fct(fct = Class) + labs(y = "") + guides(fill = guide_legend(title = "%")) -> missness_plot2
+
+png(filename = "./Figure S5 (missness plot).png", width = 8, height = 4, units = "in", type = "windows", res = 400)
+missness_plot + missness_plot2 + plot_annotation(tag_levels = "A")
+dev.off()
+
+
+# visualize study characteristics
+#library(ggsankey) 
+# make a copy
+#dat_study_charac <- dat
+#df <- dat %>%
+#  make_long(grouped_tissue,Species_diurnal_nocturnal,Captive_or_Free_living,Light_colour,Night_Phase_category)
+
+df1 <- dat %>%
+  dplyr::select(Class, grouped_tissue,Species_diurnal_nocturnal,Captive_or_Free_living,Light_colour,Night_Phase_category) 
+# change to a formal name
+df1$grouped_tissue <- ifelse(df1$grouped_tissue == "Central","Central Mel", "Peripheral Mel")
+df1$Species_diurnal_nocturnal <- ifelse(df1$Species_diurnal_nocturnal == "Diurnal","Diurnal Spp", "Nocturnal Spp")
+df1$Captive_or_Free_living <- ifelse(df1$Captive_or_Free_living == "Captive","Captive Spp", "Free-living Spp")
+# replace NA
+df1$grouped_tissue <- ifelse(is.na(df1$grouped_tissue), "Not reported", df1$grouped_tissue)
+df1$Light_colour <- ifelse(is.na(df1$Light_colour), "Not reported", df1$Light_colour)
+df1$Night_Phase_category <- ifelse(is.na(df1$Night_Phase_category), "Not reported", df1$Night_Phase_category)
+
+#tabyl(dat,Captive_or_Free_living,Outdoor_or_Indoor)
+# relevel
+# convert into factor first
+df1[sapply(df1,is.character)] <- lapply(df1[sapply(df1, is.character)],as.factor)
+df1$grouped_tissue <- factor(df1$grouped_tissue, levels = c("Central Mel", "Peripheral Mel","Not reported"))
+df1$Light_colour <- factor(df1$Light_colour, levels = c("Blue","Yellow","Red","White","Not reported"))
+df1$Night_Phase_category <- factor(df1$Night_Phase_category, levels = c("Early night","Mid night","Late night","All night","Not reported"))
+# replace Actinopterygii by the «superclass» Osteichthyes - Ref2's comment
+df1$Class[df1$Class == "Actinopterygii"] <- "Osteichthyes"
+
+df <- df1 %>%
+  ggsankey::make_long(Class,grouped_tissue,Species_diurnal_nocturnal,Captive_or_Free_living,Light_colour,Night_Phase_category)
+
+
+png(filename = "./Figure 1 (alluvil plot).png", width = 6, height = 3, units = "in", type = "windows", res = 400)
+ggplot(df, aes(x = x, next_x = next_x, node = node, next_node = next_node, fill = factor(node), label = node)) +
+  geom_sankey(flow.alpha = .6,
+              node.color = "gray30") +
+  geom_sankey_label(size = 3, color = "white", fill = "gray40") +
+  scale_fill_viridis_d() +
+  theme_sankey(base_size = 10) +
+  labs(x = NULL) +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = .5),
+        axis.text.x = element_text(color = "black", size = 9)) +
+#  ggtitle("Moderator variable features") +
+scale_x_discrete(labels = c("Class","Melatonin location", "Activity times", "Living conditions", "Light colour", "Light phase"), position = "top")
+dev.off()
+
+
+
+# naive version
+# draw an alluvial plot to show the heterogeneous experimental designs of the studies included in the meta-analysis
+freq <- as.data.frame(with(dat,table(Captive_or_Free_living,Outdoor_or_Indoor,Night_Phase_category,grouped_tissue)))  #make a dataframe of frequencies for four selected variables
+
+is_alluvia_form(as.data.frame(freq), axes = 1:4, silent = TRUE)
+
+alluvil_plot2 <- ggplot(data = freq, aes(axis1 = Captive_or_Free_living, axis2 = Outdoor_or_Indoor, axis3 = Night_Phase_category, axis4 = grouped_tissue, y = Freq)) + 
+    geom_alluvium(aes(fill = Outdoor_or_Indoor, colour = Outdoor_or_Indoor)) + 
+    geom_flow() + 
+    geom_stratum() + 
+    geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+    theme_void() + 
+    theme(legend.position = "none", 
+          plot.title = element_text(hjust = 0, vjust = 3), 
+          axis.title.x = element_text(), axis.text.x = element_text(face = "bold"), 
+          plot.margin = unit(c(1, 1, 0, 1), "cm")
+          ) + 
+  scale_x_discrete(limits = c("Captive_or_Free_living", "Outdoor_or_Indoor", "Night_Phase_category", "grouped_tissue"), position = "top")
+# save fig as .png
+# png(filename = "./alluvil_plot.png", width = 8, height = 4, units = "in", type = "windows", res = 400)
+# alluvil_plot
+# dev.off()
+
+
+# visualize research gap
+# tabyl(dat,Study_type,Night_Phase_category)[1:length(unique(dat$Night_Phase_category))] %>% as.data.frame() -> data2 # remove the last column that contains NA
+
+tabyl(dat,Species_diurnal_nocturnal,Light_colour) %>% as.data.frame() -> data2
+
+colnames(data2)[colnames(data2)=="NA_"] <- "No reported"
+
+# https://www.geeksforgeeks.org/convert-values-in-column-into-row-names-of-dataframe-in-r/
+data2 %>% remove_rownames %>% column_to_rownames(var="Species_diurnal_nocturnal") %>% ggpubr::ggballoonplot(color = "#0073C2FF", fill = "#0073C2FF")
+
+# Change color according to the value of table cells
+# Define color palette
+my_cols <- c("#0D0887FF", "#6A00A8FF", "#B12A90FF", "#E16462FF", "#FCA636FF", "#F0F921FF")
+
+data2 %>% remove_rownames %>% column_to_rownames(var="Species_diurnal_nocturnal") %>% ggpubr::ggballoonplot(size = "value", fill = "value") + 
+   scale_fill_gradientn(colors = my_cols) + 
+  guides(size = "none")
+
+
+# stretched contingency table
+#with(dat,ftable(Class,Light_colour)) %>% data.frame() -> data2
+# alternatively
+# with(dat,table(Randomisation_animal,Species_diurnal_nocturnal,grouped_tissue,Daytime_or_nighttime_melatonin)) %>% as.data.frame()
+
+# reorder dataframe - https://www.statology.org/sort-dataframe-by-column-in-r/
+#data2[order(-data2$Freq), ]
+
+#reorder(predictor, weight)
+
+#names(data2) <- c("Class","Light colour","Freq")
+# convert into factor
+#data2[c("Class","Light colour")] <- lapply(data2[c("Class","Light colour")], factor)
+# check conversion
+#sapply(data2, class)
+# relevel to make the best-representative color to appear as the first
+#data2$`Light colour` <- factor(data2$`Light colour`, levels = c("Yellow", "Red",  "Blue", "White"))
+#data2$Class <- factor(data2$Class, levels = c("Mammalia", "Aves", "Osteichthyes", "Reptilia", "Actinopterygii", "Amphibia"))
+
+
+#png(filename = "Figure S6 (Ballon plot).png", width = 6, height = 4, units = "in", type = "windows", res = 400)
+#Ballon_plot <- ggballoonplot(data2, x = "Class", y = "Light colour",
+# size = "Freq", fill = "Freq", 
+ #facet.by = c("Study_design"),
+# ggtheme = theme_bw()) +
+# scale_fill_continuous(type = "gradient") + #https://ggplot2.tidyverse.org/reference/scale_colour_continuous.html#:~:text=The%20scales%20scale_colour_continuous%20%28%29%20and%20scale_fill_continuous%20%28%29%20are,mapped%20onto%20the%20colour%20or%20fill%20aesthetics%2C%20respectively.
+ #scale_fill_gradientn(colors = c("#0D0887FF")) +
+# guides(fill = "none") + 
+# labs(size = "The number of \n effect sizes") + 
+# theme(strip.background = element_rect(fill = "white"))
+#Ballon_plot
+#dev.off()
+
+
+
+
+
+
+library(vcd)
+with(dat,ftable(Randomisation_animal,Species_diurnal_nocturnal,grouped_tissue,exclude = c(NA, NaN))) -> data2
+
+png(filename = "Study_charac2.png", width = 4, height = 4, units = "in", type = "windows", res = 400)
+structable(Randomisation_animal~Species_diurnal_nocturnal+grouped_tissue,data=data2) %>% vcd::mosaic(shade = TRUE, legend = F) 
+dev.off()
+
+# equivalent
+# mosaic(~ Light_colour + Species_diurnal_nocturnal + grouped_tissue, data = data2,shade = TRUE,legend = F)
+
+```
+
+
+# Question 1 - overall {.tabset}
+
+## mean - lnRR
+
+**(1) Is there an overall effect of ALAN on melatonin levels in wild vertebrate species?**
+
+Meta-analytic mean based one multilevel model with a VCV matrix, and 95% confidence intervals and hypothesis based on cluster-robust estimate:
+
+```{r, warning=F}
+MLMA_lnRR <- MLMA.func(dat$lnRR ~ 1,lnRRVCV,tr_matrix,dat)
+summary(MLMA_lnRR)
+
+a <- rma.mv(yi = lnRR, V = lnRRVCV, random = list(~ 1 | Spp, ~1 | Phy, ~1 | StudyID, ~1 | obs_ID), method = "REML", test = "t", data = dat, sparse = T, R = list(Phy=tr_matrix), verbose = T)
+a2 <- rma.mv(yi = lnRR, V = lnRRVCV2, random = list(~ 1 | Spp, ~1 | Phy, ~1 | StudyID, ~1 | obs_ID), method = "REML", test = "t", data = dat, sparse = T, R = list(Phy=tr_matrix), verbose = T)
+a3 <- rma.mv(yi = lnRR, V = lnRRVCV3, random = list(~ 1 | Spp, ~1 | Phy, ~1 | StudyID, ~1 | obs_ID), method = "REML", test = "t", data = dat, sparse = T, R = list(Phy=tr_matrix), verbose = T)
+
+
+b <- rma.mv(yi = lnRR, V = lnRRVCV3, random = list(~ 1 | Spp, ~ZT | StudyID, ~1 | obs_ID), mods = ~ factor(ZT) - 1, struct = "AR", method = "REML", test = "t", data = dat, sparse = T, verbose = T)
+robust(b, cluster = dat$StudyID)
+
+
+b2 <- rma.mv(yi = lnRR, V = lnRRVCV3, random = list(~ 1 | Spp, ~ZT | StudyID, ~1 | obs_ID), mods = ~ factor(ZT) - 1, struct = "HAR", method = "REML", test = "t", data = dat, sparse = T, verbose = T)
+robust(b2, cluster = dat$StudyID)
+
+b3 <- rma.mv(yi = lnRR, V = lnRRV, random = list(~ 1 | Spp, ~ZT | StudyID, ~1 | obs_ID), mods = ~ factor(ZT) - 1, struct = "AR", method = "REML", test = "t", data = dat, sparse = T, verbose = T)
+robust(b3, cluster = dat$StudyID)
+
+b4 <- rma.mv(yi = lnRR, V = lnRRV, random = list(~ 1 | Spp, ~ZT | StudyID, ~1 | obs_ID), mods = ~ factor(ZT) - 1, struct = "HAR", method = "REML", test = "t", data = dat, sparse = T, verbose = T)
+robust(b4, cluster = dat$StudyID)
+
+#b3 <- rma.mv(yi = lnRR, V = lnRRVCV3, random = list(~ 1 | Spp, ~ZT | StudyID, ~1 | obs_ID), mods = ~ factor(ZT) - 1, struct = "CAR", method = "REML", test = "t", data = dat, sparse = T, verbose = T)
+
+
+#library(metaSEM)
+# fit multilevel model via SEM framework
+# m1 <- meta3L(y=lnRR, v=lnRRV, cluster=StudyID, data=dat)
+
+# robust analysis using SMD
+MLMA_SMD <- MLMA.func(dat$SMD ~ 1,SMDVCV,tr_matrix,dat)
+summary(MLMA_SMD)
+
+#MLMA_SMDH <- MLMA.func(dat$SMDH ~ 1,SMDHVCV,tr_matrix,dat)
+#summary(MLMA_SMDH)
+```
+
+Use I2 to measure heterogeneity:
+
+```{r}
+i2_ml(MLMA_lnRR)
+
+```
+
+Use coefficient of variation ($CV_B=\frac{\tau} {|\beta|}$), which means how the heterogeneity is relative to the magnitude of the mean effect, to measure heterogeneity:
+
+```{r}
+CVB_lnRR <- sqrt(sum(MLMA_lnRR$sigma2)) / abs(MLMA_lnRR$beta[1])
+CVB_lnRR
+```
+
+Use $CV_B$'s variant, $M1=\frac{\tau} {\tau +|\beta|}$, to measure heterogeneity:
+ 
+```{r}
+M1 <- sqrt(sum(MLMA_lnRR$sigma2)) / (sqrt(sum(MLMA_lnRR$sigma2)) + abs(MLMA_lnRR$beta[1]))
+M1
+```
+
+Note that $CV_B$ and $M1$ can be linked via: 
+
+$$log(CV_B) = logit(M1)\\M1 = \frac{CV_B} {1+CV_B}$$
+Test whether the calculation is correct:
+
+```{r}
+identical(round(CVB_lnRR/(CVB_lnRR+1),3),round(M1,3))
+
+```
+
+From the above heterogeneity indices we see that heterogeneity was large among effect sizes.
+
+## variance - lnCVR
+
+**(1)	whether ALAN exposure shows consistent (low response variability) or selective (high response variability) effects on the suppression of melatonin in a wild population of animals?**
+
+First examine mean-variance relationship, which will be used to inform choosing which variance-based effect sizes. We see that variance is strongly correlated with mean, so use lnCVR to account for the impact of mean on variance. 
+
+Mean-variance relationship of control group:
+
+```{r}
+cor.test(log(dat$Con_Mean),log(dat$Con_SD)) #0.9282311 
+dat %>% ggplot(aes(x = log(Con_Mean), y = log(Con_SD))) +
+  geom_point() + 
+  labs(x = "Mean in control group (log scale)", y = "SD in control group (log scale)") + 
+  theme_bw() -> r.control
+
+```
+
+Mean-variance relationship of ALAN group:
+
+```{r, warning=F}
+cor.test(log(dat$Exp_Mean),log(dat$Exp_SD)) #0.9233114 
+dat %>% ggplot(aes(x = log(Exp_Mean), y = log(Exp_SD))) +
+  geom_point() + 
+  labs(x = "Mean in ALAN group (log scale)", y = "SD in ALAN group (log scale)") + 
+  theme_bw() -> r.treatment
+
+
+png(filename = "Figure S4 (mean-sd).png", width = 8, height = 4, units = "in", type = "windows", res = 400)
+r.control + r.treatment + plot_annotation(tag_levels = "A")
+dev.off()
+
+```
+
+Meta-analytic mean based one multilevel model with a VCV matrix, and 95% confidence intervals and hypothesis based on cluster-robust estimate:
+
+```{r, warning=F}
+MLMA_lnCVR <- MLMA.func(dat$lnCVR ~ 1,lnCVRVCV,tr_matrix,dat)
+summary(MLMA_lnCVR)
+
+```
+
+Use I2 to measure heterogeneity:
+
+```{r}
+i2_ml(MLMA_lnCVR)
+
+```
+
+Use coefficient of variation ($CV_B=\frac{\tau} {|\beta|}$), which means how the heterogeneity is relative to the magnitude of the mean effect, to measure heterogeneity:
+
+```{r}
+CVB_lnCVR <- sqrt(sum(MLMA_lnCVR$sigma2)) / abs(MLMA_lnCVR$beta[1])
+CVB_lnCVR
+
+# write a custom function
+CVB.calc <- function(mod){
+  CVB <- sqrt(sum(mod$sigma2)) / abs(mod$beta[1])
+  return(CVB)
+}
+
+M1.calc <- function(mod){
+  M1 <- sqrt(sum(mod$sigma2)) / (sqrt(sum(mod$sigma2)) + abs(mod$beta[1]))
+  return(M1)
+}
+
+CVB.calc <- function(mod){
+  CVB <- sqrt(sum(mod$sigma2)) / abs(mod$beta[1])
+  return(CVB)
+}
+
+CVB.calc <- function(mod){
+  # CVB
+  CVB_total <- (sqrt(sum(mod$sigma2)) / abs(mod$beta[1]))
+  CVB_each <- (sqrt(mod$sigma2) / abs(mod$beta[1]))
+  names(CVB_each) <- paste0("CVB_", mod$s.names)
+  names(CVB_total) <- "CVB_total"
+  CVBs <- c(CVB_total, CVB_each)
+  return(CVBs)
+}
+
+M1.calc <- function(mod){
+  # M1
+  M1_total <- (sqrt(sum(mod$sigma2)) / (sum(mod$sigma2) + abs(mod$beta[1])))
+  M1_each <- (sqrt(mod$sigma2) / (mod$sigma2 + abs(mod$beta[1])))
+  names(M1_each) <- paste0("CVB_", mod$s.names)
+  names(M1_total) <- "M1_total"
+  M1s <- c(M1_total, M1_each)
+  return(M1s)   
+}
+
+ h.calc(MLMA_lnCVR)
+ i2_ml(MLMA_lnCVR)
+ CVB.calc(MLMA_lnCVR)
+ M1.calc(MLMA_lnCVR)
+ 
+```
+
+Use $CV_B$'s variant, $M1=\frac{\tau} {\tau +|\beta|}$, to measure heterogeneity:
+ 
+```{r}
+M1 <- sqrt(sum(MLMA_lnCVR$sigma2)) / (sqrt(sum(MLMA_lnCVR$sigma2)) + abs(MLMA_lnCVR$beta[1]))
+M1
+```
+
+Note that $CV_B$ and $M1$ can be linked via: 
+
+$$log(CV_B) = logit(M1)\\M1 = \frac{CV_B} {1+CV_B}$$
+Test whether the calculation is correct:
+
+```{r}
+identical(round(CVB_lnCVR/(CVB_lnCVR+1),3),round(M1,3))
+
+```
+
+**I2 vs. CV vs. M1:**
+
+From the above heterogeneity indices we see that heterogeneity was large among effect sizes. Moreover, I2 showed that heterogeneity in lnVR was smaller than lnRR, while $CV_B$ and $M1$ indicated that lnCVR was more heterogeneous than lnRR. This is an interesting point to show the pitfall or demerit of using I2 as the measurement of heterogeneity - **lnRR has a much more smaller within-study variance, so I2 for lnRR is expected to be larger than lnCVR.**
+
+# Fig. 1 - answer to Q1
+
+```{r, warning=F}
+
+# lnRR
+MLMA_lnRR_Q1_results <- mod_results(MLMA_lnRR, mod = "1",  group = "Spp", data = dat[!is.na(dat$lnRRV),])
+
+Q1_lnRR <- orchard_plot(MLMA_lnRR_Q1_results, 
+             #mod = "1", 
+             alpha = 0.4, angle = 90,
+             xlab = "Response magnitude (mean ratio)", #transfm = "exp",
+             group = "Spp", k = TRUE, g = TRUE,
+             trunk.size = 1, branch.size = 0.5, twig.size = 1, errorbar = 0.1, precision.size = 2.5, 
+             legend.pos = "bottom.right",
+             data = dat) +
+  scale_y_continuous(expand = c(0,0)) +
+  #theme(axis.text.y = element_blank()) +
+  theme(axis.text.x = element_text(size = 10)) +
+  theme(legend.title = element_text(size = 5),
+        legend.text = element_text(size = 5)) + 
+  scale_x_discrete(labels = c("Model estimates")) +
+  scale_fill_manual(values = "lightgrey")
+
+
+## lnCVR
+MLMA_lnCVR_Q1_results <- mod_results(MLMA_lnCVR, mod = "1",  group = "Spp", data = dat[!is.na(dat$lnCVRV),])
+
+
+Q1_lnCVR <- orchard_plot(MLMA_lnCVR_Q1_results, 
+             #mod = "1", 
+             alpha = 0.4, angle = 0,
+             xlab = "Response variability (CV ratio)", #transfm = "exp",
+             group = "Spp", k = TRUE, g = TRUE,
+             trunk.size = 1, branch.size = 0.5, twig.size = 1, errorbar = 0.1, precision.size = 2.5, 
+             legend.pos = "bottom.right",
+             data = dat) +
+  scale_y_continuous(expand = c(0,0)) +
+  theme(axis.text.y = element_blank()) + 
+  theme(legend.title = element_text(size = 5),
+        legend.text = element_text(size = 5)) + 
+  #scale_x_discrete(labels = c("Overall effect"))
+  scale_fill_manual(values = "lightgrey")
+
+
+png(filename = "Q1.png", width = 6, height = 4, units = "in", type = "windows", res = 400)
+Q1_lnRR + Q1_lnCVR + plot_layout(nrow = 1) + plot_annotation(tag_levels = "A")
+dev.off()
+
+
+```
+
+
+# Question 2 - daytime or nighttime {.tabset}
+
+## mean - lnRR
+
+**(2)	Is the nighttime melatonin level more sensitive to ALAN than the daytime melatonin level (e.g., melatonin sampled at nighttime vs. daytime)?**
+
+
+Meta-analytic mean and 95% confidence intervals:
+
+```{r, warning=F}
+MLMR_2_lnRR <- MLMA.func(dat$lnRR ~ I(Daytime_or_nighttime_melatonin) - 1,lnRRVCV,tr_matrix,dat)
+summary(MLMR_2_lnRR)
+
+MLMR_2_lnRR2 <- MLMA.func(dat$lnRR ~ Daytime_or_nighttime_melatonin,lnRRVCV,tr_matrix,dat)
+
+
+MLMR_2_SMD <- MLMA.func(dat$SMD ~ I(Daytime_or_nighttime_melatonin) - 1,SMDVCV,tr_matrix,dat)
+summary(MLMR_2_SMD)
+
+#MLMR_2_SMD2 <- rma.mv(SMD ~ I(Daytime_or_nighttime_melatonin) - 1, V = SMDVCV, random = list(~ 1 | Spp, ~1 | Phy, ~1 | StudyID, ~1 | obs_ID), method = "REML", test = "t", data = dat, sparse = T, R = list(Phy=tr_matrix))
+
+```
+
+Examine difference in melatonin suppression between daytime and nighttime:
+
+```{r}
+a <- anova(MLMR_2_lnRR,X=c(-1,1))
+summary(glht(MLMR_2_lnRR, linfct=cbind(c(-1),c(1))), test=adjusted("none"))
+
+# update(MLMR_2_lnRR, mods = ~I(Daytime_or_nighttime_melatonin))
+
+# linearHypothesis(MLMR_2_lnRR_rob,c(-1,1),test="F") # F test rather than the default chi square test
+
+```
+
+Use marginal R2 to quantify the explained heterogeneity:
+
+```{r}
+r2_ml(MLMR_2_lnRR)
+```
+
+### Account for heteroscedasticity
+
+From the orchard plot we see that nighttime melatonin seems more heterogeneous than that of daytime. Let's account for the potential heteroscedasticity. 
+
+**A small point to discuss:**
+The following model is basically a multivariate model with a simplified random effect structure. This is what Robbie suggested when he reviewed our animal MA paper. Simplifying random effect structure is meaningful - at least it allows us to model heteroscedasticity in this case - still lots to learn from good people.
+
+```{r, warning=F}
+# model heteroscedasticity
+MLMR_2_lnRR.H <- rma.mv(yi = lnRR, V = lnRRVCV, random = list(~1 | StudyID, ~Daytime_or_nighttime_melatonin | obs_ID), mods = ~ I(Daytime_or_nighttime_melatonin) - 1, struct = "DIAG" , method = "REML", test = "t", data = dat, sparse = T)
+summary(MLMR_2_lnRR.H)
+
+```
+
+
+Compare results from model assuming homoscedasticity and heteroscedasticity:
+
+```{r, warning=F}
+t3 <- data.frame(beta = c(round(MLMR_2_lnRR$beta[1],3), round(MLMR_2_lnRR$beta[2],3),round(MLMR_2_lnRR.H$beta[1],3), round(MLMR_2_lnRR.H$beta[2],3)),
+           LCI = c(round(MLMR_2_lnRR$ci.lb[1],3), round(MLMR_2_lnRR$ci.lb[2],3),round(MLMR_2_lnRR.H$ci.lb[1],3), round(MLMR_2_lnRR.H$ci.lb[2],3)),
+           UCI = c(round(MLMR_2_lnRR$ci.ub[1],3), round(MLMR_2_lnRR$ci.ub[2],3),round(MLMR_2_lnRR.H$ci.ub[1],3), round(MLMR_2_lnRR.H$ci.ub[2],3)),
+           tau2 = c(round(sum(MLMR_2_lnRR$sigma2),3),round(sum(MLMR_2_lnRR$sigma2),3),round(MLMR_2_lnRR.H$tau2[1],3), round(MLMR_2_lnRR.H$tau2[2],3))) %>% mutate(tau = sqrt(tau2)) %>% t()
+
+colnames(t3) <- c("Daytime (assuming homoscedasticity)","Nighttime (assuming homoscedasticity)","Daytime (assuming heteroscedasticity)", "Nighttime (assuming heteroscedasticity)")
+
+t(t3) %>% dfround(3) %>% DT::datatable()
+
+```
+
+**Employ the likelihood ratio test to examine whether the heterogeneity statistically significantly differs between daytime and nighttime melatonin suppression due to ALAN:**  
+
+```{r, warning=F}
+# MLMR_2_lnRR.H0 <- update(MLMR_2_lnRR.H, struct = "ID")
+MLMR_2_lnRR.H0 <- rma.mv(yi = lnRR, V = lnRRVCV, random = list(~1 | StudyID, ~Daytime_or_nighttime_melatonin | obs_ID), mods = ~ I(Daytime_or_nighttime_melatonin) - 1, struct = "ID", method = "REML", test = "t", data = dat, sparse = T)
+  
+# alternatively, using "cs" but constraining rho = 0
+# rma.mv(yi = lnRR, V = lnRRVCV, random = list(~1 | StudyID, ~Daytime_or_nighttime_melatonin | obs_ID), mods = ~ I(Daytime_or_nighttime_melatonin) - 1, struct = "CS", rho = 0, method = "REML", test = "t", data = dat, sparse = T) 
+
+anova(MLMR_2_lnRR.H0, MLMR_2_lnRR.H)
+
+```
+
+
+Alternatively, we can conduct stratified meta-analyses, and compare heterogeneity estimated from different meta-analyses via Wald-type test. Estimating standard errors of the heterogeneity ($\tau^2$) takes a long time, so I did not show how to use thid approach to statistically test whether heterogeneity differ between different levels of a moderator.
+
+We also can aggregate effect size and sampling variance (i.e., accounting for non-independence), and then use location-scale random-effect model to investigate whether sampling time (daytime vs. nighttime) is related to the amount of heterogeneity. 
+Note that if this is the case, meta-regression sometimes have caveat, because it assumes a common (residual) heterogeneity across different levels of the fitted moderators, while separate meta-analyses do not.
+
+```{r, warning=F}
+
+MLMR_2_lnRR.subset <- list(rma.mv(yi = lnRR, V = lnRRVCV, random = list(~1 | StudyID, ~1 | obs_ID), method = "REML", test = "t", data = dat, subset =  Daytime_or_nighttime_melatonin == "Daytime", sparse = T),
+                           rma.mv(yi = lnRR, V = lnRRVCV, random = list(~1 | StudyID, ~1 | obs_ID), method = "REML", test = "t", data = dat, subset =  Daytime_or_nighttime_melatonin == "Nighttime", sparse = T))
+  
+
+t4 <- data.frame(beta = sapply(MLMR_2_lnRR.subset, function(x) x$beta),
+                 LCI = sapply(MLMR_2_lnRR.subset, function(x) x$ci.lb),
+                 UCI = sapply(MLMR_2_lnRR.subset, function(x) x$ci.ub),
+                 tau2 = sapply(MLMR_2_lnRR.subset, function(x) x$sigma2[1])) %>% mutate(tau = sqrt(tau2))
+
+rownames(t4) <- c("Daytime (assuming heteroscedasticity)", "Nighttime (assuming heteroscedasticity)")
+
+t4 <- dfround(t4,3)
+t4
+# calculate standard error of tau^2
+#confint(MLMR_2_lnRR.subset[[2]], sigma2=1)
+
+```
+
+We see that nighttime melatonin is more heterogeneous than daytime melatonin.
+
+## variance - lnCVR
+
+**(2)	Whether response variability of melatonin differs between nocturnal species diurnal species (e.g., birds vs. rodents)?**
+
+Meta-analytic mean and 95% confidence intervals:
+
+```{r, warning=F}
+MLMR_2_lnCVR <- MLMA.func(dat$lnCVR ~ I(Daytime_or_nighttime_melatonin) - 1,lnCVRVCV,tr_matrix,dat)
+summary(MLMR_2_lnCVR)
+
+MLMR_2_lnCVR2 <- MLMA.func(dat$lnCVR ~ Daytime_or_nighttime_melatonin ,lnCVRVCV,tr_matrix,dat)
+
+```
+
+Examine difference in melatonin suppression between daytime and nighttime:
+
+```{r}
+anova(MLMR_2_lnCVR,X=c(-1,1))
+summary(glht(MLMR_2_lnCVR, linfct=cbind(c(-1),c(1))), test=adjusted("none"))
+# update(MLMR_2_lnVR, mods = ~I(Daytime_or_nighttime_melatonin))
+
+```
+
+Use marginal R2 to quantify the explained heterogeneity:
+
+```{r}
+r2_ml(MLMR_2_lnCVR)
+```
+
+# Question 3 - central or peripheral {.tabset}
+
+## mean - lnRR
+
+**(3)	Does ALAN affect central organs more than peripheral organs (e.g., pineal vs. blood)?**
+
+Meta-analytic mean and 95% confidence intervals:
+
+```{r, warning=F}
+MLMR_3N_lnRR <- MLMA.func(dat_N$lnRR ~ I(grouped_tissue) - 1,lnRRVCV_N,tr_matrix_N,dat_N)
+summary(MLMR_3N_lnRR)
+
+MLMR_3N_lnRR2 <- MLMA.func(dat_N$lnRR ~ grouped_tissue,lnRRVCV_N,tr_matrix_N,dat_N)
+
+MLMR_3N_SMD <- MLMA.func(dat_N$SMD ~ I(grouped_tissue) - 1,SMDVCV_N,tr_matrix,dat_N)
+summary(MLMR_3N_SMD)
+
+```
+
+Examine difference in melatonin suppression between diurnal and nocturnal species:
+
+```{r}
+anova(MLMR_3N_lnRR,X=cbind(c(1),c(-1)))
+summary(glht(MLMR_3N_lnRR, linfct=cbind(c(1),c(-1))), test=adjusted("none"))
+
+```
+
+Use marginal R2 to quantify the explained heterogeneity:
+
+```{r}
+r2_ml(MLMR_3N_lnRR)
+```
+
+## variance - lnCVR {.tabset}
+
+**(3)	Whether response variability of melatonin differs between central organs and peripheral organs (e.g., pineal vs. blood)?**
+
+Meta-analytic mean and 95% confidence intervals:
+
+```{r, warning=F}
+MLMR_3N_lnCVR <- MLMA.func(dat_N$lnCVR ~ I(grouped_tissue) - 1,lnCVRVCV_N,tr_matrix_N,dat_N)
+summary(MLMR_3N_lnCVR)
+
+MLMR_3N_lnCVR2 <- MLMA.func(dat_N$lnCVR ~ grouped_tissue,lnCVRVCV_N,tr_matrix_N,dat_N)
+
+```
+
+Examine difference in melatonin suppression between diurnal and nocturnal species：
+
+```{r}
+anova(MLMR_3N_lnCVR,X=cbind(c(1), c(-1)))
+
+summary(glht(MLMR_3N_lnCVR, linfct=cbind(c(1),c(-1))), test=adjusted("none"))
+```
+
+Use marginal R2 to quantify the explained heterogeneity:
+
+```{r}
+r2_ml(MLMR_3N_lnCVR)
+```
+
+
+# Fig. 2 - answers to Q2 to Q3 
+
+```{r, warning=F}
+# lnRR
+MLMA_lnRR_Q2_results <- mod_results(MLMR_2_lnRR, mod = "Daytime_or_nighttime_melatonin",  group = "Spp", data = dat)
+MLMA_lnRR_Q3_results <- mod_results(MLMR_3N_lnRR, mod = "grouped_tissue",  group = "Spp", data = dat_N[!is.na(dat_N$lnRR)&!is.na(dat_N$lnRRV),])
+
+MLMA_lnRR_Q2Q3_results <- submerge(MLMA_lnRR_Q3_results, MLMA_lnRR_Q2_results)
+
+Q2Q3_lnRR <- orchard_plot(MLMA_lnRR_Q2Q3_results, 
+             #mod = "1", 
+             alpha = 0.9, angle = 90,
+             xlab = "Response magnitude (mean ratio)", #transfm = "exp",
+             group = "Spp", k = TRUE, g = TRUE,
+             trunk.size = 1, branch.size = 0.5, twig.size = 1, errorbar = 0.1, precision.size = 2.5,
+             legend.pos = "bottom.right",
+             data = dat) +
+  scale_y_continuous(expand = c(0,0)) +
+  theme(legend.title = element_text(size = 5),
+        legend.text = element_text(size = 5)) + 
+  scale_y_continuous(limits = c(-3,3)) + 
+  scale_x_discrete(labels = c("Central Mel", "Peripheral Mel", "Daytime Mel", "Nighttime Mel")) + 
+  scale_fill_brewer(palette = "Paired")
+
+## lnCVR
+MLMA_lnCVR_Q2_results <- mod_results(MLMR_2_lnCVR, mod = "Daytime_or_nighttime_melatonin",  group = "Spp", data = dat)
+MLMA_lnCVR_Q3_results <- mod_results(MLMR_3N_lnCVR, mod = "grouped_tissue",  group = "Spp", data = dat_N[!is.na(dat_N$lnCVR)&!is.na(dat_N$lnCVRV),])
+
+MLMA_lnCVR_Q2Q3_results <- submerge(MLMA_lnCVR_Q3_results, MLMA_lnCVR_Q2_results)
+
+Q2Q3_lnCVR <- orchard_plot(MLMA_lnCVR_Q2Q3_results, 
+             #mod = "1", 
+             alpha = 0.9, angle = 90,
+             xlab = "Response variability (CV ratio)", #transfm = "exp",
+             group = "Spp", k = TRUE, g = TRUE,
+             trunk.size = 1, branch.size = 0.5, twig.size = 1, errorbar = 0.1, precision.size = 2.5,
+             legend.pos = "bottom.right",
+             data = dat) +
+  scale_y_continuous(expand = c(0,0)) +
+  theme(axis.text.y = element_blank()) + 
+  theme(legend.title = element_text(size = 5),
+        legend.text = element_text(size = 5)) + 
+  scale_y_continuous(limits = c(-3,3)) +
+  scale_fill_brewer(palette = "Paired") #
+
+
+png(filename = "Q2Q3.png", width = 6, height = 5.5, units = "in", type = "windows", res = 400)
+Q2Q3_lnRR + Q2Q3_lnCVR + plot_layout(nrow = 1) + plot_annotation(tag_levels = "A")
+dev.off()
+
+```
+
+
+# Question 4 - diurnal or nocturnal {.tabset}
+
+## mean - lnRR
+
+**(4)	Are nocturnal species more vulnerable to ALAN than diurnal species (e.g., birds vs. rodents)?**
+
+Meta-analytic mean and 95% confidence intervals:
+
+```{r, warning=F}
+MLMR_4N_lnRR <- MLMA.func(dat_N$lnRR ~ I(Species_diurnal_nocturnal) - 1,lnRRVCV_N,tr_matrix_N,dat_N)
+summary(MLMR_4N_lnRR)
+
+MLMR_4N_lnRR2 <- MLMA.func(dat_N$lnRR ~ Species_diurnal_nocturnal,lnRRVCV_N,tr_matrix_N,dat_N)
+
+MLMR_4N_SMD <- MLMA.func(dat_N$SMD ~ I(Species_diurnal_nocturnal) - 1,SMDVCV_N,tr_matrix_N,dat_N)
+summary(MLMR_4N_SMD)
+
+# unequal variance
+#MLMR_3N_lnRRH <- rma.mv(yi = lnRR, V = lnRRVCV_N, random = list(~1 | StudyID, ~Species_diurnal_nocturnal | obs_ID), mods = ~ I(Species_diurnal_nocturnal) - 1, method = "REML", test = "t", struct = "DIAG", data = dat_N, sparse = T)
+#summary(MLMR_3N_lnRRH)
+
+```
+
+Examine difference in melatonin suppression between diurnal and nocturnal species：
+
+```{r}
+anova(MLMR_4N_lnRR,X=c(-1,1))
+summary(glht(MLMR_4N_lnRR, linfct=cbind(c(-1),c(1))), test=adjusted("none"))
+```
+
+Use marginal R2 to quantify the explained heterogeneity:
+
+```{r}
+r2_ml(MLMR_4N_lnRR)
+```
+
+## variance - lnCVR
+
+**(4)	Whether response variability of melatonin differs between nocturnal species diurnal species (e.g., birds vs. rodents)?**
+
+Meta-analytic mean and 95% confidence intervals:
+
+```{r, warning=F}
+MLMR_4N_lnCVR <- MLMA.func(dat_N$lnCVR ~ I(Species_diurnal_nocturnal) - 1,lnCVRVCV_N,tr_matrix_N,dat_N)
+summary(MLMR_4N_lnCVR)
+
+MLMR_4N_lnCVR2 <- MLMA.func(dat_N$lnCVR ~ Species_diurnal_nocturnal,lnCVRVCV_N,tr_matrix_N,dat_N)
+
+```
+
+Examine difference in melatonin suppression between diurnal and nocturnal species
+
+```{r}
+anova(MLMR_4N_lnCVR,X=c(-1,1))
+summary(glht(MLMR_4N_lnCVR, linfct=cbind(c(-1),c(1))), test=adjusted("none"))
+```
+
+Use marginal R2 to quantify the explained heterogeneity:
+
+```{r}
+r2_ml(MLMR_4N_lnCVR)
+```
+
+
+# Question 5 - captive or free-living {.tabset}
+
+## mean - lnRR
+
+**(5)	Are captive populations more affected by ALAN than free-living populations?**
+
+Meta-analytic mean and 95% confidence intervals:
+
+```{r, warning=F}
+MLMR_5N_lnRR <- MLMA.func(dat_N$lnRR ~ I(Captive_or_Free_living) - 1,lnRRVCV_N,tr_matrix_N,dat_N)
+summary(MLMR_5N_lnRR)
+
+MLMR_5N_lnRR2 <- MLMA.func(dat_N$lnRR ~ Captive_or_Free_living, lnRRVCV_N,tr_matrix_N,dat_N)
+
+MLMR_5N_SMD <- MLMA.func(dat_N$SMD ~ I(Captive_or_Free_living) - 1,SMDVCV_N,tr_matrix_N,dat_N)
+summary(MLMR_5N_SMD)
+
+#rma.mv(yi = lnRR, V = lnRRVCV_N_lux, random = list(~1 | StudyID, ~1 | obs_ID), mods = ~ I(Captive_or_Free_living) + log(Night_light_intensity_exp), method = "REML", test = "t", data = dat_N_lux, sparse = T) %>% robust(cluster = dat_N_lux$StudyID)
+
+```
+
+Examine difference in melatonin suppression between diurnal and nocturnal species:
+
+```{r}
+anova(MLMR_5N_lnRR,X=c(-1,1))
+summary(glht(MLMR_5N_lnRR, linfct=cbind(c(-1),c(1))), test=adjusted("none"))
+```
+
+Use marginal R2 to quantify the explained heterogeneity:
+
+```{r}
+r2_ml(MLMR_5N_lnRR)
+```
+
+
+## variance - lnCVR
+
+**(5)	Whether response variability of melatonin differs between nocturnal species diurnal species (e.g., birds vs. rodents)?**
+
+
+Meta-analytic mean and 95% confidence intervals:
+
+```{r, warning=F}
+MLMR_5N_lnCVR <- MLMA.func(dat_N$lnCVR ~ I(Captive_or_Free_living) - 1,lnRRVCV_N,tr_matrix_N,dat_N)
+summary(MLMR_5N_lnCVR)
+
+MLMR_5N_lnCVR2 <- MLMA.func(dat_N$lnCVR ~ Captive_or_Free_living,lnRRVCV_N,tr_matrix_N,dat_N)
+
+```
+
+Examine difference in melatonin suppression between diurnal and nocturnal species:
+
+```{r}
+anova(MLMR_5N_lnCVR,X=c(-1,1))
+summary(glht(MLMR_5N_lnCVR, linfct=cbind(c(-1),c(1))), test=adjusted("none"))
+```
+
+Use marginal R2 to quantify the explained heterogeneity:
+
+```{r}
+r2_ml(MLMR_5N_lnCVR)
+```
+
+# Fig. 3 - answers to Q4 to Q5 
+
+Might need to account for the heterogeneous heterogeneity.
+
+```{r, warning=F}
+# https://github.com/EmilHvitfeldt/paletteer
+# lnRR
+MLMA_lnRR_Q4_results <- mod_results(MLMR_4N_lnRR, mod = "Species_diurnal_nocturnal",  group = "Spp", data = dat_N)
+MLMA_lnRR_Q5_results <- mod_results(MLMR_5N_lnRR, mod = "Captive_or_Free_living",  group = "Spp", data = dat_N)
+
+MLMA_lnRR_Q4Q5_results <- submerge(MLMA_lnRR_Q5_results, MLMA_lnRR_Q4_results)
+
+Q4Q5_lnRR <- orchard_plot(MLMA_lnRR_Q4Q5_results, 
+             #mod = "1", 
+             alpha = 0.9, angle = 90,
+             xlab = "Response magnitude (mean ratio)", #transfm = "exp",
+             group = "Spp", k = TRUE, g = TRUE,
+             trunk.size = 1, branch.size = 0.5, twig.size = 1, errorbar = 0.1, precision.size = 2.5,
+             legend.pos = "bottom.right",
+             data = dat) +
+  scale_y_continuous(expand = c(0,0)) +
+  theme(legend.title = element_text(size = 5),
+        legend.text = element_text(size = 5)) + 
+  scale_y_continuous(limits = c(-3,3)) + 
+  scale_x_discrete(labels = c("Captive Spp", "Free-living Spp", "Diurnal Spp", "Nocturnal Spp")) +
+  paletteer::scale_fill_paletteer_d("nord::aurora") #  ggsci::nrc_npg
+  #viridis::scale_fill_viridis(discrete=TRUE, option="plasma")
+
+## lnCVR
+MLMA_lnCVR_Q4_results <- mod_results(MLMR_4N_lnCVR, mod = "Species_diurnal_nocturnal",  group = "Spp", data = dat_N)
+MLMA_lnCVR_Q5_results <- mod_results(MLMR_5N_lnCVR, mod = "Captive_or_Free_living",  group = "Spp", data = dat_N)
+
+MLMA_lnCVR_Q4Q5_results <- submerge(MLMA_lnCVR_Q5_results, MLMA_lnCVR_Q4_results)
+
+Q4Q5_lnCVR <- orchard_plot(MLMA_lnCVR_Q4Q5_results, 
+             #mod = "1", 
+             alpha = 0.9, angle = 90,
+             xlab = "Response variability (CV ratio)", #transfm = "exp",
+             group = "Spp", k = TRUE, g = TRUE,
+             trunk.size = 1, branch.size = 0.5, twig.size = 1, errorbar = 0.1, precision.size = 2.5,
+             legend.pos = "bottom.right",
+             data = dat) +
+  scale_y_continuous(expand = c(0,0)) +
+  theme(axis.text.y = element_blank()) + 
+  theme(legend.title = element_text(size = 5),
+        legend.text = element_text(size = 5)) + 
+  scale_y_continuous(limits = c(-3,3)) +
+  paletteer::scale_fill_paletteer_d("nord::aurora") #  ggsci::nrc_npg
+  #viridis::scale_fill_viridis(discrete=TRUE, option="viridis")
+
+png(filename = "Q4Q5.png", width = 6, height = 5.5, units = "in", type = "windows", res = 400)
+Q4Q5_lnRR + Q4Q5_lnCVR + plot_layout(ncol = 2, nrow = 1) + plot_annotation(tag_levels = "A")
+dev.off()
+
+```
+
+
+# Question 6 - intensity {.tabset}
+
+## mean - lnRR
+
+**(6)	Is there a dose-response relationship between the ALAN intensity and the magnitude of suppression of melatonin?**
+
+Meta-analytic mean and 95% confidence intervals for *lux*:
+
+```{r, warning=F}
+# fit model
+MLMR_6N_lnRR <- rma.mv(yi = lnRR, V = lnRRVCV_N, random = list(~ 1 | Spp, ~1 | Phy, ~1 | StudyID, ~1 | obs_ID), mods = ~ log(Night_light_intensity_exp), method = "REML", test = "t", data = dat_N, sparse = T, R = list(Phy=tr_matrix_N))
+summary(MLMR_6N_lnRR)
+
+
+MLMR_6N_SMD <- rma.mv(yi = SMD, V = SMDVCV_N, random = list(~ 1 | Spp, ~1 | Phy, ~1 | StudyID, ~1 | obs_ID), mods = ~ log(Night_light_intensity_exp), method = "REML", test = "t", data = dat_N, sparse = T, R = list(Phy=tr_matrix_N))
+summary(MLMR_6N_SMD)
+
+
+MLMR_6N.lux_lnRR <- rma.mv(yi = lnRR, V = lnRRVCV_N_lux, random = list(~ 1 | Spp, ~1 | Phy, ~1 | StudyID, ~1 | obs_ID), mods = ~ log(Night_light_intensity_exp), method = "REML", test = "t", data = dat_N_lux, sparse = T, R = list(Phy=tr_matrix_N_lux))
+summary(MLMR_6N.lux_lnRR)
+robust(MLMR_6N.lux_lnRR, cluster = dat_N_lux$StudyID)
+
+```
+
+
+## Non-linear relationship
+
+Have issue in model fitting and result interpretation (predicted values based on model are very strange). So data not shown 
+
+```{r, warning=F}
+# visual check
+# plot(dat_N_lux$Night_light_intensity_exp, dat_N_lux$lnRR, pch=21, col="black", bg="darkgray", cex=.20/sqrt(dat_N_lux$lnRRV), las=1, bty="l", xlab="Light intensity (lux)", ylab="Melatonin supression magnitude (lnRR)", main="Visual check")
+
+# cubic polynomial model
+# Error in poly(log(Night_light_intensity_exp), 2) :missing values are not allowed in 'poly'
+# MLMR_6N.lux_lnRR2 <- rma.mv(yi = lnRR, V = lnRRV, random = list(~1 | StudyID, ~1 | obs_ID), mods = ~ poly(Night_light_intensity_exp,2), method = "REML", test = "t", data = dat_N_lux[!is.na(dat_N_lux$Night_light_intensity_exp),], sparse = T)
+
+# whole dataset
+# plot(dat$Night_light_intensity_exp, dat$lnRR, pch=21, col="black", bg="darkgray", cex=.20/sqrt(dat$lnRRV), las=1, bty="l", xlab="Light intensity (lux)", ylab="Melatonin supression magnitude (lnRR)", main="Visual check")
+
+# MLMR_6N.lux_lnRR3 <- rma.mv(yi = lnRR, V = lnRRV, random = list(~1 | StudyID, ~1 | obs_ID), mods = ~ poly(Night_light_intensity_exp,2), method = "REML", test = "t", data = dat[!is.na(dat$Night_light_intensity_exp),], sparse = T)
+
+
+#xs <- dat[!is.na(dat$Night_light_intensity_exp),]$Night_light_intensity_exp # dat$Night_light_intensity_exp %>% summary()
+#sav <- predict(MLMR_6N.lux_lnRR3, newmods=unname(poly(xs, degree=2, raw=TRUE)))
+#regplot(MLMR_6N.lux_lnRR3, mod=2, pred=sav, xvals=xs, las=1, digits=1, bty="l",
+        #psize=.20/sqrt(dat$vi), 
+#        xlab="Predictor", main="Cubic Polynomial Model")
+
+
+# restricted cubic spline model
+#MLMR_6N.lux_lnRR3 <- rma.mv(yi = lnRR, V = lnRRVCV_N_lux, random = list(~1 | StudyID, ~1 | obs_ID), mods = ~ rms::rcs(log(Night_light_intensity_exp),4), method = "REML", test = "t", data = dat_N_lux, sparse = T)
+
+
+# may try dose-reponse meta-analysis
+# https://wviechtb.github.io/metadat/reference/dat.obrien2003.html
+```
+
+Meta-analytic mean and 95% confidence intervals for *W/m2*:
+
+```{r, warning=F}
+# fit model
+MLMR_6N.Wm2_lnRR <- rma.mv(yi = lnRR, V = lnRRVCV_N_Wm2, random = list(~ 1 | Spp, ~1 | Phy, ~1 | StudyID, ~1 | obs_ID), mods = ~ log(Night_light_intensity_exp), method = "REML", test = "t", data = dat_N_Wm2, sparse = T, R = list(Phy=tr_matrix_N_Wm2))
+summary(MLMR_6N.Wm2_lnRR)
+
+```
+
+Use marginal R2 to quantify the explained heterogeneity:
+
+```{r}
+r2_ml(MLMR_6N.lux_lnRR)
+r2_ml(MLMR_6N.Wm2_lnRR)
+```
+
+Visualise model results: 
+
+```{r, warning=F}
+# lux
+Q6_lux_lnRR <- bubble_plot(MLMR_6N.lux_lnRR, 
+            mod = "Night_light_intensity_exp", 
+            xlab = "Light intensity (lux)", ylab = "Response magnitude (mean ratio)",
+            group = "Species", k = TRUE, g = TRUE, precision.size = 2.5,
+            ci.col = "black", pi.col = "black", bubble.col = "#E69F00",
+            data = dat_N_lux, legend.pos = "bottom.right") +
+            theme(axis.text.x = element_text(size = 10, colour = "black"), axis.text.y = element_text(size = 10, colour = "black"), axis.title.x = element_text(size = 10, colour = "black"), plot.title = element_text(size = 10, colour = "black")) +
+  theme(panel.grid = element_blank()) +
+  theme(legend.title = element_text(size = 5),
+        legend.text = element_text(size = 5))
+
+# W/m2
+Q6_Wm2_lnRR <- bubble_plot(MLMR_6N.Wm2_lnRR, 
+            mod = "Night_light_intensity_exp", 
+            xlab = "Light intensity (W/m2)", ylab = "Response magnitude (mean ratio)",
+            group = "Species", k = TRUE, g = TRUE, precision.size = 2.5,
+            ci.col = "black", pi.col = "black", bubble.col = "#E69F00",
+            data = dat_N_Wm2, legend.pos = "bottom.right") +
+            theme(axis.text.x = element_text(size = 10, colour = "black"), axis.text.y = element_text(size = 10, colour = "black"), axis.title.x = element_text(size = 10, colour = "black"), plot.title = element_text(size = 10, colour = "black")) +
+  theme(panel.grid = element_blank()) +
+  theme(legend.title = element_text(size = 5),
+        legend.text = element_text(size = 5))
+
+```
+
+## variance - lnCVR
+
+**(6)	Is there a dose-response relationship between the ALAN intensity and the variation of suppression of melatonin?**
+
+Meta-analytic mean and 95% confidence intervals for *lux*:
+
+```{r, warning=F}
+# fit model
+MLMR_6N_lnCVR <- rma.mv(yi = lnCVR, V = lnCVRVCV_N, random = list(~ 1 | Spp, ~1 | Phy, ~1 | StudyID, ~1 | obs_ID), mods = ~ log(Night_light_intensity_exp), method = "REML", test = "t", data = dat_N, sparse = T, R = list(Phy=tr_matrix_N))
+summary(MLMR_6N_lnCVR)
+
+
+MLMR_6N.lux_lnCVR <- rma.mv(yi = lnCVR, V = lnCVRVCV_N_lux, random = list(~ 1 | Spp, ~1 | Phy, ~1 | StudyID, ~1 | obs_ID), mods = ~ log(Night_light_intensity_exp), method = "REML", test = "t", data = dat_N_lux, sparse = T, R = list(Phy=tr_matrix_N_lux))
+
+summary(MLMR_6N.lux_lnCVR)
+
+```
+
+Meta-analytic mean and 95% confidence intervals for *W/m2*:
+
+```{r, warning=F}
+# fit model
+MLMR_6N.Wm2_lnCVR <- rma.mv(yi = lnCVR, V = lnCVRVCV_N_Wm2, random = list(~ 1 | Spp, ~1 | Phy, ~1 | StudyID, ~1 | obs_ID), mods = ~ log(Night_light_intensity_exp), method = "REML", test = "t", data = dat_N_Wm2, sparse = T, R = list(Phy=tr_matrix_N_Wm2))
+summary(MLMR_6N.Wm2_lnCVR)
+
+```
+
+Use marginal R2 to quantify the explained heterogeneity:
+
+```{r}
+r2_ml(MLMR_6N.lux_lnCVR)
+r2_ml(MLMR_6N.Wm2_lnCVR)
+```
+
+Visualise model results: 
+
+```{r, warning=F}
+# lux
+Q6_lux_lnCVR <- bubble_plot(MLMR_6N.lux_lnCVR, 
+            mod = "Night_light_intensity_exp", 
+            xlab = "Light intensity (lux)", ylab = "Response variability (CV ratio)",
+            group = "Species", k = TRUE, g = TRUE, precision.size = 2.5,
+            ci.col = "black", pi.col = "black", bubble.col = "#E69F00",
+            data = dat_N_lux, legend.pos = "bottom.right") +
+            theme(axis.text.x = element_text(size = 10, colour = "black"), axis.text.y = element_text(size = 10, colour = "black"), axis.title.x = element_text(size = 10, colour = "black"), plot.title = element_text(size = 10, colour = "black")) +
+  theme(panel.grid = element_blank()) +
+  theme(legend.title = element_text(size = 5),
+        legend.text = element_text(size = 5))
+
+# W/m2
+Q6_Wm2_lnCVR <- bubble_plot(MLMR_6N.Wm2_lnCVR, 
+            mod = "Night_light_intensity_exp", 
+            xlab = "Light intensity (W/m2)", ylab = "Response variability (CV ratio)",
+            group = "Species", k = TRUE, g = TRUE, precision.size = 2.5,
+            ci.col = "black", pi.col = "black", bubble.col = "#E69F00",
+            data = dat_N_Wm2, legend.pos = "bottom.right") +
+            theme(axis.text.x = element_text(size = 10, colour = "black"), axis.text.y = element_text(size = 10, colour = "black"), axis.title.x = element_text(size = 10, colour = "black"), plot.title = element_text(size = 10, colour = "black")) +
+  theme(panel.grid = element_blank()) +
+  theme(legend.title = element_text(size = 5),
+        legend.text = element_text(size = 5))
+
+```
+
+
+# Question 7 - color {.tabset}
+
+## mean - lnRR
+
+**(7)	Is there a relationship between ALAN spectral properties and the magnitude of suppression of melatonin and ALAN?**
+
+```{r, warning=F}
+dat_N$Light_colour <- factor(dat_N$Light_colour, levels = c("White","Red","Yellow","Blue"))
+MLMR_7N_lnRR <- MLMA.func(dat_N$lnRR ~ I(Light_colour) - 1,lnRRVCV_N,tr_matrix_N,dat_N)
+summary(MLMR_7N_lnRR)
+
+MLMR_7N_lnRR2 <- MLMA.func(dat_N$lnRR ~ Light_colour,lnRRVCV_N,tr_matrix_N,dat_N)
+
+MLMR_7N_SMD <- MLMA.func(dat_N$SMD ~ I(Light_colour) - 1,SMDVCV_N,tr_matrix_N,dat_N)
+summary(MLMR_7N_SMD)
+
+```
+
+Examine difference in melatonin suppression between diurnal and nocturnal species：
+
+## linear combination
+```{r}
+anova(MLMR_7N_lnRR,X=cbind(c(1,1,1,0,0),
+                               c(-1,0,0,0,-1),
+                               c(0,-1,0,-1,0),
+                               c(0,0,-1,1,1)))
+
+
+
+summary(glht(MLMR_7N_lnRR, linfct=cbind(c(1,1,1,0,0),
+                               c(-1,0,0,0,-1),
+                               c(0,-1,0,-1,0),
+                               c(0,0,-1,1,1))), test=adjusted("none"))
+
+```
+
+Use marginal R2 to quantify the explained heterogeneity:
+
+```{r}
+r2_ml(MLMR_7N_lnRR)
+```
+
+## variance - lnCVR
+
+**(7) Is there a relationship between ALAN spectral properties and the variability of suppression of melatonin and ALAN?**
+
+```{r, warning=F}
+MLMR_7N_lnCVR <- MLMA.func(dat_N$lnCVR ~ I(Light_colour) - 1,lnCVRVCV_N,tr_matrix_N,dat_N)
+summary(MLMR_7N_lnCVR)
+
+MLMR_7N_lnCVR2 <- MLMA.func(dat_N$lnCVR ~ Light_colour,lnCVRVCV_N,tr_matrix_N,dat_N)
+
+```
+
+Examine difference in melatonin suppression between diurnal and nocturnal species:
+
+```{r}
+
+anova(MLMR_7N_lnCVR,X=cbind(c(1,1,1),
+                               c(-1,0,0),
+                               c(0,-1,0),
+                               c(0,0,-1)))
+
+
+```
+
+Use marginal R2 to quantify the explained heterogeneity:
+
+```{r}
+r2_ml(MLMR_7N_lnCVR)
+```
+
+
+## Light wavelenth
+
+Use light wavelength (nm) as a moderator:
+
+```{r, warning=F}
+# lnRR
+MLMR_7N.wave_lnRR <- rma.mv(yi = lnRR, V = lnRRVCV_N, random = list(~ 1 | Spp, ~1 | Phy, ~1 | StudyID, ~1 | obs_ID), mods = ~ Light_wavelength, method = "REML", test = "t", data = dat_N, sparse = T, R = list(Phy=tr_matrix_N))
+summary(MLMR_7N.wave_lnRR)
+
+# lnCVR
+MLMR_7N.wave_lnCVR <- rma.mv(yi = lnCVR, V = lnCVRVCV_N, random = list(~ 1 | Spp, ~1 | Phy, ~1 | StudyID, ~1 | obs_ID), mods = ~ Light_wavelength, method = "REML", test = "t", data = dat_N, sparse = T, R = list(Phy=tr_matrix_N))
+summary(MLMR_7N.wave_lnCVR)
+```
+
+Plot the relationship between light wavelength and response:
+
+```{r, warning=F}
+# plot
+Q7_wave_lnRR <- bubble_plot(MLMR_7N.wave_lnRR, 
+            mod = "Light_wavelength", 
+            xlab = "Light wavelength (nm)", ylab = "Response magnitude (mean ratio)",
+            group = "Spp", k = TRUE, g = TRUE, precision.size = 2.5,
+            ci.col = "black", pi.col = "black", bubble.col = "#CC79A7",
+            data = dat_N, legend.pos = "bottom.right") +
+            theme(axis.text.x = element_text(size = 12, colour = "black"), axis.text.y = element_text(size = 10, colour = "black"), axis.title.x = element_text(size = 10, colour = "black"), plot.title = element_text(size = 10, colour = "black")) +
+  theme(panel.grid = element_blank()) +
+  theme(legend.title = element_text(size = 5),
+        legend.text = element_text(size = 5))
+
+
+Q7_wave_lnCVR <- bubble_plot(MLMR_7N.wave_lnCVR, 
+            mod = "Light_wavelength", 
+            xlab = "Light wavelength (nm)", ylab = "Response variability (CV ratio)",
+            group = "Spp", k = TRUE, g = TRUE, precision.size = 2.5,
+            ci.col = "black", pi.col = "black", bubble.col = "#CC79A7",
+            data = dat_N, legend.pos = "bottom.right") +
+            theme(axis.text.x = element_text(size = 10, colour = "black"), axis.text.y = element_text(size = 10, colour = "black"), axis.title.x = element_text(size = 10, colour = "black"), plot.title = element_text(size = 10, colour = "black")) +
+  theme(panel.grid = element_blank()) +
+  theme(legend.title = element_text(size = 5),
+        legend.text = element_text(size = 5))
+
+```
+
+# Fig. 3 - Q6 to Q7 
+
+```{r}
+
+png(filename = "Q6Q7.png", width = 6, height = 6, units = "in", type = "windows", res = 400)
+(Q6_lux_lnRR  | Q6_lux_lnCVR) / (Q7_wave_lnRR | Q7_wave_lnCVR) + plot_annotation(tag_levels = "A")
+dev.off()
+
+```
+ 
+
+# Question 8 {.tabset}
+
+## mean - lnRR {.tabset}
+
+**(8) Is the magnitude of suppression of melatonin dependent on the timing (window/phase) of exposure to ALAN (e.g., early night vs. midnight vs. late night vs. whole night)**
+
+```{r, warning=F}
+dat_N$Night_Phase_category <- factor(dat_N$Night_Phase_category, levels = c("All night","Late night","Mid night","Early night"))
+MLMR_8N_lnRR <- MLMA.func(dat_N$lnRR ~ I(Night_Phase_category) - 1,lnRRVCV_N,tr_matrix_N,dat_N)
+summary(MLMR_8N_lnRR)
+
+MLMR_8N_lnRR2 <- MLMA.func(dat_N$lnRR ~ Night_Phase_category,lnRRVCV_N,tr_matrix_N,dat_N)
+
+MLMR_8N_SMD <- MLMA.func(dat_N$SMD ~ I(Night_Phase_category) - 1,SMDVCV_N,tr_matrix_N,dat_N)
+summary(MLMR_8N_SMD)
+
+```
+
+Examine difference in melatonin suppression between diurnal and nocturnal species:
+
+```{r}
+anova(MLMR_8N_lnRR,X=cbind(c(1,1,1,0),
+                           c(-1,0,0,0),
+                           c(0,-1,0,1),
+                           c(0,0,-1,-1)))
+
+summary(glht(MLMR_8N_lnRR, linfct=cbind(c(1,1,1,0),
+                           c(-1,0,0,0),
+                           c(0,-1,0,1),
+                           c(0,0,-1,-1))), test=adjusted("none"))
+
+```
+
+Use marginal R2 to quantify the explained heterogeneity:
+
+```{r}
+r2_ml(MLMR_8N_lnRR)
+```
+
+## variance - lnCVR {.tabset}
+
+**(8) Is the variation of suppression of melatonin dependent on the timing (window/phase) of exposure to ALAN (e.g., early night vs. midnight vs. late night vs. whole night)?**
+
+```{r, warning=F}
+MLMR_8N_lnCVR <- MLMA.func(dat_N$lnCVR ~ I(Night_Phase_category) - 1,lnRRVCV_N,tr_matrix_N,dat_N)
+summary(MLMR_8N_lnCVR)
+
+MLMR_8N_lnCVR2 <- MLMA.func(dat_N$lnCVR ~ Night_Phase_category,lnRRVCV_N,tr_matrix_N,dat_N)
+
+```
+
+
+Examine difference in melatonin suppression between diurnal and nocturnal species:
+
+```{r}
+anova(MLMR_8N_lnCVR,X=cbind(c(1,1,1),
+                           c(-1,0,0),
+                           c(0,-1,0),
+                           c(0,0,-1)))
+
+```
+
+Use marginal R2 to quantify the explained heterogeneity:
+
+```{r}
+r2_ml(MLMR_8N_lnCVR)
+```
+
+
+# Question 9 {.tabset}
+
+## mean - lnRR {.tabset}
+
+**(9)	Does a long-term exposure to ALAN have a greater effect than short-term exposure?**
+
+Meta-analytic mean and 95% confidence intervals for **daily length**:
+
+```{r, warning=F}
+# fit model
+MLMR_9N_lnRR <- rma.mv(yi = lnRR, V = lnRRVCV_N, random = list(~ 1 | Spp, ~1 | Phy, ~1 | StudyID, ~1 | obs_ID), mods = ~ log(Extended_hours), method = "REML", test = "t", data = dat_N, sparse = T, R = list(Phy=tr_matrix_N))
+summary(MLMR_9N_lnRR)
+
+
+MLMR_9N_SMD <- rma.mv(yi = SMD, V = SMDVCV_N, random = list(~ 1 | Spp, ~1 | Phy, ~1 | StudyID, ~1 | obs_ID), mods = ~ log(Extended_hours), method = "REML", test = "t", data = dat_N, sparse = T, R = list(Phy=tr_matrix_N))
+summary(MLMR_9N_SMD)
+
+# lux dataset
+MLMR_9N.lux_lnRR <- rma.mv(yi = lnRR, V = lnRRVCV_N_lux, random = list(~ 1 | Spp, ~1 | Phy, ~1 | StudyID, ~1 | obs_ID), mods = ~ log(Extended_hours), method = "REML", test = "t", data = dat_N_lux, sparse = T, R = list(Phy=tr_matrix_N_lux))
+summary(MLMR_9N.lux_lnRR)
+
+```
+
+Meta-analytic mean and 95% confidence intervals for **Experimental length**:
+
+```{r, warning=F}
+# fit model
+MLMR_9N_lnRR2 <- rma.mv(yi = lnRR, V = lnRRVCV_N, random = list(~ 1 | Spp, ~1 | Phy, ~1 | StudyID, ~1 | obs_ID), mods = ~ log(Exposure_duration), method = "REML", test = "t", data = dat_N, sparse = T, R = list(Phy=tr_matrix_N))
+summary(MLMR_9N_lnRR2)
+
+MLMR_9N_SMD2 <- rma.mv(yi = SMD, V = SMDVCV_N, random = list(~ 1 | Spp, ~1 | Phy, ~1 | StudyID, ~1 | obs_ID), mods = ~ log(Exposure_duration), method = "REML", test = "t", data = dat_N, sparse = T, R = list(Phy=tr_matrix_N))
+summary(MLMR_9N_SMD2)
+
+# lux dataset
+MLMR_9N.lux_lnRR2 <- rma.mv(yi = lnRR, V = lnRRVCV_N_lux, random = list(~ 1 | Spp, ~1 | Phy, ~1 | StudyID, ~1 | obs_ID), mods = ~ log(Exposure_duration), method = "REML", test = "t", data = dat_N_lux, sparse = T, R = list(Phy=tr_matrix_N_lux))
+summary(MLMR_9N.lux_lnRR2)
+
+```
+
+Use marginal R2 to quantify the explained heterogeneity:
+
+```{r}
+r2_ml(MLMR_9N_lnRR)
+r2_ml(MLMR_9N.lux_lnRR)
+r2_ml(MLMR_9N_lnRR2)
+r2_ml(MLMR_9N.lux_lnRR2)
+```
+
+### Visualise model results 
+
+```{r, warning=F}
+
+bubble_plot(MLMR_9N_lnRR, 
+            mod = "Extended_hours", 
+            xlab = "Daily duration of ALAN (hours)", ylab = "Response magnitude (mean ratio)",
+            group = "Species", k = TRUE, g = TRUE,
+            ci.col = "black", pi.col = "black", bubble.col = "#D55E00",
+            data = dat_N, legend.pos = "bottom.right") +
+            theme(axis.text.x = element_text(size = 12, colour = "black"), axis.text.y = element_text(size = 12, colour = "black"), axis.title.x = element_text(size = 12, colour = "black"), plot.title = element_text(size = 12, colour = "black")) +
+  theme(panel.grid = element_blank())
+
+```
+
+## variance - lnCVR {.tabset}
+
+**(9)	Whether response variability of melatonin differs between long-term exposure and short-term exposure?**
+
+Meta-analytic mean and 95% confidence intervals for **daily length**:
+
+```{r, warning=F}
+# fit model
+MLMR_9N_lnCVR <- rma.mv(yi = lnCVR, V = lnCVRVCV_N, random = list(~ 1 | Spp, ~1 | Phy, ~1 | StudyID, ~1 | obs_ID), mods = ~ log(Extended_hours), method = "REML", test = "t", data = dat_N, sparse = T, R = list(Phy=tr_matrix_N))
+summary(MLMR_9N_lnCVR)
+
+# lux dataset
+MLMR_9N.lux_lnCVR <- rma.mv(yi = lnCVR, V = lnCVRVCV_N_lux, random = list(~ 1 | Spp, ~1 | Phy, ~1 | StudyID, ~1 | obs_ID), mods = ~ log(Extended_hours), method = "REML", test = "t", data = dat_N_lux, sparse = T, R = list(Phy=tr_matrix_N_lux))
+summary(MLMR_9N.lux_lnCVR)
+
+```
+
+Meta-analytic mean and 95% confidence intervals for **Experimental length**:
+
+```{r, warning=F}
+# fit model
+MLMR_9N_lnCVR2 <- rma.mv(yi = lnCVR, V = lnCVRVCV_N, random = list(~ 1 | Spp, ~1 | Phy, ~1 | StudyID, ~1 | obs_ID), mods = ~ log(Exposure_duration), method = "REML", test = "t", data = dat_N, sparse = T, R = list(Phy=tr_matrix_N))
+summary(MLMR_9N_lnCVR2)
+
+# lux dataset
+MLMR_9N.lux_lnCVR2 <- rma.mv(yi = lnCVR, V = lnCVRVCV_N_lux, random = list(~ 1 | Spp, ~1 | Phy, ~1 | StudyID, ~1 | obs_ID), mods = ~ log(Exposure_duration), method = "REML", test = "t", data = dat_N_lux, sparse = T, R = list(Phy=tr_matrix_N_lux))
+summary(MLMR_9N.lux_lnCVR2)
+
+```
+
+Use marginal R2 to quantify the explained heterogeneity:
+
+```{r}
+r2_ml(MLMR_9N_lnCVR)
+r2_ml(MLMR_9N.lux_lnCVR)
+r2_ml(MLMR_9N_lnCVR2)
+r2_ml(MLMR_9N.lux_lnCVR2)
+```
+
+### Visualise model results 
+
+```{r, warning=F}
+bubble_plot(MLMR_9N_lnCVR2, 
+            mod = "Exposure_duration", 
+            xlab = "Experimental duration of ALAN (days)", ylab = "Response variability (CV ratio)",
+            group = "Species", k = TRUE, g = TRUE,
+            ci.col = "black", pi.col = "black", bubble.col = "#D55E00",
+            data = dat_N, legend.pos = "bottom.right") +
+            theme(axis.text.x = element_text(size = 12, colour = "black"), axis.text.y = element_text(size = 12, colour = "black"), axis.title.x = element_text(size = 12, colour = "black"), plot.title = element_text(size = 12, colour = "black")) +
+  theme(panel.grid = element_blank())
+
+```
+
+
+# Robust analyses
+
+## Model selection
+
+The first robust analysis we did was multi-moderator meta-regression. We used to approaches, which resulted in the same results.
+
+```{r}
+# lnRR
+# multilevel multi-moderator meta-analytic model
+MLMR.full <- rma.mv(yi = lnRR, V = lnRRVCV_N, random = list(~ 1 | Spp, ~1 | Phy, ~1 | StudyID, ~1 | obs_ID), mods = ~ grouped_tissue + Species_diurnal_nocturnal + Captive_or_Free_living + log(Night_light_intensity_exp) + Light_colour + log(Extended_hours) + Night_Phase_category, method = "ML", test = "t", data = dat_N, sparse = T, R = list(Phy=tr_matrix_N))
+
+# all possible models
+MLMR.candidate <- dredge(MLMR.full, beta = "none", evaluate = TRUE, rank = "AICc", trace=2)
+
+# save to save time - running this model is time-consuming
+#saveRDS(MLMR.candidate, file = "MLMR.candidate.Rds")
+MLMR.candidate <- readRDS(file = "MLMR.candidate.Rds")
+#save(MLMR.candidate, file = "MLMR.candidate.Rdata") 
+#load(file = "MLMR.candidate.Rdata")
+MLMR.candidate %>% DT::datatable()
+
+# select "best" models
+subset(MLMR.candidate, delta <= 2, recalc.weights = FALSE) %>% DT::datatable() # do not recalculates the weights to make them sum to 1
+
+# the relative importance values for the predictors
+sw(MLMR.candidate)
+
+# multimodel inference
+summary(model.avg(MLMR.candidate))$coefmat.full %>% dfround(3)
+
+
+# lnCVR
+# multilevel multi-moderator meta-analytic model
+MLMR.full.lnCVR <- rma.mv(yi = lnCVR, V = lnCVRVCV_N, random = list(~ 1 | Spp, ~1 | Phy, ~1 | StudyID, ~1 | obs_ID), mods = ~ grouped_tissue + Species_diurnal_nocturnal + Captive_or_Free_living + log(Night_light_intensity_exp) + Light_colour + log(Extended_hours) + Night_Phase_category, method = "ML", test = "t", data = dat_N, sparse = T, R = list(Phy=tr_matrix_N))
+
+# all possible models
+MLMR.candidate.lnCVR <- dredge(MLMR.full.lnCVR, beta = "none", evaluate = TRUE, rank = "AICc", trace=2)
+
+# save to save time - running this model is time-consuming
+saveRDS(MLMR.candidate.lnCVR, file = "MLMR.candidate.lnCVR.Rds")
+MLMR.candidate.lnCVR <- readRDS(file = "MLMR.candidate.lnCVR.Rds")
+#save(MLMR.candidate, file = "MLMR.candidate.Rdata") 
+#load(file = "MLMR.candidate.Rdata")
+MLMR.candidate.lnCVR %>% DT::datatable()
+
+# select "best" models
+subset(MLMR.candidate.lnCVR, delta <= 2, recalc.weights = FALSE) %>% DT::datatable() # do not recalculates the weights to make them sum to 1
+
+# the relative importance values for the predictors
+sw(MLMR.candidate.lnCVR)
+
+# multimodel inference
+summary(model.avg(MLMR.candidate.lnCVR))$coefmat.full %>% dfround(3)
+```
+
+
+```{r}
+# write a custom function to fit models
+MLMR.glmulti <- function(formula, data, ...) {
+   rma.mv(formula, lnRRVCV_N,
+          random = list(~ 1 | Spp, ~1 | Phy, ~1 | StudyID, ~1 | obs_ID),
+          data = data, test = "t", method="ML", sparse = TRUE, R = list(Phy=tr_matrix_N), ...)
+}
+
+# fit all possible models
+MLMR.candidate2 <- glmulti(lnRR ~ grouped_tissue + Species_diurnal_nocturnal + Captive_or_Free_living + log(Night_light_intensity_exp) + Light_colour + log(Extended_hours) + Night_Phase_category, data = dat_N, level = 1, marginality = F, fitfunction = MLMR.glmulti, crit="aicc", confsetsize = 256, plotty = FALSE, report = TRUE) # setting level=1 means terms of order 1；2^8 models
+
+# save to save time - running this model is time-consuming
+#saveRDS(MLMR.candidate2, file = "MLMR.candidate2.Rds")
+MLMR.candidate2 <- readRDS(file = "MLMR.candidate2.Rds")
+
+# select "best" models
+MLMR.best <- weightable(MLMR.candidate2)
+MLMR.best[MLMR.best$aicc <= min(MLMR.best$aicc) + 2, ] %>% DT::datatable()
+# examine the first "best" model 
+# MLMR.candidate2@objects[[1]]
+
+
+# relative importance of the various predictors more generally, taking all of the models into consideration
+ww = exp(-(MLMR.candidate2@crits - MLMR.candidate2@crits[1])/2)
+ww = ww/sum(ww)
+clartou = function(x) {
+      pieces <- sort(strsplit(x, ":")[[1]])
+      if (length(pieces) > 1) 
+        paste(pieces[1], ":", pieces[2], sep = "")
+      else x
+    }
+    
+tet = lapply(MLMR.candidate2@formulas, function(x) sapply(attr(delete.response(terms(x)),"term.labels"), clartou))
+    
+allt <- unique(unlist(tet))
+imp <- sapply(allt, function(x) sum(ww[sapply(tet, function(t) x %in% t)]))
+vip_predictors <- data.frame(predictor = names(imp),
+                             weight = as.numeric(imp))
+
+# add R2
+vip_predictors <- vip_predictors %>% mutate(R2 = c(r2_ml(MLMR_3N_lnRR)[1],r2_ml(MLMR_7N_lnRR)[1],r2_ml(MLMR_9N_lnRR)[1],r2_ml(MLMR_6N_lnRR)[1],r2_ml(MLMR_5N_lnRR)[1],r2_ml(MLMR_8N_lnRR)[1],r2_ml(MLMR_4N_lnRR)[1]))
+
+# plot - the overall support for each variable across all models
+# plot(MLMR.candidate2, type="s") # edit(plot.glmulti) 
+png(filename = "Figure 7 (model_selection).png", width = 6.5, height = 4, units = "in", type = "windows", res = 400)
+vip_predictors %>% dfround(3)  %>%
+  ggplot(aes(x = reorder(predictor, weight), y = weight), fill = "lightgrey") +
+  geom_col(aes(), width = 0.7) +
+  #scale_fill_manual(values = cols) +
+  coord_flip() + 
+  labs(y = "Akaike weights", x = "Moderator variables", title = "") +
+  #ylim(0,1)+
+  scale_y_continuous(expand = expansion(mult = c(0, 0.2))) +
+  #coord_cartesian(ylim = c(0,1)) + 
+  geom_text(aes(label=scales::percent(weight, accuracy = 1)), size = 3, position = position_stack(vjust = 0.5), color = "white", fontface = "bold") +
+  geom_text(aes(label = paste0("italic(R)^2==", reorder(R2,weight))), parse = T, hjust = -0.2, size = 3) +
+  theme(legend.position = "none",
+        panel.grid = element_blank(),
+        panel.border = element_blank(),
+        panel.background = element_blank(),
+        axis.text.y = element_text(size = 12, color = "black"),
+        axis.title.y = element_text(size = 12, color = "black"),
+        axis.ticks.y = element_blank(),
+        axis.line.x = element_line(colour = "black")) +
+  scale_x_discrete(labels = c("Exposure duration of ALAN", "Activity time of Spp","Living condition of Spp","Location of Mel","Light intensity","Light phase","Light color"))
+dev.off()
+
+
+# multimodel inference
+coef(MLMR.candidate2, varweighting="Johnson") %>% dfround(4)
+
+t <- as.data.frame(coef(MLMR.candidate2, varweighting="Johnson"))
+t <- data.frame(Estimate=t$Estimate, SE=sqrt(t$`Uncond. variance`),
+                  Importance=t$Importance, row.names=row.names(t)) %>% 
+  mutate(z = Estimate/SE,
+         p = 2*pnorm(abs(z),lower.tail=F), # Pr(>|z|)
+         ci.lb = Estimate - qnorm(1-0.05/2,lower.tail=T)*SE,
+         ci.ub = Estimate + qnorm(1-0.05/2,lower.tail=T)*SE)
+
+
+tbl <- t[order(t$Importance, decreasing=TRUE),c(1,2,4:7,3)] %>% dfround(3)
+
+
+# Table S28
+row.names(tbl) <- c("Intercept", "Red light", "Yellow light", "Blue light", "Late night", "Mid night", "Early night", "Light intensity", "Peripheral Mel", "Free-living Spp", "Nocturnal Spp", "Duration")
+tbl2 <- data.frame(Coefficient = row.names(tbl), Estimate = tbl$Estimate, CI = sprintf("[%0.2f, %0.2f]", tbl$ci.lb, tbl$ci.ub), z = tbl$z, p = tbl$p, Importance = tbl$Importance)
+names(tbl2)[3] <- "95% CI"
+
+
+tab.S28 <- tbl2 %>%
+flextable() %>% 
+  align(align = "center", part = "header") %>% 
+  align(align = "center", part = "body") %>% 
+  mk_par(j = 2, part = "header", value = as_paragraph(as_i("β"), as_sub(""))) %>%
+  mk_par(j = 4, part = "header", value = as_paragraph(as_i("z"))) %>% 
+  mk_par(j = 5, part = "header", value = as_paragraph(as_i("p"))) %>%
+  colformat_double(j = c(2,4), digits = 2) %>% 
+  colformat_double(j = 5, digits = 3) %>%
+  colformat_double(j = 6, digits = 3) %>%
+  bold(part = "header", bold = T) %>% 
+  #theme_vanilla() %>% 
+  border(part = "body", border = NULL) %>% 
+  hline_top(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>% 
+  hline_bottom(part = "body", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>%
+  hline(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 0.5)) %>%
+  fontsize(part = "all", size = 10) %>% 
+  autofit()
+
+
+
+# Table S29
+tbl <- MLMR.best[MLMR.best$aicc <= min(MLMR.best$aicc) + 2, ]
+names(tbl) <- c("Model structure", "AICc", "Akaike weights")
+
+tbl2 <- tbl %>% mutate(R2 = c(r2_ml(MLMR.candidate2@objects[[1]])[1],r2_ml(MLMR.candidate2@objects[[2]])[1],r2_ml(MLMR.candidate2@objects[[3]])[1],r2_ml(MLMR.candidate2@objects[[4]])[1]))
+
+tab.S29 <- tbl2 %>%
+flextable() %>% 
+  align(align = "center", part = "header") %>% 
+  align(align = "center", part = "body") %>%
+  mk_par(j = 4, part = "header", value = as_paragraph(as_i("R"),as_sup("2"))) %>%
+  colformat_double(j = c(2), digits = 2) %>%
+  colformat_double(j = c(3), digits = 3) %>%
+  colformat_double(j = c(4), digits = 3) %>% 
+  bold(part = "header", bold = T) %>% 
+  #theme_vanilla() %>% 
+  border(part = "body", border = NULL) %>% 
+  hline_top(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>% 
+  hline_bottom(part = "body", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>%
+  hline(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 0.5)) %>%
+  #merge_at(i = 1:3, j = 1) %>%
+  fontsize(part = "all", size = 10) %>% 
+  autofit()
+
+```
+
+
+## Publication bias {.tabset}
+
+### Visual check of publication bias
+
+Residual funnel plots:
+
+```{r}
+# check the best models
+# MLMR.best[MLMR.best$aicc <= min(MLMR.best$aicc) + 2, ] %>% DT::datatable()
+
+# write a help function to calculate adapted sampling variance based on effective size based  - tilde n
+ess.var_cal <- function(dat){1/dat$Con_N + 1/dat$Exp_N} 
+# calculate tilde N
+dat$ess.var <- ess.var_cal(dat) 
+# calculate adapted sampling error based on effective size - tilde square root n
+dat$ess.se <- sqrt(dat$ess.var) 
+
+# center year
+# residual funnel plot 1
+funnel_Q1_lnRR.1 <- rma.mv(yi = lnRR, V = lnRRVCV, random = list(~ 1 | Spp, ~1 | Phy, ~1 | StudyID, ~1 | obs_ID), method = "REML", test = "t", data = dat, sparse = T, R = list(Phy=tr_matrix))
+
+# residual funnel plot 2
+# check important predictors MLMR.candidate2@objects[[1]] %>% formula()
+funnel_Q1_lnRR.2 <- rma.mv(yi = lnRR, V = lnRRVCV, random = list(~ 1 | Spp, ~1 | Phy, ~1 | StudyID, ~1 | obs_ID), mods = ~ ess.se + grouped_tissue + Light_colour + Night_Phase_category + log(Night_light_intensity_exp), method = "REML", test = "t", data = dat, sparse = T, R = list(Phy=tr_matrix))
+
+#funnel_Q1_lnRR.1p <- funnel(funnel_Q1_lnRR.1 , yaxis = 'seinv',level = c(95),shade = c('white'),legend = F,pch = 21,refline = 0,xlab = "Mean ratio (lnRR)", ylab = "Precision")
+#funnel_Q1_lnRR.2p <- funnel(funnel_Q1_lnRR.2 , yaxis = 'seinv',level = c(95),shade = c('white'),legend = F,pch = 21,refline = 0, xlab = "Residual", ylab = "Precision")
+
+# Figure S11
+png(filename = "Figure S11 (funnel).png", width = 10, height = 5, units = "in", type = "windows", res = 400)
+par(mfrow=c(1,2))
+funnel(funnel_Q1_lnRR.1 , yaxis = 'seinv',level = c(95),shade = c('white'),legend = F,pch = 21,refline = 0,xlab = "Mean ratio (lnRR)", ylab = "Precision") 
+funnel(funnel_Q1_lnRR.2 , yaxis = 'seinv',level = c(95),shade = c('white'),legend = F,pch = 21,refline = 0, xlab = "Residual", ylab = "Precision") 
+# plot_layout(ncol = 2, nrow = 1)
+dev.off()
+
+```
+
+
+### Statistical test of publicaiton bias
+
+Simultaneously test small-study effect and time lag bias:
+
+```{r}
+dat <- dat %>% mutate(Pub_year.c = scale(Pub_year,scale=F))
+# check important predictors MLMR.candidate2@objects[[1]] %>% formula()
+pb_lnRR <- rma.mv(yi = lnRR, V = lnRRVCV, random = list(~ 1 | Spp, ~1 | Phy, ~1 | StudyID, ~1 | obs_ID), mods = ~ ess.se + Pub_year.c + grouped_tissue + Light_colour + Night_Phase_category + log(Night_light_intensity_exp), method = "REML", test = "t", data = dat, sparse = T, R = list(Phy=tr_matrix))
+summary(pb_lnRR)
+
+# visualize
+png(filename = "Figure S12 (pub test).png", width = 8, height = 4, units = "in", type = "windows", res = 400)
+pb_test.p1 <- bubble_plot(pb_lnRR, 
+            mod = "ess.se", 
+            xlab = "Adjusted standard error", ylab = "Response magnitude (mean ratio)",
+            group = "Spp", k = TRUE, g = TRUE,
+            ci.col = "black", pi.col = "black",
+            data = dat, legend.pos = "bottom.right") +
+            theme(axis.text.x = element_text(size = 12, colour = "black"), axis.text.y = element_text(size = 12, colour = "black"), axis.title.x = element_text(size = 12, colour = "black"), plot.title = element_text(size = 12, colour = "black")) +
+  theme(panel.grid = element_blank())
+
+pb_test.p2 <- bubble_plot(pb_lnRR, 
+            mod = "Pub_year.c", 
+            xlab = "Publication year", ylab = "",
+            group = "Spp", k = TRUE, g = TRUE,
+            ci.col = "black", pi.col = "black",
+            data = dat, legend.pos = "bottom.right") +
+            theme(axis.text.x = element_text(size = 12, colour = "black"), axis.text.y = element_text(size = 12, colour = "black"), axis.title.x = element_text(size = 12, colour = "black"), plot.title = element_text(size = 12, colour = "black"),
+                  axis.title.y = element_blank()) +
+  theme(panel.grid = element_blank())
+pb_test.p1 + pb_test.p2 + plot_layout(ncol = 2, nrow = 1) + plot_annotation(tag_levels = "A")
+dev.off()
+
+
+
+```
+
+### Correct for publicaiton bias
+
+```{r}
+
+dat$Daytime_or_nighttime_melatonin <- as.factor(dat$Daytime_or_nighttime_melatonin)
+
+dat$Daytime_or_nighttime_melatonin <- factor(dat$Daytime_or_nighttime_melatonin, levels = c("Nighttime", "Daytime"))
+a <- rma.mv(yi = lnRR, V = lnRRVCV, random = list(~1 | Species, ~1 | StudyID, ~1 | obs_ID), mods = ~ ess.var + Pub_year.c +  Daytime_or_nighttime_melatonin + Species_diurnal_nocturnal, method = "REML", test = "t", data = dat, sparse = T)
+
+dat$Daytime_or_nighttime_melatonin <- factor(dat$Daytime_or_nighttime_melatonin, levels = c("Daytime", "Nighttime"))
+a2 <- rma.mv(yi = lnRR, V = lnRRVCV, random = list(~1 | Species, ~1 | StudyID, ~1 | obs_ID), mods = ~ ess.var + Pub_year.c + Daytime_or_nighttime_melatonin + Species_diurnal_nocturnal, method = "REML", test = "t", data = dat, sparse = T)
+
+
+
+prep1 <- qdrg(object = a, data = dat, 
+              at = list(ess.var = 0, Pub_year.c = 0),
+              df = a$ddf)
+
+res1 <- emmeans(prep1, specs = "1", df = a$ddf, weights = "equal") # or proportional cell weighting
+res1
+
+
+prep2 <- qdrg(object = a2, data = dat, 
+              at = list(ess.var = 0, Pub_year.c = 0),
+              df = a$ddf)
+res2 <- emmeans(prep2, specs = "1", df = a$ddf, weights = "equal")
+res2
+
+
+# creat reference grid
+sav <- emmprep(a,
+               at = list(ess.var = 0,Pub_year.c = 0),
+               df=389,
+               sigma=sqrt((a$sigma2)[1]))
+
+emmeans(sav,specs = "1", weights = "equal", by = "Daytime_or_nighttime_melatonin")
+
+
+mod_results(a, mod = "1", group = "StudyID", data = dat, weights = "prop", at = list(Pub_year.c = c(1,5,10)), by = "Pub_year.c")
+
+
+
+# https://wviechtb.github.io/metafor/reference/emmprep.html
+sav <- emmprep(pb_lnRR,
+               at = list(ess.var = 0),
+               df=392,
+               sigma=sqrt(sum(pb_lnRR$sigma2))
+               )
+
+emmeans(sav,specs = "1")
+
+
+
+```
+
+## Leave-one-out cross-validation
+
+```{r}
+### create the variable that will be left out 
+dat$leave_out <- as.factor(dat$Phy)
+
+### create a list to contain model estimates
+leave1out_mod <- list()
+### repeatedly run the multilevel model, leaving out one study at a time
+for(i in 1:length(levels(dat$leave_out))){
+### create the data with one study removed at a time
+dat2 <- dat %>% filter(leave_out != levels(dat$leave_out)[i])
+### create a list of VCV matrices for following model fitting
+VCV_leave1out <- list() 
+VCV_leave1out[[i]] <- impute_covariance_matrix(vi = dat2$lnRRV, cluster = dat2$StudyID, r = 0.5) 
+### model fitting
+leave1out_mod[[i]] <- rma.mv(yi = lnRR,V = VCV_leave1out[[i]], random=list(~ 1 | Spp, ~1 | StudyID, ~1 | obs_ID), method = "REML", test = "t",data = dat2,sparse = TRUE)}
+
+
+### extract intercept and 95% CIs from each of the above fitted models
+est.func <- function(mod){
+  df <- data.frame(est = mod$b, lower = mod$ci.lb, upper = mod$ci.ub)
+  return(df)
+}
+
+### turn the model estimates into data frame
+leave1out_results <- lapply(leave1out_mod, function(x) est.func(x)) %>% bind_rows %>% mutate(left_out = levels(dat$leave_out))
+
+
+# visualize the model estimates
+leave1out_results$left_out <- as.factor(leave1out_results$left_out)
+leave1out_results$left_out <- factor(leave1out_results$left_out, levels = leave1out_results$left_out) # stop reordering factors and show correct order in plot
+
+leave1out.phy <- ggplot(leave1out_results) +
+  geom_hline(yintercept = 0, lty = 2, lwd = 0.75, colour = "lightgrey") +
+  geom_hline(yintercept = MLMA_lnRR$ci.lb, lty = 3, lwd = 0.75, colour = "black") +
+  geom_hline(yintercept = MLMA_lnRR$b, lty = 1, lwd = 0.75, colour = "black") +
+  geom_hline(yintercept = MLMA_lnRR$ci.ub, lty = 3, lwd = 0.75, colour = "black") +
+  geom_pointrange(aes(x = left_out, y = est, ymin = lower, ymax = upper),color = "#009E73") +
+  xlab("Species left out") + 
+  ylab("Mean ratio (95% CI)") + 
+  coord_flip() +
+  theme(panel.grid.minor = element_blank())+
+  theme_bw() + 
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.border = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.line.x = element_line(colour = "black")) +
+  theme(axis.text.y = element_text(size = 10))
+
+png(filename = "Figure S13 (leave1out).png", width = 6.5, height = 6, units = "in", type = "windows", res = 400)
+leave1out.phy
+dev.off()
+
+
+# histogram overlaid with kernel density curve
+leave1out_hist <- ggplot(leave1out_results, aes(x=est)) + 
+    geom_histogram(aes(y=..density..), # histogram with density instead of count on y-axis
+                   binwidth=.0005,
+                   colour="black", fill="white") +
+    geom_density(alpha=.2, fill="#FF6666") +  # overlay with transparent density plot
+    geom_vline(aes(xintercept=mean(coef(MLMA_lnRR), na.rm=T)), color="red", linetype="dashed", size=1) +
+  labs(x = "Mean ratio (lnRR)", y = "Deisity") # xlab("Effect size lnRR")
+
+leave1out_hist
+
+```
+ 
+
+
+## Arm-based method
+
+Is this only applicable to overall effect? Can we apply this to the moderator analyses?
+
+```{r}
+# lines 923
+# https://github.com/jamessteeleii/Meta-Analysis-of-Variation-in-Resistance-Training/blob/main/analysis/Analysis%20-%20Meta-Analysis%20of%20Variation%20in%20Sport%20and%20Exercise%20Science.R
+
+# Bishop J, Garratt M P D, Nakagawa S. Animal pollination increases stability of crop yield across spatial scales[J]. Ecology Letters, 2022, 25(9): 2034-2047.
+
+# Senior A M, Gosby A K, Lu J, et al. Meta-analysis of variance: an illustration comparing the effects of two dietary interventions on variability in weight[J]. Evolution, medicine, and public health, 2016, 2016(1): 244-255.
+
+```
+
+
+
+# Risk of bias
+
+## Randomisation
+```{r, warning=F}
+Randomisation_lnRR <- MLMA.func(dat$lnRR ~ I(Randomisation_animal) - 1,lnRRVCV,tr_matrix,dat)
+summary(Randomisation_lnRR)
+
+Randomisation_lnRR2 <- MLMA.func(dat$lnRR ~ Randomisation_animal,lnRRVCV,tr_matrix,dat)
+
+anova(Randomisation_lnRR,X=cbind(c(0),
+                                 c(1),
+                                 c(-1)))
+
+Randomisation_lnCVR <- MLMA.func(dat$lnCVR ~ I(Randomisation_animal) - 1,lnCVRVCV,tr_matrix,dat)
+
+Randomisation_lnCVR2 <- MLMA.func(dat$lnCVR ~ Randomisation_animal,lnCVRVCV,tr_matrix,dat)
+
+summary(Randomisation_lnCVR)
+
+```
+
+
+## Blindness
+Models could not be fitted because of incomplete reporting
+```{r, warning=F}
+#Blind_lnRR <- MLMA.func(dat$lnRR ~ I(Blind_meansurement) - 1,lnRRVCV,tr_matrix,dat)
+#summary(Blind_lnRR)
+
+#anova(Blind_lnRR,X=c(-1,1))
+
+#Blind_lnCVR <- MLMA.func(dat$lnCVR ~ I(Blind_meansurement) - 1,lnCVRVCV,tr_matrix,dat)
+#summary(Blind_lnCVR)
+```
+
+## Design
+```{r, warning=F}
+Study_type_lnRR <- MLMA.func(dat$lnRR ~ I(Study_type) - 1,lnRRVCV,tr_matrix,dat)
+summary(Study_type_lnRR)
+Study_type_lnRR2 <- MLMA.func(dat$lnRR ~ Study_type,lnRRVCV,tr_matrix,dat)
+
+anova(Study_type_lnRR,X=c(-1,1))
+
+# model with lnCVR was unfeasible
+#Study_type_lnCVR <- MLMA.func(dat$lnCVR ~ I(Blind_meansurement) - 1,lnCVRVCV,tr_matrix,dat)
+#Study_type_lnCVR2 <- MLMA.func(dat$lnCVR ~ Blind_meansurement,lnCVRVCV,tr_matrix,dat)
+
+#summary(Blind_lnCVR)
+```
+
+# Supplementary Table
+
+```{r}
+# table S4
+tbl <- data.frame(`Random-effects structure` = c("None","Obs ID","Obs ID + Study ID","Obs ID + Study ID + Spp ID", "Obs ID + Study ID + Spp ID + Phy"),
+                      `AICc1` = c(fitstats(null_mod_lnRR)[5],fitstats(mod_lnRR.obsID)[5],fitstats(mod_lnRR.obsID.StudyID)[5],fitstats(mod_lnRR.obsID.StudyID.Spp)[5],fitstats(mod_lnRR.obsID.StudyID.Spp.Phy)[5]),
+                      `AICc2` = c(fitstats(null_mod_lnCVR)[5],fitstats(mod_lnCVR.obsID)[5],fitstats(mod_lnCVR.obsID.StudyID)[5],fitstats(mod_lnCVR.obsID.StudyID.Spp)[5],fitstats(mod_lnCVR.obsID.StudyID.Spp.Phy)[5]))
+
+names(tbl)[1] <- "Random-effects structure"
+
+tab.S4 <- tbl %>% flextable() %>% 
+  align(align = "center", part = "header") %>% 
+  align(align = "center", part = "body") %>% 
+  mk_par(j = 2, part = "header", value = as_paragraph("AICc")) %>%
+  mk_par(j = 3, part = "header", value = as_paragraph("AICc")) %>% 
+  colformat_double(j = c(2,3), digits = 0) %>% 
+  bold(part = "header", bold = T) %>% 
+  #theme_vanilla() %>% 
+  border(part = "body", border = NULL) %>% 
+  hline_top(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>% 
+  hline_bottom(part = "body", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>%
+  hline(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 0.5)) %>%
+  add_header_row(values = c(" ","lnRR","lnCVR"), colwidths = c(1,1,1)) %>%
+  autofit()
+
+#save_as_docx("Table S4" = tab.S4, path ="Supplementary Tables.docx")
+
+
+# table S5
+tbl <- rbind(MLMA_table(MLMA_lnRR), MLMA_table(MLMA_lnCVR))  
+row.names(tbl) <- c("Intercept", "Intercept2")
+tbl <- tbl %>% mutate(Metric = c("lnRR","lnCVR"))
+tbl2 <- tibble::rownames_to_column(tbl,"Coefficient")[,c(8,1,2,3,4,5,6,7)]
+
+tab.S5 <- tbl2 %>% flextable() %>% 
+  align(align = "center", part = "header") %>% 
+  align(align = "center", part = "body") %>% 
+  mk_par(j = 2, part = "header", value = as_paragraph(as_i("β"), as_sub(" "))) %>%
+   mk_par(j = 5, part = "header", value = as_paragraph(as_i("t"), as_sub(MLMA_lnRR$QMdf[2]))) %>% 
+  mk_par(j = 6, part = "header", value = as_paragraph(as_i("p"))) %>%
+  mk_par(j = 7, part = "header", value = as_paragraph(as_i("N"),as_sub("species"))) %>%
+  mk_par(j = 8, part = "header", value = as_paragraph(as_i("N"),as_sub("obs"))) %>% 
+  mk_par(i = 1, j = 2, part = "body", value = as_paragraph("Intercept")) %>% 
+  mk_par(i = 2, j = 2, part = "body", value = as_paragraph("Intercept")) %>% 
+  colformat_double(j = c(3,4), digits = 2) %>%
+  colformat_double(j = 6, digits = 3) %>% 
+  bold(part = "header", bold = T) %>% 
+  #theme_vanilla() %>% 
+  border(part = "body", border = NULL) %>% 
+  hline_top(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>% 
+  hline_bottom(part = "body", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>%
+  hline(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 0.5)) %>%
+  autofit()
+
+
+#save_as_docx("Table S4" = tab.S4, "Table S5" = tab.S5, path ="Supplementary Tables.docx")
+# https://ardata-fr.github.io/flextable-book/rendering.html
+
+#print(tbl, preview = "docx")
+
+# Table S6
+tbl <- h.calc(MLMA_lnRR) 
+row.names(tbl) <- c("Total", "Species", "Phylogeny", "Study", "Residual")
+# tbl <- tbl %>% mutate(`Cochran's Q` = MLMA_lnRR$QE,df = MLMA_lnRR$QEdf,p = MLMA_lnRR$QEp)
+tbl <- tbl %>% mutate(`Cochran's Q test` = "Q(df = 436) = 8680, p-val < .0001",
+                      Metric = "lnRR")
+
+tbl2 <- tibble::rownames_to_column(tbl,"Heterogeneity")[,c(7,1:6)]
+tab.S6 <- tbl2 %>% flextable() %>% colformat_double(digits = 2) %>% 
+  mk_par(j = 3, part = "header", value = as_paragraph(as_i("σ"), as_sup("2"))) %>% 
+  mk_par(j = 4, part = "header", value = as_paragraph(as_i("I"), as_sup("2"))) %>%
+  mk_par(j = 5, part = "header", value = as_paragraph("CV", as_sub("B"))) %>% 
+  mk_par(j = 6, part = "header", value = as_paragraph("M", as_sub(""))) %>% 
+  border(part = "body", border = NULL) %>% 
+  hline_top(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>% 
+  hline_bottom(part = "body", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>%
+  hline(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 0.5)) %>%
+  colformat_double(j = 3, digits = 2) %>% 
+  colformat_double(j = c(4,5,6), digits = 1) %>%
+  #colformat_double(j = 6, digits = 0) %>%
+  #colformat_double(j = 8, digits = 3) %>%
+  #italic(part = "header", j = 8) %>%
+  bold(part = "header", bold = T) %>% 
+  fontsize(part = "all", size = 10) %>% 
+  align(align = "center", part = "header") %>% 
+  align(align = "center", part = "body") %>% 
+  merge_at(i = 1:5, j = 7) %>% 
+  merge_at(i = 1:5, j = 1) %>% 
+  autofit()
+
+#save_as_docx("Table S4" = tab.S4, "Table S5" = tab.S5, "Table S6" = tab.S6, path ="Supplementary Tables.docx")
+
+# Table S7
+tbl <- h.calc(MLMA_lnCVR) 
+row.names(tbl) <- c("Total", "Species", "Phylogeny", "Study", "Residual")
+# tbl <- tbl %>% mutate(`Cochran's Q` = MLMA_lnRR$QE,df = MLMA_lnRR$QEdf,p = MLMA_lnRR$QEp)
+tbl <- tbl %>% mutate(`Cochran's Q test` = "Q(df = 436) = 1019, p-val < .0001",
+                      Metric = "lnCVR")
+
+tbl2 <- tibble::rownames_to_column(tbl,"Heterogeneity")[,c(7,1:6)]
+tab.S7 <- tbl2 %>% flextable() %>% colformat_double(digits = 2) %>% 
+  mk_par(j = 3, part = "header", value = as_paragraph(as_i("σ"), as_sup("2"))) %>% 
+  mk_par(j = 4, part = "header", value = as_paragraph(as_i("I"), as_sup("2"))) %>%
+  mk_par(j = 5, part = "header", value = as_paragraph("CV", as_sub("B"))) %>% 
+  mk_par(j = 6, part = "header", value = as_paragraph("M", as_sub(""))) %>% 
+  border(part = "body", border = NULL) %>% 
+  hline_top(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>% 
+  hline_bottom(part = "body", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>%
+  hline(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 0.5)) %>%
+  colformat_double(j = 3, digits = 2) %>% 
+  colformat_double(j = c(4,5,6), digits = 1) %>%
+  #colformat_double(j = 6, digits = 0) %>%
+  #colformat_double(j = 8, digits = 3) %>%
+  #italic(part = "header", j = 8) %>%
+  bold(part = "header", bold = T) %>% 
+  fontsize(part = "all", size = 10) %>% 
+  align(align = "center", part = "header") %>% 
+  align(align = "center", part = "body") %>% 
+  merge_at(i = 1:5, j = 7) %>% 
+  merge_at(i = 1:5, j = 1) %>% 
+  autofit()
+
+#save_as_docx("Table S4" = tab.S4, "Table S5" = tab.S5, "Table S6" = tab.S6, "Table S7" = tab.S7, path ="Supplementary Tables.docx")
+
+
+# Table S8
+tbl <- MLMR_table(MLMR_2_lnRR,MLMR_2_lnRR2,moderator = "Daytime_or_nighttime_melatonin",group = "Spp", data =dat)
+row.names(tbl) <- c("Daytime", "Nighttime", "Delta (N - D)")
+tbl <- tbl %>% mutate(R2 = round(R2_calc(MLMR_2_lnRR)[1],3),
+                      Metric = "lnRR")
+tbl2 <- tibble::rownames_to_column(tbl, "Coefficient")[,c(9,1:8)]
+
+tab.S8 <- tbl2 %>%
+flextable() %>% 
+  align(align = "center", part = "header") %>% 
+  align(align = "center", part = "body") %>% 
+  mk_par(j = 2, part = "header", value = as_paragraph(as_i("β"), as_sub(""))) %>%
+   mk_par(j = 5, part = "header", value = as_paragraph(as_i("t"), as_sub(MLMR_2_lnRR$QMdf[2]))) %>% 
+  mk_par(j = 6, part = "header", value = as_paragraph(as_i("p"))) %>%
+  mk_par(j = 7, part = "header", value = as_paragraph(as_i("N"),as_sub("species"))) %>%
+  mk_par(j = 8, part = "header", value = as_paragraph(as_i("N"),as_sub("obs"))) %>%
+  mk_par(j = 9, part = "header", value = as_paragraph(as_i("R"),as_sup("2"))) %>% 
+  colformat_double(j = c(3,5), digits = 2) %>% 
+  colformat_double(j = 6, digits = 3) %>% 
+  bold(part = "header", bold = T) %>% 
+  #theme_vanilla() %>% 
+  border(part = "body", border = NULL) %>% 
+  hline_top(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>% 
+  hline_bottom(part = "body", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>%
+  hline(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 0.5)) %>%
+  fontsize(part = "all", size = 10) %>% 
+  merge_at(i = 1:3, j = 9) %>%
+  merge_at(i = 1:3, j = 1) %>%
+  set_caption(caption = as_paragraph("Omnibus test or ", as_i("Q"), as_sub("M")," ","test: F(df1 = 2, df2 = 36) = 9.9, p-val = 0.0004")) %>% 
+  autofit()
+
+
+#save_as_docx("Table S4" = tab.S4, "Table S5" = tab.S5, "Table S6" = tab.S6, "Table S7" = tab.S7, "Table S8" = tab.S8, path ="Supplementary Tables.docx")
+
+
+# Table S9
+tbl <- MLMR_table(MLMR_2_lnCVR,MLMR_2_lnCVR2,moderator = "Daytime_or_nighttime_melatonin",group = "Spp", data =dat)
+row.names(tbl) <- c("Daytime", "Nighttime", "Delta (N - D)")
+tbl <- tbl %>% mutate(R2 = round(R2_calc(MLMR_2_lnCVR)[1],3),
+                      Metric = "lnCVR")
+tbl2 <- tibble::rownames_to_column(tbl, "Coefficient")[,c(9,1:8)]
+
+tab.S9 <- tbl2 %>%
+flextable() %>% 
+  align(align = "center", part = "header") %>% 
+  align(align = "center", part = "body") %>% 
+  mk_par(j = 2, part = "header", value = as_paragraph(as_i("β"), as_sub(""))) %>%
+   mk_par(j = 5, part = "header", value = as_paragraph(as_i("t"), as_sub(MLMR_2_lnRR$QMdf[2]))) %>% 
+  mk_par(j = 6, part = "header", value = as_paragraph(as_i("p"))) %>%
+  mk_par(j = 7, part = "header", value = as_paragraph(as_i("N"),as_sub("species"))) %>%
+  mk_par(j = 8, part = "header", value = as_paragraph(as_i("N"),as_sub("obs"))) %>%
+  mk_par(j = 9, part = "header", value = as_paragraph(as_i("R"),as_sup("2"))) %>% 
+  colformat_double(j = c(3,5), digits = 2) %>% 
+  colformat_double(j = 6, digits = 3) %>% 
+  bold(part = "header", bold = T) %>% 
+  #theme_vanilla() %>% 
+  border(part = "body", border = NULL) %>% 
+  hline_top(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>% 
+  hline_bottom(part = "body", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>%
+  hline(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 0.5)) %>%
+  fontsize(part = "all", size = 10) %>% 
+  merge_at(i = 1:3, j = 9) %>%
+  merge_at(i = 1:3, j = 1) %>%
+  set_caption(caption = as_paragraph("Omnibus test or ", as_i("Q"), as_sub("M")," ","test: F(df1 = 2, df2 = 36) = 4.2, p-val = 0.0230")) %>% 
+  autofit()
+
+
+#save_as_docx("Table S4" = tab.S4, "Table S5" = tab.S5, "Table S6" = tab.S6, "Table S7" = tab.S7, "Table S8" = tab.S8, "Table S9" = tab.S9, path ="Supplementary Tables.docx")
+
+# Table S10
+tbl <- MLMR_table(MLMR_3N_lnRR, MLMR_3N_lnRR2, moderator = "grouped_tissue",group = "Spp", data =dat_N)
+row.names(tbl) <- c("Central", "Peripheral", "Delta (P - C)")
+tbl <- tbl %>% mutate(R2 = round(R2_calc(MLMR_3N_lnRR)[1],3),
+                      Metric = "lnRR")
+tbl2 <- tibble::rownames_to_column(tbl, "Coefficient")[,c(9,1:8)]
+
+tab.S10 <- tbl2 %>%
+flextable() %>% 
+  align(align = "center", part = "header") %>% 
+  align(align = "center", part = "body") %>% 
+  mk_par(j = 2, part = "header", value = as_paragraph(as_i("β"), as_sub(""))) %>%
+   mk_par(j = 5, part = "header", value = as_paragraph(as_i("t"), as_sub(MLMR_2_lnRR$QMdf[2]))) %>% 
+  mk_par(j = 6, part = "header", value = as_paragraph(as_i("p"))) %>%
+  mk_par(j = 7, part = "header", value = as_paragraph(as_i("N"),as_sub("species"))) %>%
+  mk_par(j = 8, part = "header", value = as_paragraph(as_i("N"),as_sub("obs"))) %>%
+  mk_par(j = 9, part = "header", value = as_paragraph(as_i("R"),as_sup("2"))) %>% 
+  colformat_double(j = c(3,5), digits = 2) %>% 
+  colformat_double(j = 6, digits = 3) %>% 
+  bold(part = "header", bold = T) %>% 
+  #theme_vanilla() %>% 
+  border(part = "body", border = NULL) %>% 
+  hline_top(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>% 
+  hline_bottom(part = "body", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>%
+  hline(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 0.5)) %>%
+  fontsize(part = "all", size = 10) %>% 
+  merge_at(i = 1:3, j = 9) %>%
+  merge_at(i = 1:3, j = 1) %>%
+  set_caption(caption = as_paragraph("Omnibus test or ", as_i("Q"), as_sub("M")," ","test: F(df1 = 2, df2 = 33) = 7.0, p-val = 0.0029")) %>% 
+  autofit()
+
+#save_as_docx("Table S4" = tab.S4, "Table S5" = tab.S5, "Table S6" = tab.S6, "Table S7" = tab.S7, "Table S8" = tab.S8, "Table S9" = tab.S9, "Table S10" = tab.S10, path ="Supplementary Tables.docx")
+
+# Table S11
+tbl <- MLMR_table(MLMR_3N_lnCVR, MLMR_3N_lnCVR2, moderator = "grouped_tissue",group = "Spp", data =dat_N)
+row.names(tbl) <- c("Central", "Peripheral", "Delta (P - C)")
+tbl <- tbl %>% mutate(R2 = round(R2_calc(MLMR_3N_lnCVR)[1],3),
+                      Metric = "lnCVR")
+tbl2 <- tibble::rownames_to_column(tbl, "Coefficient")[,c(9,1:8)]
+
+tab.S11 <- tbl2 %>%
+flextable() %>% 
+  align(align = "center", part = "header") %>% 
+  align(align = "center", part = "body") %>% 
+  mk_par(j = 2, part = "header", value = as_paragraph(as_i("β"), as_sub(""))) %>%
+   mk_par(j = 5, part = "header", value = as_paragraph(as_i("t"), as_sub(MLMR_2_lnRR$QMdf[2]))) %>% 
+  mk_par(j = 6, part = "header", value = as_paragraph(as_i("p"))) %>%
+  mk_par(j = 7, part = "header", value = as_paragraph(as_i("N"),as_sub("species"))) %>%
+  mk_par(j = 8, part = "header", value = as_paragraph(as_i("N"),as_sub("obs"))) %>%
+  mk_par(j = 9, part = "header", value = as_paragraph(as_i("R"),as_sup("2"))) %>% 
+  colformat_double(j = c(3,5), digits = 2) %>% 
+  colformat_double(j = 6, digits = 3) %>% 
+  bold(part = "header", bold = T) %>% 
+  #theme_vanilla() %>% 
+  border(part = "body", border = NULL) %>% 
+  hline_top(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>% 
+  hline_bottom(part = "body", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>%
+  hline(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 0.5)) %>%
+  fontsize(part = "all", size = 10) %>% 
+  merge_at(i = 1:3, j = 9) %>%
+  merge_at(i = 1:3, j = 1) %>%
+  set_caption(caption = as_paragraph("Omnibus test or ", as_i("Q"), as_sub("M")," ","test: F(df1 = 2, df2 = 33) = 7.7, p-val = 0.0018")) %>% 
+  autofit()
+
+#save_as_docx("Table S4" = tab.S4, "Table S5" = tab.S5, "Table S6" = tab.S6, "Table S7" = tab.S7, "Table S8" = tab.S8, "Table S9" = tab.S9, "Table S10" = tab.S10, "Table S11" = tab.S11, path ="Supplementary Tables.docx")
+
+
+# Table S12
+tbl <- MLMR_table(MLMR_4N_lnRR, MLMR_4N_lnRR2, moderator = "Species_diurnal_nocturnal",group = "Spp", data = dat_N)
+row.names(tbl) <- c("Diurnal", "Nocturnal", "Delta (N - D)")
+tbl <- tbl %>% mutate(R2 = round(R2_calc(MLMR_4N_lnRR)[1],3),
+                      Metric = "lnRR")
+tbl2 <- tibble::rownames_to_column(tbl, "Coefficient")[,c(9,1:8)]
+
+tab.S12 <- tbl2 %>%
+flextable() %>% 
+  align(align = "center", part = "header") %>% 
+  align(align = "center", part = "body") %>% 
+  mk_par(j = 2, part = "header", value = as_paragraph(as_i("β"), as_sub(""))) %>%
+   mk_par(j = 5, part = "header", value = as_paragraph(as_i("t"), as_sub(MLMR_2_lnRR$QMdf[2]))) %>% 
+  mk_par(j = 6, part = "header", value = as_paragraph(as_i("p"))) %>%
+  mk_par(j = 7, part = "header", value = as_paragraph(as_i("N"),as_sub("species"))) %>%
+  mk_par(j = 8, part = "header", value = as_paragraph(as_i("N"),as_sub("obs"))) %>%
+  mk_par(j = 9, part = "header", value = as_paragraph(as_i("R"),as_sup("2"))) %>% 
+  colformat_double(j = c(3,5), digits = 2) %>% 
+  colformat_double(j = 6, digits = 3) %>% 
+  bold(part = "header", bold = T) %>% 
+  #theme_vanilla() %>% 
+  border(part = "body", border = NULL) %>% 
+  hline_top(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>% 
+  hline_bottom(part = "body", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>%
+  hline(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 0.5)) %>%
+  fontsize(part = "all", size = 10) %>% 
+  merge_at(i = 1:3, j = 9) %>%
+  merge_at(i = 1:3, j = 1) %>%
+  set_caption(caption = as_paragraph("Omnibus test or ", as_i("Q"), as_sub("M")," ","test: F(df1 = 2, df2 = 35) = 8.2, p-val = 0.0012")) %>% 
+  autofit()
+
+#save_as_docx("Table S4" = tab.S4, "Table S5" = tab.S5, "Table S6" = tab.S6, "Table S7" = tab.S7, "Table S8" = tab.S8, "Table S9" = tab.S9, "Table S10" = tab.S10, "Table S11" = tab.S11, "Table S12" = tab.S12, path ="Supplementary Tables.docx")
+
+# Table S13
+tbl <- MLMR_table(MLMR_4N_lnCVR, MLMR_4N_lnCVR2, moderator = "Species_diurnal_nocturnal",group = "Spp", data = dat_N)
+row.names(tbl) <- c("Diurnal", "Nocturnal", "Delta (N - D)")
+tbl <- tbl %>% mutate(R2 = round(R2_calc(MLMR_4N_lnCVR)[1],3),
+                      Metric = "lnCVR")
+tbl2 <- tibble::rownames_to_column(tbl, "Coefficient")[,c(9,1:8)]
+
+tab.S13 <- tbl2 %>%
+flextable() %>% 
+  align(align = "center", part = "header") %>% 
+  align(align = "center", part = "body") %>% 
+  mk_par(j = 2, part = "header", value = as_paragraph(as_i("β"), as_sub(""))) %>%
+   mk_par(j = 5, part = "header", value = as_paragraph(as_i("t"), as_sub(MLMR_2_lnRR$QMdf[2]))) %>% 
+  mk_par(j = 6, part = "header", value = as_paragraph(as_i("p"))) %>%
+  mk_par(j = 7, part = "header", value = as_paragraph(as_i("N"),as_sub("species"))) %>%
+  mk_par(j = 8, part = "header", value = as_paragraph(as_i("N"),as_sub("obs"))) %>%
+  mk_par(j = 9, part = "header", value = as_paragraph(as_i("R"),as_sup("2"))) %>% 
+  colformat_double(j = c(3,5), digits = 2) %>% 
+  colformat_double(j = 6, digits = 3) %>% 
+  bold(part = "header", bold = T) %>% 
+  #theme_vanilla() %>% 
+  border(part = "body", border = NULL) %>% 
+  hline_top(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>% 
+  hline_bottom(part = "body", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>%
+  hline(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 0.5)) %>%
+  fontsize(part = "all", size = 10) %>% 
+  merge_at(i = 1:3, j = 9) %>%
+  merge_at(i = 1:3, j = 1) %>%
+  set_caption(caption = as_paragraph("Omnibus test or ", as_i("Q"), as_sub("M")," ","test: F(df1 = 2, df2 = 35) = 8.2, p-val = 0.0012")) %>% 
+  autofit()
+
+#save_as_docx("Table S4" = tab.S4, "Table S5" = tab.S5, "Table S6" = tab.S6, "Table S7" = tab.S7, "Table S8" = tab.S8, "Table S9" = tab.S9, "Table S10" = tab.S10, "Table S11" = tab.S11, "Table S12" = tab.S12, "Table S13" = tab.S13, path ="Supplementary Tables.docx")
+
+
+# Table S14
+tbl <- MLMR_table(MLMR_5N_lnRR, MLMR_5N_lnRR2, moderator = "Captive_or_Free_living", group = "Spp", data = dat_N)
+row.names(tbl) <- c("Captive", "Free-living", "Delta (F - C)")
+tbl <- tbl %>% mutate(R2 = round(R2_calc(MLMR_5N_lnRR)[1],3),
+                      Metric = "lnRR")
+tbl2 <- tibble::rownames_to_column(tbl, "Coefficient")[,c(9,1:8)]
+
+tab.S14 <- tbl2 %>%
+flextable() %>% 
+  align(align = "center", part = "header") %>% 
+  align(align = "center", part = "body") %>% 
+  mk_par(j = 2, part = "header", value = as_paragraph(as_i("β"), as_sub(""))) %>%
+   mk_par(j = 5, part = "header", value = as_paragraph(as_i("t"), as_sub(MLMR_2_lnRR$QMdf[2]))) %>% 
+  mk_par(j = 6, part = "header", value = as_paragraph(as_i("p"))) %>%
+  mk_par(j = 7, part = "header", value = as_paragraph(as_i("N"),as_sub("species"))) %>%
+  mk_par(j = 8, part = "header", value = as_paragraph(as_i("N"),as_sub("obs"))) %>%
+  mk_par(j = 9, part = "header", value = as_paragraph(as_i("R"),as_sup("2"))) %>% 
+  colformat_double(j = c(3,5), digits = 2) %>% 
+  colformat_double(j = 6, digits = 3) %>% 
+  bold(part = "header", bold = T) %>% 
+  #theme_vanilla() %>% 
+  border(part = "body", border = NULL) %>% 
+  hline_top(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>% 
+  hline_bottom(part = "body", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>%
+  hline(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 0.5)) %>%
+  fontsize(part = "all", size = 10) %>% 
+  merge_at(i = 1:3, j = 9) %>%
+  merge_at(i = 1:3, j = 1) %>%
+  set_caption(caption = as_paragraph("Omnibus test or ", as_i("Q"), as_sub("M")," ","test: F(df1 = 2, df2 = 35) = 15.2, p-val < .0001")) %>% 
+  autofit()
+
+#save_as_docx("Table S4" = tab.S4, "Table S5" = tab.S5, "Table S6" = tab.S6, "Table S7" = tab.S7, "Table S8" = tab.S8, "Table S9" = tab.S9, "Table S10" = tab.S10, "Table S11" = tab.S11, "Table S12" = tab.S12, "Table S13" = tab.S13, "Table S14" = tab.S14, path ="Supplementary Tables.docx")
+
+# Table S15
+tbl <- MLMR_table(MLMR_5N_lnCVR, MLMR_5N_lnCVR2, moderator = "Captive_or_Free_living", group = "Spp", data = dat_N)
+row.names(tbl) <- c("Captive", "Free-living", "Delta (F - C)")
+tbl <- tbl %>% mutate(R2 = round(R2_calc(MLMR_5N_lnCVR)[1],3),
+                      Metric = "lnCVR")
+tbl2 <- tibble::rownames_to_column(tbl, "Coefficient")[,c(9,1:8)]
+
+tab.S15<- tbl2 %>%
+flextable() %>% 
+  align(align = "center", part = "header") %>% 
+  align(align = "center", part = "body") %>% 
+  mk_par(j = 2, part = "header", value = as_paragraph(as_i("β"), as_sub(""))) %>%
+   mk_par(j = 5, part = "header", value = as_paragraph(as_i("t"), as_sub(MLMR_2_lnRR$QMdf[2]))) %>% 
+  mk_par(j = 6, part = "header", value = as_paragraph(as_i("p"))) %>%
+  mk_par(j = 7, part = "header", value = as_paragraph(as_i("N"),as_sub("species"))) %>%
+  mk_par(j = 8, part = "header", value = as_paragraph(as_i("N"),as_sub("obs"))) %>%
+  mk_par(j = 9, part = "header", value = as_paragraph(as_i("R"),as_sup("2"))) %>% 
+  colformat_double(j = c(3,5), digits = 2) %>% 
+  colformat_double(j = 6, digits = 3) %>% 
+  bold(part = "header", bold = T) %>% 
+  #theme_vanilla() %>% 
+  border(part = "body", border = NULL) %>% 
+  hline_top(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>% 
+  hline_bottom(part = "body", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>%
+  hline(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 0.5)) %>%
+  fontsize(part = "all", size = 10) %>% 
+  merge_at(i = 1:3, j = 9) %>%
+  merge_at(i = 1:3, j = 1) %>%
+  set_caption(caption = as_paragraph("Omnibus test or ", as_i("Q"), as_sub("M")," ","test: F(df1 = 2, df2 = 35) = 6.3, p-val = 0.0045")) %>% 
+  autofit()
+
+#save_as_docx("Table S4" = tab.S4, "Table S5" = tab.S5, "Table S6" = tab.S6, "Table S7" = tab.S7, "Table S8" = tab.S8, "Table S9" = tab.S9, "Table S10" = tab.S10, "Table S11" = tab.S11, "Table S12" = tab.S12, "Table S13" = tab.S13, "Table S14" = tab.S14, "Table S15" = tab.S15, path ="Supplementary Tables.docx")
+
+
+# Table S16
+tbl <- MLMR_table2(MLMR_6N_lnRR)
+row.names(tbl) <- c("Intercept", "Intensity")
+tbl <- tbl %>% mutate(R2 = round(R2_calc(MLMR_6N_lnRR)[1],3),
+                      Metric = "lnRR")
+tbl2 <- tibble::rownames_to_column(tbl, "Coefficient")[,c(9,1:8)]
+
+tab.S16 <- tbl2 %>%
+flextable() %>% 
+  align(align = "center", part = "header") %>% 
+  align(align = "center", part = "body") %>% 
+  mk_par(j = 2, part = "header", value = as_paragraph(as_i("β"), as_sub(""))) %>%
+   mk_par(j = 5, part = "header", value = as_paragraph(as_i("t"), as_sub(MLMR_2_lnRR$QMdf[2]))) %>% 
+  mk_par(j = 6, part = "header", value = as_paragraph(as_i("p"))) %>%
+  mk_par(j = 7, part = "header", value = as_paragraph(as_i("N"),as_sub("species"))) %>%
+  mk_par(j = 8, part = "header", value = as_paragraph(as_i("N"),as_sub("obs"))) %>%
+  mk_par(j = 9, part = "header", value = as_paragraph(as_i("R"),as_sup("2"))) %>% 
+  colformat_double(j = c(3,5), digits = 2) %>% 
+  colformat_double(j = 6, digits = 3) %>% 
+  bold(part = "header", bold = T) %>% 
+  #theme_vanilla() %>% 
+  border(part = "body", border = NULL) %>% 
+  hline_top(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>% 
+  hline_bottom(part = "body", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>%
+  hline(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 0.5)) %>%
+  fontsize(part = "all", size = 10) %>% 
+  merge_at(i = 1:2, j = 9) %>%
+  merge_at(i = 1:2, j = 8) %>%
+  merge_at(i = 1:2, j = 7) %>%
+  merge_at(i = 1:2, j = 1) %>%
+  set_caption(caption = as_paragraph("Omnibus test or ", as_i("Q"), as_sub("M")," ","test: F(df1 = 1, df2 = 266) = 6.7, p-val = 0.0101")) %>% 
+  autofit()
+
+#save_as_docx("Table S4" = tab.S4, "Table S5" = tab.S5, "Table S6" = tab.S6, "Table S7" = tab.S7, "Table S8" = tab.S8, "Table S9" = tab.S9, "Table S10" = tab.S10, "Table S11" = tab.S11, "Table S12" = tab.S12, "Table S13" = tab.S13, "Table S14" = tab.S14, "Table S15" = tab.S15, "Table S16" = tab.S16, path ="Supplementary Tables.docx")
+
+# Table S17
+tbl <- MLMR_table2(MLMR_6N_lnCVR)
+row.names(tbl) <- c("Intercept", "Intensity")
+tbl <- tbl %>% mutate(R2 = round(R2_calc(MLMR_6N_lnCVR)[1],3),
+                      Metric = "lnCVR")
+tbl2 <- tibble::rownames_to_column(tbl, "Coefficient")[,c(9,1:8)]
+
+tab.S17 <- tbl2 %>%
+flextable() %>% 
+  align(align = "center", part = "header") %>% 
+  align(align = "center", part = "body") %>% 
+  mk_par(j = 2, part = "header", value = as_paragraph(as_i("β"), as_sub(""))) %>%
+   mk_par(j = 5, part = "header", value = as_paragraph(as_i("t"), as_sub(MLMR_2_lnRR$QMdf[2]))) %>% 
+  mk_par(j = 6, part = "header", value = as_paragraph(as_i("p"))) %>%
+  mk_par(j = 7, part = "header", value = as_paragraph(as_i("N"),as_sub("species"))) %>%
+  mk_par(j = 8, part = "header", value = as_paragraph(as_i("N"),as_sub("obs"))) %>%
+  mk_par(j = 9, part = "header", value = as_paragraph(as_i("R"),as_sup("2"))) %>% 
+  colformat_double(j = c(3,5), digits = 2) %>% 
+  colformat_double(j = 6, digits = 3) %>% 
+  bold(part = "header", bold = T) %>% 
+  #theme_vanilla() %>% 
+  border(part = "body", border = NULL) %>% 
+  hline_top(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>% 
+  hline_bottom(part = "body", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>%
+  hline(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 0.5)) %>%
+  fontsize(part = "all", size = 10) %>% 
+  merge_at(i = 1:2, j = 9) %>%
+  merge_at(i = 1:2, j = 8) %>%
+  merge_at(i = 1:2, j = 7) %>%
+  merge_at(i = 1:2, j = 1) %>%
+  set_caption(caption = as_paragraph("Omnibus test or ", as_i("Q"), as_sub("M")," ","test: F(df1 = 1, df2 = 266) = 1.3, p-val = 0.2627")) %>% 
+  autofit()
+
+#save_as_docx("Table S4" = tab.S4, "Table S5" = tab.S5, "Table S6" = tab.S6, "Table S7" = tab.S7, "Table S8" = tab.S8, "Table S9" = tab.S9, "Table S10" = tab.S10, "Table S11" = tab.S11, "Table S12" = tab.S12, "Table S13" = tab.S13, "Table S14" = tab.S14, "Table S15" = tab.S15, "Table S16" = tab.S16, "Table S17" = tab.S17, path ="Supplementary Tables.docx")
+
+
+# Table S18
+tbl <- MLMR_table2(MLMR_6N.lux_lnRR)
+row.names(tbl) <- c("Intercept", "Intensity")
+tbl <- tbl %>% mutate(R2 = round(R2_calc(MLMR_6N.lux_lnRR )[1],3),
+                      Metric = "lnRR")
+tbl2 <- tibble::rownames_to_column(tbl, "Coefficient")[,c(9,1:8)]
+
+tab.S18 <- tbl2 %>%
+flextable() %>% 
+  align(align = "center", part = "header") %>% 
+  align(align = "center", part = "body") %>% 
+  mk_par(j = 2, part = "header", value = as_paragraph(as_i("β"), as_sub(""))) %>%
+   mk_par(j = 5, part = "header", value = as_paragraph(as_i("t"), as_sub(MLMR_2_lnRR$QMdf[2]))) %>% 
+  mk_par(j = 6, part = "header", value = as_paragraph(as_i("p"))) %>%
+  mk_par(j = 7, part = "header", value = as_paragraph(as_i("N"),as_sub("species"))) %>%
+  mk_par(j = 8, part = "header", value = as_paragraph(as_i("N"),as_sub("obs"))) %>%
+  mk_par(j = 9, part = "header", value = as_paragraph(as_i("R"),as_sup("2"))) %>% 
+  colformat_double(j = c(3,5), digits = 2) %>% 
+  colformat_double(j = 6, digits = 3) %>% 
+  bold(part = "header", bold = T) %>% 
+  #theme_vanilla() %>% 
+  border(part = "body", border = NULL) %>% 
+  hline_top(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>% 
+  hline_bottom(part = "body", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>%
+  hline(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 0.5)) %>%
+  fontsize(part = "all", size = 10) %>% 
+  merge_at(i = 1:2, j = 9) %>%
+  merge_at(i = 1:2, j = 8) %>%
+  merge_at(i = 1:2, j = 7) %>%
+  merge_at(i = 1:2, j = 1) %>%
+  set_caption(caption = as_paragraph("Omnibus test or ", as_i("Q"), as_sub("M")," ","test: F(df1 = 1, df2 = 106) = 17.9, p-val < .0001")) %>% 
+  autofit()
+
+#save_as_docx("Table S4" = tab.S4, "Table S5" = tab.S5, "Table S6" = tab.S6, "Table S7" = tab.S7, "Table S8" = tab.S8, "Table S9" = tab.S9, "Table S10" = tab.S10, "Table S11" = tab.S11, "Table S12" = tab.S12, "Table S13" = tab.S13, "Table S14" = tab.S14, "Table S15" = tab.S15, "Table S16" = tab.S16, "Table S17" = tab.S17, path ="Supplementary Tables.docx")
+
+# Table S19
+tbl <- MLMR_table2(MLMR_6N.lux_lnCVR)
+row.names(tbl) <- c("Intercept", "Intensity")
+tbl <- tbl %>% mutate(R2 = round(R2_calc(MLMR_6N.lux_lnCVR )[1],3),
+                      Metric = "lnCVR")
+tbl2 <- tibble::rownames_to_column(tbl, "Coefficient")[,c(9,1:8)]
+
+tab.S19 <- tbl2 %>%
+flextable() %>% 
+  align(align = "center", part = "header") %>% 
+  align(align = "center", part = "body") %>% 
+  mk_par(j = 2, part = "header", value = as_paragraph(as_i("β"), as_sub(""))) %>%
+   mk_par(j = 5, part = "header", value = as_paragraph(as_i("t"), as_sub(MLMR_2_lnRR$QMdf[2]))) %>% 
+  mk_par(j = 6, part = "header", value = as_paragraph(as_i("p"))) %>%
+  mk_par(j = 7, part = "header", value = as_paragraph(as_i("N"),as_sub("species"))) %>%
+  mk_par(j = 8, part = "header", value = as_paragraph(as_i("N"),as_sub("obs"))) %>%
+  mk_par(j = 9, part = "header", value = as_paragraph(as_i("R"),as_sup("2"))) %>% 
+  colformat_double(j = c(3,5), digits = 2) %>% 
+  colformat_double(j = 6, digits = 3) %>% 
+  bold(part = "header", bold = T) %>% 
+  #theme_vanilla() %>% 
+  border(part = "body", border = NULL) %>% 
+  hline_top(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>% 
+  hline_bottom(part = "body", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>%
+  hline(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 0.5)) %>%
+  fontsize(part = "all", size = 10) %>% 
+  merge_at(i = 1:2, j = 9) %>%
+  merge_at(i = 1:2, j = 8) %>%
+  merge_at(i = 1:2, j = 7) %>%
+  merge_at(i = 1:2, j = 1) %>%
+  set_caption(caption = as_paragraph("Omnibus test or ", as_i("Q"), as_sub("M")," ","test: F(df1 = 1, df2 = 106) = 3.3, p-val = 0.0732")) %>% 
+  autofit()
+
+
+# Table S20
+tbl <- MLMR_table2(MLMR_7N.wave_lnRR)
+row.names(tbl) <- c("Intercept", "Wavelength")
+tbl <- tbl %>% mutate(R2 = round(R2_calc(MLMR_7N.wave_lnRR)[1],3),
+                      Metric = "lnRR")
+tbl2 <- tibble::rownames_to_column(tbl, "Coefficient")[,c(9,1:8)]
+
+tab.S20 <- tbl2 %>%
+flextable() %>% 
+  align(align = "center", part = "header") %>% 
+  align(align = "center", part = "body") %>% 
+  mk_par(j = 2, part = "header", value = as_paragraph(as_i("β"), as_sub(""))) %>%
+   mk_par(j = 5, part = "header", value = as_paragraph(as_i("t"), as_sub(MLMR_2_lnRR$QMdf[2]))) %>% 
+  mk_par(j = 6, part = "header", value = as_paragraph(as_i("p"))) %>%
+  mk_par(j = 7, part = "header", value = as_paragraph(as_i("N"),as_sub("species"))) %>%
+  mk_par(j = 8, part = "header", value = as_paragraph(as_i("N"),as_sub("obs"))) %>%
+  mk_par(j = 9, part = "header", value = as_paragraph(as_i("R"),as_sup("2"))) %>% 
+  colformat_double(j = c(3,5), digits = 2) %>% 
+  colformat_double(j = 6, digits = 3) %>% 
+  bold(part = "header", bold = T) %>% 
+  #theme_vanilla() %>% 
+  border(part = "body", border = NULL) %>% 
+  hline_top(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>% 
+  hline_bottom(part = "body", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>%
+  hline(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 0.5)) %>%
+  fontsize(part = "all", size = 10) %>% 
+  merge_at(i = 1:2, j = 9) %>%
+  merge_at(i = 1:2, j = 8) %>%
+  merge_at(i = 1:2, j = 7) %>%
+  merge_at(i = 1:2, j = 1) %>%
+  set_caption(caption = as_paragraph("Omnibus test or ", as_i("Q"), as_sub("M")," ","test: F(df1 = 1, df2 = 79) = 13.0, p-val = 0.0006")) %>% 
+  autofit()
+
+
+# Table S21
+tbl <- MLMR_table2(MLMR_7N.wave_lnCVR)
+row.names(tbl) <- c("Intercept", "Wavelength")
+tbl <- tbl %>% mutate(R2 = round(R2_calc(MLMR_7N.wave_lnCVR)[1],3),
+                      Metric = "lnCVR")
+tbl2 <- tibble::rownames_to_column(tbl, "Coefficient")[,c(9,1:8)]
+
+tab.S21 <- tbl2 %>%
+flextable() %>% 
+  align(align = "center", part = "header") %>% 
+  align(align = "center", part = "body") %>% 
+  mk_par(j = 2, part = "header", value = as_paragraph(as_i("β"), as_sub(""))) %>%
+   mk_par(j = 5, part = "header", value = as_paragraph(as_i("t"), as_sub(MLMR_2_lnRR$QMdf[2]))) %>% 
+  mk_par(j = 6, part = "header", value = as_paragraph(as_i("p"))) %>%
+  mk_par(j = 7, part = "header", value = as_paragraph(as_i("N"),as_sub("species"))) %>%
+  mk_par(j = 8, part = "header", value = as_paragraph(as_i("N"),as_sub("obs"))) %>%
+  mk_par(j = 9, part = "header", value = as_paragraph(as_i("R"),as_sup("2"))) %>% 
+  colformat_double(j = c(3,5), digits = 2) %>% 
+  colformat_double(j = 6, digits = 3) %>% 
+  bold(part = "header", bold = T) %>% 
+  #theme_vanilla() %>% 
+  border(part = "body", border = NULL) %>% 
+  hline_top(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>% 
+  hline_bottom(part = "body", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>%
+  hline(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 0.5)) %>%
+  fontsize(part = "all", size = 10) %>% 
+  merge_at(i = 1:2, j = 9) %>%
+  merge_at(i = 1:2, j = 8) %>%
+  merge_at(i = 1:2, j = 7) %>%
+  merge_at(i = 1:2, j = 1) %>%
+  set_caption(caption = as_paragraph("Omnibus test or ", as_i("Q"), as_sub("M")," ","test: F(df1 = 1, df2 = 79) = 2.6, p-val = 0.1134")) %>% 
+  autofit()
+
+
+# Table S22
+tbl <- MLMR_table(MLMR_7N_lnRR, MLMR_7N_lnRR2, moderator = "Light_colour", group = "Spp", data = dat_N)
+row.names(tbl) <- c("White", "Red", "Yellow", "Blue","Delta (R - W)", "Delta (Y - W)", "Delta (B - W)")
+tbl <- tbl %>% mutate(R2 = round(R2_calc(MLMR_7N_lnRR)[1],3),
+                      Metric = "lnRR")
+tbl2 <- tibble::rownames_to_column(tbl, "Coefficient")[,c(9,1:8)]
+
+tab.S22 <- tbl2 %>%
+flextable() %>% 
+  align(align = "center", part = "header") %>% 
+  align(align = "center", part = "body") %>% 
+  mk_par(j = 2, part = "header", value = as_paragraph(as_i("β"), as_sub(""))) %>%
+   mk_par(j = 5, part = "header", value = as_paragraph(as_i("t"), as_sub(MLMR_2_lnRR$QMdf[2]))) %>% 
+  mk_par(j = 6, part = "header", value = as_paragraph(as_i("p"))) %>%
+  mk_par(j = 7, part = "header", value = as_paragraph(as_i("N"),as_sub("species"))) %>%
+  mk_par(j = 8, part = "header", value = as_paragraph(as_i("N"),as_sub("obs"))) %>%
+  mk_par(j = 9, part = "header", value = as_paragraph(as_i("R"),as_sup("2"))) %>% 
+  colformat_double(j = c(3,5), digits = 2) %>% 
+  colformat_double(j = 6, digits = 3) %>% 
+  bold(part = "header", bold = T) %>% 
+  #theme_vanilla() %>% 
+  border(part = "body", border = NULL) %>% 
+  hline_top(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>% 
+  hline_bottom(part = "body", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>%
+  hline(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 0.5)) %>%
+  fontsize(part = "all", size = 10) %>% 
+  merge_at(i = 1:7, j = 9) %>%
+  merge_at(i = 1:7, j = 1) %>%
+  set_caption(caption = as_paragraph("Omnibus test or ", as_i("Q"), as_sub("M")," ","test: F(df1 = 2, df2 = 27) = 5649.5, p-val < .0001")) %>% 
+  autofit()
+
+
+# Table S23
+tbl <- MLMR_table(MLMR_7N_lnCVR, MLMR_7N_lnCVR2, moderator = "Light_colour", group = "Spp", data = dat_N)
+row.names(tbl) <- c("White", "Red", "Yellow", "Blue","Delta (R - W)", "Delta (Y - W)", "Delta (B - W)")
+tbl <- tbl %>% mutate(R2 = round(R2_calc(MLMR_7N_lnCVR)[1],3),
+                      Metric = "lnCVR")
+tbl2 <- tibble::rownames_to_column(tbl, "Coefficient")[,c(9,1:8)]
+
+tab.S23 <- tbl2 %>%
+flextable() %>% 
+  align(align = "center", part = "header") %>% 
+  align(align = "center", part = "body") %>% 
+  mk_par(j = 2, part = "header", value = as_paragraph(as_i("β"), as_sub(""))) %>%
+   mk_par(j = 5, part = "header", value = as_paragraph(as_i("t"), as_sub(MLMR_2_lnRR$QMdf[2]))) %>% 
+  mk_par(j = 6, part = "header", value = as_paragraph(as_i("p"))) %>%
+  mk_par(j = 7, part = "header", value = as_paragraph(as_i("N"),as_sub("species"))) %>%
+  mk_par(j = 8, part = "header", value = as_paragraph(as_i("N"),as_sub("obs"))) %>%
+  mk_par(j = 9, part = "header", value = as_paragraph(as_i("R"),as_sup("2"))) %>% 
+  colformat_double(j = c(3,5), digits = 2) %>% 
+  colformat_double(j = 6, digits = 3) %>% 
+  bold(part = "header", bold = T) %>% 
+  #theme_vanilla() %>% 
+  border(part = "body", border = NULL) %>% 
+  hline_top(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>% 
+  hline_bottom(part = "body", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>%
+  hline(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 0.5)) %>%
+  fontsize(part = "all", size = 10) %>% 
+  merge_at(i = 1:7, j = 9) %>%
+  merge_at(i = 1:7, j = 1) %>%
+  set_caption(caption = as_paragraph("Omnibus test or ", as_i("Q"), as_sub("M")," ","test: F(df1 = 2, df2 = 27) = 2624751309703048.5, p-val < .0001")) %>% 
+  autofit()
+
+
+# Table S24
+tbl <- MLMR_table(MLMR_8N_lnRR, MLMR_8N_lnRR2, moderator = "Night_Phase_category", group = "Spp", data = dat_N)
+row.names(tbl) <- c("All night", "Late night", "Mid night", "Early night","Delta (L - A)", "Delta (M - A)", "Delta (E - A)")
+tbl <- tbl %>% mutate(R2 = round(R2_calc(MLMR_8N_lnRR)[1],3),
+                      Metric = "lnRR")
+tbl2 <- tibble::rownames_to_column(tbl, "Coefficient")[,c(9,1:8)]
+
+tab.S24 <- tbl2 %>%
+flextable() %>% 
+  align(align = "center", part = "header") %>% 
+  align(align = "center", part = "body") %>% 
+  mk_par(j = 2, part = "header", value = as_paragraph(as_i("β"), as_sub(""))) %>%
+   mk_par(j = 5, part = "header", value = as_paragraph(as_i("t"), as_sub(MLMR_2_lnRR$QMdf[2]))) %>% 
+  mk_par(j = 6, part = "header", value = as_paragraph(as_i("p"))) %>%
+  mk_par(j = 7, part = "header", value = as_paragraph(as_i("N"),as_sub("species"))) %>%
+  mk_par(j = 8, part = "header", value = as_paragraph(as_i("N"),as_sub("obs"))) %>%
+  mk_par(j = 9, part = "header", value = as_paragraph(as_i("R"),as_sup("2"))) %>% 
+  colformat_double(j = c(3,5), digits = 2) %>% 
+  colformat_double(j = 6, digits = 3) %>% 
+  bold(part = "header", bold = T) %>% 
+  #theme_vanilla() %>% 
+  border(part = "body", border = NULL) %>% 
+  hline_top(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>% 
+  hline_bottom(part = "body", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>%
+  hline(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 0.5)) %>%
+  fontsize(part = "all", size = 10) %>% 
+  merge_at(i = 1:7, j = 9) %>%
+  merge_at(i = 1:7, j = 1) %>%
+  set_caption(caption = as_paragraph("Omnibus test or ", as_i("Q"), as_sub("M")," ","test: F(df1 = 4, df2 = 23) = 3165.6, p-val < .0001")) %>% 
+  autofit()
+
+
+# Table S25
+tbl <- MLMR_table(MLMR_8N_lnCVR, MLMR_8N_lnCVR2, moderator = "Night_Phase_category", group = "Spp", data = dat_N)
+row.names(tbl) <- c("All night", "Late night", "Mid night", "Early night","Delta (L - A)", "Delta (M - A)", "Delta (E - A)")
+tbl <- tbl %>% mutate(R2 = round(R2_calc(MLMR_8N_lnCVR)[1],3),
+                      Metric = "lnCVR")
+tbl2 <- tibble::rownames_to_column(tbl, "Coefficient")[,c(9,1:8)]
+
+tab.S25 <- tbl2 %>%
+flextable() %>% 
+  align(align = "center", part = "header") %>% 
+  align(align = "center", part = "body") %>% 
+  mk_par(j = 2, part = "header", value = as_paragraph(as_i("β"), as_sub(""))) %>%
+   mk_par(j = 5, part = "header", value = as_paragraph(as_i("t"), as_sub(MLMR_2_lnRR$QMdf[2]))) %>% 
+  mk_par(j = 6, part = "header", value = as_paragraph(as_i("p"))) %>%
+  mk_par(j = 7, part = "header", value = as_paragraph(as_i("N"),as_sub("species"))) %>%
+  mk_par(j = 8, part = "header", value = as_paragraph(as_i("N"),as_sub("obs"))) %>%
+  mk_par(j = 9, part = "header", value = as_paragraph(as_i("R"),as_sup("2"))) %>% 
+  colformat_double(j = c(3,5), digits = 2) %>% 
+  colformat_double(j = 6, digits = 3) %>% 
+  bold(part = "header", bold = T) %>% 
+  #theme_vanilla() %>% 
+  border(part = "body", border = NULL) %>% 
+  hline_top(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>% 
+  hline_bottom(part = "body", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>%
+  hline(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 0.5)) %>%
+  fontsize(part = "all", size = 10) %>% 
+  merge_at(i = 1:7, j = 9) %>%
+  merge_at(i = 1:7, j = 1) %>%
+  set_caption(caption = as_paragraph("Omnibus test or ", as_i("Q"), as_sub("M")," ","test: F(df1 = 4, df2 = 23) = 2.8, p-val = 0.0502")) %>% 
+  autofit()
+
+
+# Table S26
+tbl <- MLMR_table2(MLMR_9N_lnRR2)
+row.names(tbl) <- c("Intercept", "Duration")
+tbl <- tbl %>% mutate(R2 = round(R2_calc(MLMR_9N_lnRR2)[1],3),
+                      Metric = "lnRR")
+tbl2 <- tibble::rownames_to_column(tbl, "Coefficient")[,c(9,1:8)]
+
+tab.S26 <- tbl2 %>%
+flextable() %>% 
+  align(align = "center", part = "header") %>% 
+  align(align = "center", part = "body") %>% 
+  mk_par(j = 2, part = "header", value = as_paragraph(as_i("β"), as_sub(""))) %>%
+   mk_par(j = 5, part = "header", value = as_paragraph(as_i("t"), as_sub(MLMR_2_lnRR$QMdf[2]))) %>% 
+  mk_par(j = 6, part = "header", value = as_paragraph(as_i("p"))) %>%
+  mk_par(j = 7, part = "header", value = as_paragraph(as_i("N"),as_sub("species"))) %>%
+  mk_par(j = 8, part = "header", value = as_paragraph(as_i("N"),as_sub("obs"))) %>%
+  mk_par(j = 9, part = "header", value = as_paragraph(as_i("R"),as_sup("2"))) %>% 
+  colformat_double(j = c(3,5), digits = 2) %>% 
+  colformat_double(j = 6, digits = 3) %>% 
+  bold(part = "header", bold = T) %>% 
+  #theme_vanilla() %>% 
+  border(part = "body", border = NULL) %>% 
+  hline_top(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>% 
+  hline_bottom(part = "body", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>%
+  hline(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 0.5)) %>%
+  fontsize(part = "all", size = 10) %>% 
+  merge_at(i = 1:2, j = 9) %>%
+  merge_at(i = 1:2, j = 8) %>%
+  merge_at(i = 1:2, j = 7) %>%
+  merge_at(i = 1:2, j = 1) %>%
+  set_caption(caption = as_paragraph("Omnibus test or ", as_i("Q"), as_sub("M")," ","test: F(df1 = 1, df2 = 284) = 6702.0, p-val < .0001")) %>% 
+  autofit()
+
+# Table S27
+tbl <- MLMR_table2(MLMR_9N_lnCVR2)
+row.names(tbl) <- c("Intercept", "Duration")
+tbl <- tbl %>% mutate(R2 = round(R2_calc(MLMR_9N_lnCVR2)[1],3),
+                      Metric = "lnCVR")
+tbl2 <- tibble::rownames_to_column(tbl, "Coefficient")[,c(9,1:8)]
+
+tab.S27 <- tbl2 %>%
+flextable() %>% 
+  align(align = "center", part = "header") %>% 
+  align(align = "center", part = "body") %>% 
+  mk_par(j = 2, part = "header", value = as_paragraph(as_i("β"), as_sub(""))) %>%
+   mk_par(j = 5, part = "header", value = as_paragraph(as_i("t"), as_sub(MLMR_2_lnRR$QMdf[2]))) %>% 
+  mk_par(j = 6, part = "header", value = as_paragraph(as_i("p"))) %>%
+  mk_par(j = 7, part = "header", value = as_paragraph(as_i("N"),as_sub("species"))) %>%
+  mk_par(j = 8, part = "header", value = as_paragraph(as_i("N"),as_sub("obs"))) %>%
+  mk_par(j = 9, part = "header", value = as_paragraph(as_i("R"),as_sup("2"))) %>% 
+  colformat_double(j = c(3,5), digits = 2) %>% 
+  colformat_double(j = 6, digits = 3) %>% 
+  bold(part = "header", bold = T) %>% 
+  #theme_vanilla() %>% 
+  border(part = "body", border = NULL) %>% 
+  hline_top(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>% 
+  hline_bottom(part = "body", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>%
+  hline(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 0.5)) %>%
+  fontsize(part = "all", size = 10) %>% 
+  merge_at(i = 1:2, j = 9) %>%
+  merge_at(i = 1:2, j = 8) %>%
+  merge_at(i = 1:2, j = 7) %>%
+  merge_at(i = 1:2, j = 1) %>%
+  set_caption(caption = as_paragraph("Omnibus test or ", as_i("Q"), as_sub("M")," ","test: F(df1 = 1, df2 = 248) = 1.7, p-val = 0.1903")) %>% 
+  autofit()
+
+# Table S30
+tbl <- MLMR_table(Study_type_lnRR, Study_type_lnRR2, moderator = "Study_type", group = "Spp", data = dat)
+row.names(tbl) <- c("Experiment", "Observation", "Delta (O - E)")
+tbl <- tbl %>% mutate(R2 = round(R2_calc(Study_type_lnRR)[1],3),
+                      Metric = "lnRR")
+tbl2 <- tibble::rownames_to_column(tbl, "Coefficient")[,c(9,1:8)]
+
+tab.S30 <- tbl2 %>%
+flextable() %>% 
+  align(align = "center", part = "header") %>% 
+  align(align = "center", part = "body") %>% 
+  mk_par(j = 2, part = "header", value = as_paragraph(as_i("β"), as_sub(""))) %>%
+   mk_par(j = 5, part = "header", value = as_paragraph(as_i("t"), as_sub(MLMR_2_lnRR$QMdf[2]))) %>% 
+  mk_par(j = 6, part = "header", value = as_paragraph(as_i("p"))) %>%
+  mk_par(j = 7, part = "header", value = as_paragraph(as_i("N"),as_sub("species"))) %>%
+  mk_par(j = 8, part = "header", value = as_paragraph(as_i("N"),as_sub("obs"))) %>%
+  mk_par(j = 9, part = "header", value = as_paragraph(as_i("R"),as_sup("2"))) %>% 
+  colformat_double(j = c(3,5), digits = 2) %>% 
+  colformat_double(j = 6, digits = 3) %>% 
+  bold(part = "header", bold = T) %>% 
+  #theme_vanilla() %>% 
+  border(part = "body", border = NULL) %>% 
+  hline_top(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>% 
+  hline_bottom(part = "body", border = officer::fp_border(color = "black", style = "solid", width = 1.5)) %>%
+  hline(part = "head", border = officer::fp_border(color = "black", style = "solid", width = 0.5)) %>%
+  fontsize(part = "all", size = 10) %>% 
+  merge_at(i = 1:3, j = 9) %>%
+  merge_at(i = 1:3, j = 1) %>%
+  set_caption(caption = as_paragraph("Omnibus test or ", as_i("Q"), as_sub("M")," ","test: F(df1 = 1, df2 = 36) = 1.2, p-val = 0.2889")) %>% 
+  autofit()
+
+save_as_docx("Table S4" = tab.S4, "Table S5" = tab.S5, "Table S6" = tab.S6, "Table S7" = tab.S7, "Table S8" = tab.S8, "Table S9" = tab.S9, "Table S10" = tab.S10, "Table S11" = tab.S11, "Table S12" = tab.S12, "Table S13" = tab.S13, "Table S14" = tab.S14, "Table S15" = tab.S15, "Table S16" = tab.S16, "Table S17" = tab.S17, "Table S18" = tab.S18, "Table S19" = tab.S19, "Table S20" = tab.S20, "Table S21" = tab.S21, "Table S22" = tab.S22, "Table S23" = tab.S23, "Table S24" = tab.S24, "Table S25" = tab.S25, "Table S26" = tab.S26, "Table S27" = tab.S27, "Table S28" = tab.S28, "Table S29" = tab.S29, "Table S30" = tab.S30, path ="Supplementary Tables.docx")
+
+```
+
+# Supplementary Figures
+
+```{r}
+# Figure S7
+# getting blups (best linear predictors from the model) for lnRR
+blups <- ranef(MLMA_lnRR) 
+t.spp <- blups$Spp # this needs to be added
+t.phy <- blups$Phy
+t.study <- blups$StudyID # study
+t.spp <- rownames_to_column(t.spp, var = "Species")
+t.phy <- rownames_to_column(t.phy, var = "Species")
+t.spp$Species <- t.phy$Species # uppercase
+t.study <- rownames_to_column(t.study, var = "Study") # study
+
+# average species
+colnames(t.spp) <- c("Species", "Deviation", "SE", "Lower_bound", "Upper_bound")
+colnames(t.phy) <- c("Species", "Deviation", "SE", "Lower_bound", "Upper_bound")
+colnames(t.study) <- c("Study", "Deviation", "SE", "Lower_bound", "Upper_bound")
+
+# sorting match between study and species
+dat %>% group_by(StudyID) %>% summarise(Species = unique(Phy)) -> dat_match # warning information: https://stackoverflow.com/questions/62140483/how-to-interpret-dplyr-message-summarise-regrouping-output-by-x-override
+
+index <- match(dat_match$Species, t.spp$Species)
+
+spp.mean <- rep(MLMA_lnRR$b, dim(t.spp)[1]) + t.spp$Deviation + t.phy$Deviation
+spp.se <- sqrt(MLMA_lnRR$se^2 + t.spp$SE^2 +  t.phy$SE^2) 
+spp.lb <- spp.mean - spp.se * qnorm(0.975) 
+spp.ub <- spp.mean + spp.se * qnorm(0.975)
+re.spp <- tibble(Species = t.spp$Species, Mean = spp.mean, SE = spp.se, Lower_bound = spp.lb, Upper_bound = spp.ub) %>% arrange(Species)
+N_obs <- dat %>% group_by(Phy) %>% summarise(N_obs=n()) # calculate sample size
+names(N_obs)[1] <- "Species"
+re.spp.lnRR <- left_join(re.spp,N_obs,by = "Species")
+tip.label <- data.frame(Species = my.tr$tip.label) # extract tip label
+re.spp.lnRR2 <- left_join(tip.label,re.spp.lnRR,by = "Species") 
+
+
+# getting blups (best linear predictors from the model) for lnCVR
+blups <- ranef(MLMA_lnCVR) 
+t.spp <- blups$Spp # this needs to be added
+t.phy <- blups$Phy
+t.study <- blups$StudyID # study
+t.spp <- rownames_to_column(t.spp, var = "Species")
+t.phy <- rownames_to_column(t.phy, var = "Species")
+t.spp$Species <- t.phy$Species # uppercase
+t.study <- rownames_to_column(t.study, var = "Study") # study
+
+# average species
+colnames(t.spp) <- c("Species", "Deviation", "SE", "Lower_bound", "Upper_bound")
+colnames(t.phy) <- c("Species", "Deviation", "SE", "Lower_bound", "Upper_bound")
+colnames(t.study) <- c("Study", "Deviation", "SE", "Lower_bound", "Upper_bound")
+
+# sorting match between study and species
+dat %>% group_by(StudyID) %>% summarise(Species = unique(Phy)) -> dat_match # warning information: https://stackoverflow.com/questions/62140483/how-to-interpret-dplyr-message-summarise-regrouping-output-by-x-override
+
+index <- match(dat_match$Species, t.spp$Species)
+
+spp.mean <- rep(MLMA_lnCVR$b, dim(t.spp)[1]) + t.spp$Deviation + t.phy$Deviation
+spp.se <- sqrt(MLMA_lnCVR$se^2 + t.spp$SE^2 +  t.phy$SE^2) 
+spp.lb <- spp.mean - spp.se * qnorm(0.975) 
+spp.ub <- spp.mean + spp.se * qnorm(0.975)
+re.spp <- tibble(Species = t.spp$Species, Mean = spp.mean, SE = spp.se, Lower_bound = spp.lb, Upper_bound = spp.ub) %>% arrange(Species)
+N_obs <- dat %>% group_by(Phy) %>% summarise(N_obs=n()) # calculate sample size
+names(N_obs)[1] <- "Species"
+re.spp.lnCVR <- left_join(re.spp,N_obs,by = "Species")
+tip.label <- data.frame(Species = my.tr$tip.label) # extract tip label
+re.spp.lnCVR2 <- left_join(tip.label,re.spp.lnCVR,by = "Species") 
+
+
+
+# get class data
+spp.class <- dplyr::distinct(dat, Phy, .keep_all = TRUE) %>% dplyr::select(Class, Phy)
+names(spp.class)[2] <- "Species"
+
+spp.class2 <- left_join(tip.label,spp.class,by = "Species")
+
+# Actinopterygii and Osteichthyes all belong to fish, although there are differnt. In our dataset, only Actinopterygii only has one estimate. To make the figure easy, we change Actinopterygii to Osteichthyes 
+spp.class2$Class[spp.class2$Class == "Actinopterygii"] <- "Osteichthyes"
+
+# version 2
+p1 <- ggtree(my.tr, branch.length = "branch.length") 
+# https://yulab-smu.top/treedata-book/chapter7.html  
+p2 <- p1 %<+% spp.class2 + geom_tiplab(aes(color  = Class),size=3,fontface = "italic") + geom_tippoint(aes(color=Class)) + xlim_expand(c(0,3), panel = "Tree") + guides(color="none")  # xlim issue https://stackoverflow.com/questions/48928250/ggtreefacet-plot-second-panel-uses-xlim-parameter-from-first-one
+p3 <- facet_plot(p2, panel = 'N observations', data = re.spp.lnRR2, 
+				geom = geom_barh, 
+				mapping = aes(x = N_obs,fill=Class,color=Class), alpha = 0.4, stat='identity') +  guides(fill="none",color="none") + # #0072B2 https://yulab-smu.top/treedata-book/chapter12.html,
+  geom_facet(panel = "Estimates of mean ratio (lnRR)", data = re.spp.lnRR2,
+           geom = ggstance::geom_pointrangeh, # geom_pointrange
+           mapping = aes(x = Mean, xmin = Lower_bound, xmax = Upper_bound, color = Class)) + # #CC79A7
+  # add overall effect MLMA_lnRR$b
+  geom_facet(panel = "Estimates of mean ratio (lnRR)", data = re.spp.lnRR2,
+           geom = geom_vline, 
+           mapping = aes(xintercept = -0.45),linetype="dashed",color="grey") +  # add multiple panels or multiple layers on the same panels (Figure 13.1) # https://yulab-smu.top/treedata-book/chapter7.html - at Chapter 13
+  geom_facet(panel = "Estimates of CV ratio (lnCVR)", data = re.spp.lnCVR2,
+           geom = ggstance::geom_pointrangeh, 
+           mapping = aes(x = Mean, xmin = Lower_bound, xmax = Upper_bound, color = Class)) + 
+  # add overall effect MLMA_lnCVR$b
+  geom_facet(panel = "Estimates of CV ratio (lnCVR)", data = re.spp.lnRR2,
+           geom = geom_vline, 
+           mapping = aes(xintercept = 0.21), linetype="dashed",color="grey") + 
+  theme_tree2() + theme(strip.background = element_rect(fill = "white"))
+
+# lbs <- c(Tree = "Phylogenetic tree") # change facet name # https://guangchuangyu.github.io/cn/2018/09/facet_labeller/
+# p3 <- ggtree::facet_labeller(p3,lbs)
+p4 <- facet_widths(p3, c(Tree=0.7,`N observations`=0.2,`Estimates of mean ratio (lnRR)`=0.4,`Estimates of CV ratio (lnCVR)`=0.4)) # set the widths of specific panels (it also supports using a name vector)
+
+png(filename = "Figure S7 (Phy est).png", width = 8, height = 6, units = "in", type = "windows", res = 400)
+p4
+dev.off()
+
+
+# Figure S8
+Q7_color_lnRR <- orchard_plot(MLMR_7N_lnRR, 
+             mod = "Light_colour", 
+             alpha = 0.9, angle = 0,
+             xlab = "Response magnitude (mean ratio)", #transfm = "exp",
+             group = "Species", k = TRUE, g = TRUE,
+             trunk.size = 1, branch.size = 0.5, twig.size = 1, errorbar = 0.1, precision.size = 2.5,
+             legend.pos = "bottom.right",
+             data = dat_N) +
+  scale_y_continuous(expand = c(0,0)) +
+  theme(legend.title = element_text(size = 5),
+        legend.text = element_text(size = 5)) + 
+  #scale_y_continuous(limits = c(-3,1.5)) +
+  scale_fill_manual(values = c("white","red","#F0E442","blue"))
+
+Q7_color_lnCVR <- orchard_plot(MLMR_7N_lnCVR, 
+             mod = "Light_colour", 
+             alpha = 0.9, angle = 0,
+             xlab = "Response variability (CV ratio)", #transfm = "exp",
+             group = "Species", k = TRUE, g = TRUE,
+             trunk.size = 1, branch.size = 0.5, twig.size = 1, errorbar = 0.1, precision.size = 2.5,
+             legend.pos = "bottom.right",
+             data = dat_N) +
+  scale_y_continuous(expand = c(0,0)) +
+  theme(legend.title = element_text(size = 5),
+        legend.text = element_text(size = 5)) + 
+  #scale_y_continuous(limits = c(-2,3)) +
+  scale_fill_manual(values = c("white","red","#F0E442","blue"))
+
+
+png(filename = "Figure S8 (color).png", width = 8, height = 5, units = "in", type = "windows", res = 400)
+(Q7_color_lnRR  | Q7_color_lnCVR) + plot_annotation(tag_levels = "A")
+dev.off()
+
+
+# Figure S9
+Q8_phase_lnRR <- orchard_plot(MLMR_8N_lnRR, 
+             mod = "Night_Phase_category", 
+             alpha = 0.9, angle = 0,
+             xlab = "Response magnitude (mean ratio)", #transfm = "exp",
+             group = "Species", k = TRUE, g = TRUE,
+             trunk.size = 1, branch.size = 0.5, twig.size = 1, errorbar = 0.1, precision.size = 2.5,
+             legend.pos = "bottom.right",
+             data = dat_N) +
+  scale_y_continuous(expand = c(0,0)) +
+  theme(legend.title = element_text(size = 5),
+        legend.text = element_text(size = 5)) +
+  paletteer::scale_fill_paletteer_d("nord::aurora")
+
+Q8_phase_lnCVR <- orchard_plot(MLMR_8N_lnCVR, 
+             mod = "Night_Phase_category", 
+             alpha = 0.9, angle = 0,
+             xlab = "Response variability (CV ratio)", #transfm = "exp",
+             group = "Species", k = TRUE, g = TRUE,
+             trunk.size = 1, branch.size = 0.5, twig.size = 1, errorbar = 0.1, precision.size = 2.5,
+             legend.pos = "bottom.right",
+             data = dat_N) +
+  scale_y_continuous(expand = c(0,0)) +
+  theme(legend.title = element_text(size = 5),
+        legend.text = element_text(size = 5)) +
+  paletteer::scale_fill_paletteer_d("nord::aurora")
+
+png(filename = "Figure S9 (phase).png", width = 8, height = 5, units = "in", type = "windows", res = 400)
+(Q8_phase_lnRR | Q8_phase_lnCVR) + plot_annotation(tag_levels = "A")
+dev.off()
+
+# Figure S10
+Q9_duration_lnRR <- bubble_plot(MLMR_9N_lnRR2, 
+            mod = "Exposure_duration", 
+            xlab = "Experimental duration of ALAN (days)", ylab = "Response magnitude (mean ratio)",
+            group = "Species", k = TRUE, g = TRUE,
+            ci.col = "black", pi.col = "black", bubble.col = "#D55E00",
+            data = dat_N, legend.pos = "bottom.right") +
+            theme(axis.text.x = element_text(size = 12, colour = "black"), axis.text.y = element_text(size = 12, colour = "black"), axis.title.x = element_text(size = 12, colour = "black"), plot.title = element_text(size = 12, colour = "black")) +
+  theme(panel.grid = element_blank())
+
+Q9_duration_lnCVR <- bubble_plot(MLMR_9N_lnCVR, 
+            mod = "Extended_hours", 
+            xlab = "Daily duration of ALAN (hours)", ylab = "Response variability (CV ratio)",
+            group = "Species", k = TRUE, g = TRUE,
+            ci.col = "black", pi.col = "black", bubble.col = "#D55E00",
+            data = dat_N, legend.pos = "bottom.right") +
+            theme(axis.text.x = element_text(size = 12, colour = "black"), axis.text.y = element_text(size = 12, colour = "black"), axis.title.x = element_text(size = 12, colour = "black"), plot.title = element_text(size = 12, colour = "black")) +
+  theme(panel.grid = element_blank())
+
+png(filename = "Figure S10 (duration).png", width = 8, height = 5, units = "in", type = "windows", res = 400)
+(Q9_duration_lnRR | Q9_duration_lnCVR) + plot_annotation(tag_levels = "A")
+dev.off()
+```
+
+
+# Additional analysis
+
+These are additional analyses that were required by peer-review referees
+
+## Normality check
+
+```{r}
+png(filename = "Figure (Normality check lnRR).png", width = 8, height = 8, units = "in", type = "windows", res = 400)
+# define plotting region
+par(mfrow=c(2,2)) 
+# create histogram
+hist(exp(dat$lnRR), col='steelblue', main='Before log-transformation', xlab="Response ratio (RR)")
+hist(dat$lnRR, col='steelblue', main='After log-transformation',xlab="Log response ratio (lnRR)")
+# create Q-Q plot 
+qqnorm(exp(dat$lnRR), main='Before log-transformation')
+#qqline(exp(dat$lnRR))
+qqnorm(dat$lnRR, main='After log-transformation')
+#qqline(dat$lnRR)
+dev.off()
+
+```
+
+## Intensity
+
+```{r}
+# subset of nighttime melatonin using lux<100
+dat_N_lux100 <- filter(dat_N_lux,Night_light_intensity_exp<100)
+
+# VCV
+lnRRVCV_N_lux100 <- metafor::vcalc(vi = lnRRV, cluster = StudyID, obs = obs_ID, data = dat_N_lux100, rho = 0.5)
+
+# tree
+taxa_N_lux100 <- tnrs_match_names(names = unique(dat_N_lux100$Species), context = "Animals")
+my.tr_N_lux100 <- tol_induced_subtree(ott_ids=ott_id(taxa_N_lux100))
+my.tr_N_lux100$tip.label <- strip_ott_ids(my.tr_N_lux100$tip.label, remove_underscores = TRUE)
+is.binary(my.tr_N_lux100) 
+my.tr_N_lux100 <- compute.brlen(my.tr_N_lux100, method = "Grafen", power = 1)
+is.ultrametric(my.tr_N_lux100)
+tr_matrix_N_lux100 <- vcv.phylo(my.tr_N_lux100, model = "Brownian", corr = T)
+
+# visualize correlation
+ggcorrplot::ggcorrplot(tr_matrix_N_lux100, sig.level=0.05, lab_size = 4.5, p.mat = NULL, insig = c("pch", "blank"), pch = 1, pch.col = "black", pch.cex =1, tl.cex = 14) +
+  theme(axis.text.x = element_text(size = 10, margin=margin(-2,0,0,0)),
+        axis.text.y = element_text(size = 10, margin=margin(0,-2,0,0)),
+        panel.grid.minor = element_line(size=10)) + 
+  geom_tile(fill="white") +
+  geom_tile(height=0.8, width=0.8) +
+  scale_fill_gradient2(low = "#E69F00", mid = "white", high = "#56B4E9", midpoint = 0.5, breaks=c(0, 1), limit=c(0, 1)) + 
+ labs(fill = "Correlation")
+
+# plot tree
+plot.phylo(vcv2phylo(tr_matrix_N_lux100), cex = 0.6, label.offset = 0.1, no.margin = T)
+
+
+
+# sensitivity analysis required by one peer-review referee
+MLMR_6N.lux100_lnRR <- rma.mv(yi = lnRR, V = lnRRVCV_N_lux100, random = list(~ 1 | Spp, ~1 | Phy, ~1 | StudyID, ~1 | obs_ID), mods = ~ log(Night_light_intensity_exp), method = "REML", test = "t", data = dat_N_lux100, sparse = T, R = list(Phy=tr_matrix_N_lux100), verbose = T)
+summary(MLMR_6N.lux100_lnRR) #robust(MLMR_6N.lux100_lnRR, cluster = dat_N_lux100$StudyID)
+
+```
+
+# White light
+
+CCTs of white light
+```{r}
+# white light subset
+dat_WL <- filter(dat, Light_colour == "White" & Spectral_characteristics == "Full-spectrum")
+# CCT
+dat_WL$Light_CT
+```
+
