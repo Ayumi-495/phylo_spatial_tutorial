@@ -56,14 +56,14 @@ dat_scholer$const <- 1
 head(dat_scholer)
 
 
-spatial_dist <- rma.mv(logit_survival, se^2,
+spatial <- rma.mv(logit_survival, se^2,
                   random = list(~ 1 | ref,  # random effect for study
                             ~ 1 | effect_id, # random effect for each effect size
                             ~ 1 | species, # random effect for species
                             ~ tip_label | const), # random effect for phylogeny
-                  dist = list(D_dist),  # phylogenetic distance matrix
+                  dist = list(D),  # phylogenetic distance matrix
                   struct = "SPEXP", # use spatial exponential correlation structure
-                  # control = list(rho.init = 1), 
+                  control = list(rho.init = 1), 
                   data = dat_scholer)
 summary(spatial)
 

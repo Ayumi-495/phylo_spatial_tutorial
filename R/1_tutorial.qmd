@@ -50,7 +50,7 @@ execute:
 rm(list = ls())
 
 pacman::p_load(brms, MCMCglmm, metafor, metadat, tidyverse, data.table, crayon, here, ape, glmmTMB,
-               dplyr, tidyr, purrr, stringr, readr, readxl, lubridate, magrittr, janitor, 
+               dplyr, tidyr, purrr, stringr, readr, readxl, lubridate, magrittr, janitor, orchaRd,
                flextable, kableExtra, geosphere, rotl, data.table, openxlsx, cmdstanr, rstan)
 
 ```
@@ -193,17 +193,15 @@ tips_to_keep <- intersect(Huberty_Denno_2004$Herbivore, tip_labels)
 HubDen_tree_pruned <- drop.tip(HubDen_tree, setdiff(tip_labels, tips_to_keep))
 
 setdiff(HubDen_tree_pruned$tip.label, Huberty_Denno_2004$Herbivore)
+# 
+# # make correlation matrix
+# HubDen_vcv <- vcv.phylo(HubDen_tree_pruned, corr = TRUE)
+# 
+# # make sure the herbivore names in the data match the tree
+# HubDen_2004 <- Huberty_Denno_2004 %>%
+#   filter(Herbivore %in% rownames(HubDen_vcv)) %>%
+#   mutate(Herbivore = factor(Herbivore)) 
 
-# make correlation matrix
-HubDen_vcv <- vcv.phylo(HubDen_tree_pruned, corr = TRUE)
-
-# make sure the herbivore names in the data match the tree
-HubDen_2004 <- Huberty_Denno_2004 %>%
-  filter(Herbivore %in% rownames(HubDen_vcv)) %>%
-  mutate(Herbivore = factor(Herbivore)) 
-HubDen_2004$Phylo <- HubDen_2004$Herbivore
-
-HubDen_2004$effect_id <- seq_len(nrow(HubDen_2004))
 
 ```
 
@@ -292,6 +290,36 @@ is.ultrametric(tr_um)
 plot(tr_um)
 
 A <- vcv(tr_um, corr = TRUE)
+
+# change the variable name (sub-guild) to sub_guild using data.table package
+
+Huberty_Denno_2004 <- Huberty_Denno_2004 |> 
+  rename(
+    Study_id = Reference, 
+    Species = Herbivore,
+    Sub_guild = `Sub-guild`
+    ) |> 
+    mutate(Phylo = Species,
+    Effect_id = row_number(),
+    Feeding_mode = ifelse(Sub_guild == "Free-living", "Free-living", "Endophytic")
+  )
+
+names(Huberty_Denno_2004)
+# [1] "Sub_guild"       "HerbivoreOrder"  "HerbivoreFamily" "Species"         "Host Family"     "Host Plant"      "MA Variable"    
+#  [8] "VC Variable"     "Study_id"        "d"               "var"             "Phylo"           "Effect_id"      
+
+Huberty_Denno_2004_1 <- Huberty_Denno_2004 %>%
+  filter(Phylo %in% rownames(A)) %>%
+  mutate(Phylo = factor(Phylo))
+
+sp_in_both <- intersect(rownames(A), Huberty_Denno_2004$Phylo) # 49 species
+
+Huberty_Denno_2004_1 <- Huberty_Denno_2004 %>%
+  filter(Phylo %in% sp_in_both) %>%
+  droplevels()
+A <- A[sp_in_both, sp_in_both]
+Huberty_Denno_2004_1$Phylo <- factor(Huberty_Denno_2004_1$Phylo, levels = rownames(A))
+
 ```
 
 ### model fitting
@@ -312,91 +340,110 @@ This conceptually similar to a spatial model where nearby locations are more sim
 #| eval: false
 
 HD_BM <- rma.mv(d, var,
-                 random = list(~ 1 | Reference, 
-                               ~ 1 | effect_id, 
-                               ~ 1 | Herbivore, 
+                 random = list(~ 1 | Study_id, 
+                               ~ 1 | Effect_id, 
+                               ~ 1 | Species, 
                                ~ 1 | Phylo),
                  R = list(Phylo = A), 
-                 data = HubDen_2004)
+                 data = Huberty_Denno_2004_1)
 
 summary(HD_BM)
 
-# Multivariate Meta-Analysis Model (k = 85; method: REML)
+# Multivariate Meta-Analysis Model (k = 79; method: REML)
 # 
 #    logLik   Deviance        AIC        BIC       AICc   
-# -161.2370   322.4741   332.4741   344.6282   333.2433   
+# -148.4857   296.9715   306.9715   318.7550   307.8048   
 # 
 # Variance Components:
 # 
 #             estim    sqrt  nlvls  fixed     factor    R 
-# sigma^2.1  0.8191  0.9051     45     no  Reference   no 
-# sigma^2.2  0.2244  0.4737     85     no  effect_id   no 
-# sigma^2.3  1.1564  1.0754     54     no  Herbivore   no 
-# sigma^2.4  2.0725  1.4396     54     no      Phylo  yes 
+# sigma^2.1  0.9842  0.9921     44     no   Study_id   no 
+# sigma^2.2  0.2343  0.4841     79     no  Effect_id   no 
+# sigma^2.3  0.8975  0.9474     49     no    Species   no 
+# sigma^2.4  2.2086  1.4861     49     no      Phylo  yes 
 # 
 # Test for Heterogeneity:
-# Q(df = 84) = 706.6128, p-val < .0001
+# Q(df = 78) = 670.2309, p-val < .0001
 # 
 # Model Results:
 # 
 # estimate      se     zval    pval    ci.lb   ci.ub    
-#  -0.5027  0.8614  -0.5835  0.5595  -2.1910  1.1857    
+#  -0.3825  0.8875  -0.4310  0.6665  -2.1219  1.3569      
+
+# confidence intervals for variance components
+ci_var <- confint(HD_BM, level = 0.95)  
+#           estimate  ci.lb  ci.ub 
+# sigma^2.1   0.9842 0.2461 2.2717 
+# sigma.1     0.9921 0.4961 1.5072 
+# 
+#           estimate  ci.lb  ci.ub 
+# sigma^2.2   0.2343 0.0088 1.1491 
+# sigma.2     0.4841 0.0939 1.0719 
+# 
+#           estimate  ci.lb  ci.ub 
+# sigma^2.3   0.8975 0.0000 2.4773 
+# sigma.3     0.9474 0.0000 1.5739 
+# 
+#           estimate  ci.lb  ci.ub 
+# sigma^2.4   2.2086 0.0000 9.0794 
+# sigma.4     1.4861 0.0000 3.0132 
 
 # phylogenetic heritability
-
 phylo <- HD_BM$sigma2[4]/ (HD_BM$sigma2[3]+HD_BM$sigma2[4]) 
 phylo*100
 
-# change the variable name (sub-guild) to sub_guild using data.table package
+oorchaRd::i2_ml(HD_BM)
+#    I2_Total  I2_Study_id I2_Effect_id   I2_Species     I2_Phylo 
+#    96.692496    22.005790     5.239669    20.066093    49.380944 
 
-setDT(HubDen_2004)
-setnames(HubDen_2004, old = "Sub-guild", new = "Sub_guild")
+
+orchard_plot(HD_BM, 
+  group = "Study_id",
+  xlab = "Effect size (Hedges'd)",
+  angle = 45) + 
+  scale_x_discrete(labels = c("Overall effect"))
+
+
 
 HD_BM_2 <- rma.mv(yi = d,
                     V = var,      
-                    mods  = ~ -1 + Sub_guild,
+                    mods  = ~ -1 + Feeding_mode,
                     random = list(
-                      ~ 1 | Reference,
-                      ~ 1 | effect_id,
-                      ~ 1 | Herbivore,
+                      ~ 1 | Study_id,
+                      ~ 1 | Effect_id,
+                      ~ 1 | Species,
                       ~ 1 | Phylo
                       ),
                     R = list(Phylo = A),
-                    data  = HubDen_2004
+                    data  = Huberty_Denno_2004_1
                     )
 
+
 summary(HD_BM_2)
-# Multivariate Meta-Analysis Model (k = 85; method: REML)
+# Multivariate Meta-Analysis Model (k = 79; method: REML)
 # 
 #    logLik   Deviance        AIC        BIC       AICc   
-# -144.5514   289.1028   311.1028   337.0266   315.1028   
+# -146.1464   292.2928   304.2928   318.3556   305.4928   
 # 
 # Variance Components:
 # 
 #             estim    sqrt  nlvls  fixed     factor    R 
-# sigma^2.1  1.0431  1.0213     45     no  Reference   no 
-# sigma^2.2  0.1866  0.4320     85     no  effect_id   no 
-# sigma^2.3  0.8676  0.9315     54     no  Herbivore   no 
-# sigma^2.4  1.8756  1.3695     54     no      Phylo  yes 
+# sigma^2.1  1.0000  1.0000     44     no   Study_id   no 
+# sigma^2.2  0.2255  0.4748     79     no  Effect_id   no 
+# sigma^2.3  0.8004  0.8947     49     no    Species   no 
+# sigma^2.4  2.9347  1.7131     49     no      Phylo  yes 
 # 
 # Test for Residual Heterogeneity:
-# QE(df = 78) = 618.0104, p-val < .0001
+# QE(df = 77) = 666.9718, p-val < .0001
 # 
-# Test of Moderators (coefficients 1:7):
-# QM(df = 7) = 13.8791, p-val = 0.0534
+# Test of Moderators (coefficients 1:2):
+# QM(df = 2) = 1.2620, p-val = 0.5320
 # 
 # Model Results:
 # 
-#                       estimate      se     zval    pval    ci.lb   ci.ub    
-# Sub_guildBorer          0.8938  1.1735   0.7617  0.4462  -1.4061  3.1938    
-# Sub_guildFree-living   -0.3839  0.9614  -0.3993  0.6897  -2.2682  1.5005    
-# Sub_guildGall Former   -1.8786  1.1051  -1.6999  0.0892  -4.0446  0.2874  . 
-# Sub_guildMesophyll     -1.1245  1.2825  -0.8768  0.3806  -3.6381  1.3892    
-# Sub_guildMiner          1.4165  1.1358   1.2471  0.2124  -0.8097  3.6427    
-# Sub_guildPhloem        -1.3502  1.0540  -1.2810  0.2002  -3.4159  0.7156    
-# Sub_guildXylem         -1.0210  1.8943  -0.5390  0.5899  -4.7337  2.6917    
-# 
-# ---
+#                          estimate      se     zval    pval    ci.lb   ci.ub    
+# Feeding_modeEndophytic    -0.1490  1.0355  -0.1439  0.8856  -2.1786  1.8807    
+# Feeding_modeFree-living   -0.8251  1.0945  -0.7539  0.4509  -2.9703  1.3201  
 ```
 
 In `brms`, variance is specified using the `se()` function, and we need to specify the phylogenetic covariance matrix using the `data2` argument. The `gr()` function is used to specify the phylogenetic random effect. Do not forget to specify `|a|`- it means that correlation is allowed between the phylogenetic random effects.
@@ -406,16 +453,25 @@ In `brms`, variance is specified using the `se()` function, and we need to speci
 #| label: dat1 - phylo_brownian - brms
 #| eval: false
 
+max_cores <- 10
+num_chains <- 2
+threads_per_chain <- floor(max_cores / num_chains)
+options(mc.cores = num_chains) 
+
+vcv <- diag(Huberty_Denno_2004_1$var)
+rownames(vcv) <- Huberty_Denno_2004_1$Effect_id
+colnames(vcv) <- Huberty_Denno_2004_1$Effect_id
+
 formula_dat1_BM <- bf(d | se(sqrt(var)) ~ 1 + 
-                        (1 | Reference) + 
-                        (1 | effect_id) + 
-                        (1 | Herbivore) +  # non-phylogenetic random effect
-                        (1 |a| gr(Phylo, cov = A))
+                        (1 | Study_id) + 
+                        (1 | Effect_id) + 
+                        (1 | Species) +  # non-phylogenetic random effect
+                        (1 | gr(Phylo, cov = A))
                       )
 
 prior_dat1_BM <- get_prior(
   formula = formula_dat1_BM,
-  data = HubDen_2004,
+  data = Huberty_Denno_2004_1,
   data2 = list(A = A),
   family = gaussian()
 )
@@ -423,20 +479,123 @@ prior_dat1_BM <- get_prior(
 dat1_BM_brms <- brm(
   formula = formula_dat1_BM,
   family = gaussian(),
-  data = HubDen_2004,
+  data = Huberty_Denno_2004_1,
   data2 = list(A = A),
   prior = prior_dat1_BM,
-  iter = 6000, 
-  warmup = 4000,  
-  thin = 1,
-  chains = 2, 
-  control = list(adapt_delta = 0.95)
+  iter = 10000, 
+  warmup = 7000,  
+　chains = num_chains,
+  backend = "cmdstanr",
+  threads = threading(threads_per_chain), 
+  control = list(adapt_delta = 0.98, max_treedepth = 15)
 )
 summary(dat1_BM_brms)
+#   Family: gaussian 
+#   Links: mu = identity; sigma = identity 
+# Formula: d | se(sqrt(var)) ~ 1 + (1 | Study_id) + (1 | Effect_id) + (1 | Species) + (1 | gr(Phylo, cov = A)) 
+#    Data: Huberty_Denno_2004_1 (Number of observations: 79) 
+#   Draws: 2 chains, each with iter = 10000; warmup = 7000; thin = 1;
+#          total post-warmup draws = 6000
+# 
+# Multilevel Hyperparameters:
+# ~Effect_id (Number of levels: 79) 
+#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# sd(Intercept)     0.62      0.28     0.13     1.22 1.00      468      985
+# 
+# ~Phylo (Number of levels: 49) 
+#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# sd(Intercept)     1.41      0.69     0.16     2.88 1.00      943     1322
+# 
+# ~Species (Number of levels: 49) 
+#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# sd(Intercept)     0.89      0.36     0.10     1.55 1.01      679     1054
+# 
+# ~Study_id (Number of levels: 44) 
+#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# sd(Intercept)     0.97      0.29     0.31     1.53 1.00      921      716
+# 
+# Regression Coefficients:
+#           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# Intercept    -0.39      0.85    -2.12     1.34 1.00     4121     3324
+# 
+# Further Distributional Parameters:
+#       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# sigma     0.00      0.00     0.00     0.00   NA       NA       NA
+# 
+# Draws were sampled using sample(hmc). For each parameter, Bulk_ESS
+# and Tail_ESS are effective sample size measures, and Rhat is the potential
+# scale reduction factor on split chains (at convergence, Rhat = 1).
 
-phylo_BM <- 1.52^2/(1.53^2+0.96^2)
-phylo_BM*100
 
+
+100 * (sigma2_u + sigma2bar_e) / (sigma2_u + sigma2bar_e + Vbar)
+
+
+
+formula_dat1_BM2 <- bf(d | se(sqrt(var)) ~ 1 + Feeding_mode + 
+                        (1 | Study_id) + 
+                        (1 | Effect_id) + 
+                        (1 | Species) +  # non-phylogenetic random effect
+                        (1 | gr(Phylo, cov = A))
+                      )
+
+prior_dat1_BM2 <- get_prior(
+  formula = formula_dat1_BM2,
+  data = Huberty_Denno_2004_1,
+  data2 = list(A = A),
+  family = gaussian()
+)
+
+dat1_BM_brms2 <- brm(
+  formula = formula_dat1_BM2,
+  family = gaussian(),
+  data = Huberty_Denno_2004_1,
+  data2 = list(A = A),
+  prior = prior_dat1_BM2,
+  iter = 20000, 
+  warmup = 15000,  
+　chains = num_chains,
+  backend = "cmdstanr",
+  threads = threading(threads_per_chain), 
+  control = list(adapt_delta = 0.98, max_treedepth = 15)
+)
+summary(dat1_BM_brms2)
+# Family: gaussian 
+#   Links: mu = identity; sigma = identity 
+# Formula: d | se(sqrt(var)) ~ 1 + Feeding_mode + (1 | Study_id) + (1 | Effect_id) + (1 | Species) + (1 | gr(Phylo, cov = A)) 
+#    Data: Huberty_Denno_2004_1 (Number of observations: 79) 
+#   Draws: 2 chains, each with iter = 20000; warmup = 15000; thin = 1;
+#          total post-warmup draws = 10000
+# 
+# Multilevel Hyperparameters:
+# ~Effect_id (Number of levels: 79) 
+#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# sd(Intercept)     0.62      0.27     0.14     1.20 1.00     1139     2263
+# 
+# ~Phylo (Number of levels: 49) 
+#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# sd(Intercept)     1.60      0.72     0.18     3.06 1.00     1527     1760
+# 
+# ~Species (Number of levels: 49) 
+#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# sd(Intercept)     0.84      0.37     0.09     1.55 1.00     1286     3076
+# 
+# ~Study_id (Number of levels: 44) 
+#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# sd(Intercept)     0.98      0.29     0.36     1.54 1.00     1957     1454
+# 
+# Regression Coefficients:
+#                         Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# Intercept                  -0.20      0.94    -2.13     1.74 1.00     7853     6161
+# Feeding_modeFreeMliving    -0.59      0.68    -1.92     0.72 1.00     6135     7392
+# 
+# Further Distributional Parameters:
+#       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# sigma     0.00      0.00     0.00     0.00   NA       NA       NA
+# 
+# Draws were sampled using sample(hmc). For each parameter, Bulk_ESS
+# and Tail_ESS are effective sample size measures, and Rhat is the potential
+# scale reduction factor on split chains (at convergence, Rhat = 1).
 ```
 
 Both the Bayesian model (`brms`) and the frequentist model (`metafor`) consistently showed strong phylogenetic signal, with the phylogenetic variance component being the largest among all random effects. The estimates of random effect magnitudes were broadly similar between the two models.
@@ -446,11 +605,11 @@ We can also fit phylogenetic meta-analysis models using the `glmmTMB` package.
 ```{r}
 
 dat1_BM_tmb <- glmmTMB(d ~ 1 + equalto(0 + id|g, var) + 
-                       (1|Reference) + 
-                       (1|effect_id) +
-                       (1|Herbivore) +
-                       propto(0 + species|g, A),
-                       data = HubDen_2004,
+                       (1|Study_id) + 
+                       (1|Effect_id) +
+                       (1|Species) +
+                       propto(0 + Phylo|g, A),
+                       data = Huberty_Denno_2004_1,
                        REML = T)
 
 
@@ -476,7 +635,7 @@ HD_spatial_lin <- rma.mv(d, var,
                                    ~ 1 | Herbivore, # random effect for species
                                    ~ Phylo | Const), # random effect for phylogeny
                      dist=list(D_HD),  # phylogenetic distance matrix
-                     struct = "SPEXP", # use spatial exponential correlation structure
+                     struct = "SPLIN", # use spatial exponential correlation structure
                      control=list(rho.init = 1), 
                      data = HubDen_2004)
 
