@@ -18,21 +18,26 @@ metafor_p1 <- orchard_plot(HD_BM,
   scale_x_discrete(labels = c("Overall effect")) +
   scale_color_manual(values = "#CDBE70") +
   scale_fill_manual(values = "#EEDC82") + 
+  scale_y_continuous(breaks = seq(-4.0, 4.0, 1), limits = c(-4.0, 4.0)) + 
   theme_classic()
 
 ## random effect
 ci_var <- confint(HD_BM, level = 0.95) 
 tbl <- tibble::as_tibble(ci_var, rownames = "term")
 
-label_map <- c("Study_id", "Effect_id", "Species", "Phylo")
+label_map <- c("Phylo", "Study_id", "Species", "Effect_id")
 tbl_var <- tbl %>%
   filter(str_detect(term, "^sigma\\^2\\.")) %>%
   mutate(
     idx   = as.integer(str_match(term, "\\.(\\d+)$")[,2]),
-    label = label_map[idx],
-    label = factor(label, levels = label_map)
+    label = case_when(
+      idx == 1 ~ "Study_id",
+      idx == 2 ~ "Effect_id",
+      idx == 3 ~ "Species",
+      idx == 4 ~ "Phylo"
+    ),
+    label = factor(label, levels = label_map) 
   )
-
 
 metafor_p2 <- ggplot(tbl_var, aes(x = label, y = estimate)) +
   geom_point(size = 3.0, color = "#9AC0CD") +
@@ -41,6 +46,7 @@ metafor_p2 <- ggplot(tbl_var, aes(x = label, y = estimate)) +
   labs(x = NULL, y = "Variance 95% CI") +
   scale_y_continuous(breaks = seq(0, 10.0, 1), limits = c(0, 10.0)) + 
   theme_classic(base_size = 12)
+
 metafor_eg1_1 <- metafor_p1 / metafor_p2
 
 #### brms ----
@@ -62,7 +68,7 @@ brms_p1 <- ggplot(fixed_effects_samples_brms, aes(x = .value, y = .variable)) +
     color = "#CDBE70"
   ) +
   geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
-  scale_x_continuous(breaks = seq(-3.0, 3.0, 1), limits = c(-3.0, 4.0)) + 
+  scale_x_continuous(breaks = seq(-4.0, 4.0, 1), limits = c(-4.0, 4.0)) + 
   labs(title = "Posterior distributions of fixed effects - brms",
        y = "Fixed effect (variance)"
   ) +
@@ -76,7 +82,17 @@ random_effects_samples_brms <- random_effects_samples_brms %>%
   pivot_longer(cols = starts_with("sd_"), 
                names_to = ".variable", 
                values_to = ".value")　%>% 
-  mutate(.value = .value^2)
+  mutate(.value = .value^2,
+         .variable = case_when(
+           .variable == "sd_Phylo__Intercept"      ~ "Phylo",
+           .variable == "sd_Study_id__Intercept"   ~ "Study",
+           .variable == "sd_Species__Intercept"    ~ "Species",
+           .variable == "sd_Effect_id__Intercept"  ~ "Effect_id"
+         ),
+         .variable = factor(.variable, 
+                            levels = c("Phylo", "Study", "Species", "Effect_id")
+                            )
+         )
 
 head(random_effects_samples_brms)
 
