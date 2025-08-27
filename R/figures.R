@@ -11,11 +11,14 @@ pacman::p_load("coda", "tidyverse", "here",
 
 #### metafor ----
 ## fixed effect
-metafor_1 <- orchard_plot(HD_BM, 
-             group = "Study_id",
-             xlab = "Effect size (Hedges'd)",
-             angle = 45) + 
-  scale_x_discrete(labels = c("Overall effect"))
+metafor_p1 <- orchard_plot(HD_BM, 
+                           group = "Study_id",
+                           xlab = "Effect size (Hedges' d)",
+                           angle = 45) + 
+  scale_x_discrete(labels = c("Overall effect")) +
+  scale_color_manual(values = "#CDBE70") +
+  scale_fill_manual(values = "#EEDC82") + 
+  theme_classic()
 
 ## random effect
 ci_var <- confint(HD_BM, level = 0.95) 
@@ -31,12 +34,14 @@ tbl_var <- tbl %>%
   )
 
 
-ggplot(tbl_var, aes(x = label, y = estimate)) +
-  geom_point(size = 2.8) +
-  geom_errorbar(aes(ymin = ci.lb, ymax = ci.ub), width = 0.15) +
+metafor_p2 <- ggplot(tbl_var, aes(x = label, y = estimate)) +
+  geom_point(size = 3.0, color = "#9AC0CD") +
+  geom_errorbar(aes(ymin = ci.lb, ymax = ci.ub), width = 0.25, color = "#9AC0CD") +
   coord_flip() +
-  labs(x = NULL, y = expression(Variance~(sigma^2)~"± 95% CI")) +
-  theme_minimal(base_size = 12)
+  labs(x = NULL, y = "Variance 95% CI") +
+  scale_y_continuous(breaks = seq(0, 10.0, 1), limits = c(0, 10.0)) + 
+  theme_classic(base_size = 12)
+metafor_eg1_1 <- metafor_p1 / metafor_p2
 
 #### brms ----
 get_variables(dat1_BM_brms)
@@ -53,8 +58,8 @@ brms_p1 <- ggplot(fixed_effects_samples_brms, aes(x = .value, y = .variable)) +
   stat_halfeye(
     normalize = "xy", 
     point_interval = "mean_qi", 
-    fill = "lightcyan3", 
-    color = "lightcyan4"
+    fill = "#EEDC82", 
+    color = "#CDBE70"
   ) +
   geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
   scale_x_continuous(breaks = seq(-3.0, 3.0, 1), limits = c(-3.0, 4.0)) + 
@@ -79,8 +84,8 @@ brms_p2 <- ggplot(random_effects_samples_brms, aes(x = .value, y = .variable)) +
   stat_halfeye(
     normalize = "xy",
     point_interval = "mean_qi", 
-    fill = "olivedrab3", 
-    color = "olivedrab4"
+    fill = "#B2DFEE", 
+    color = "#9AC0CD"
   ) +
   geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
   scale_x_continuous(breaks = seq(0, 10.0, 1), limits = c(0, 10.0)) + 
@@ -89,4 +94,6 @@ brms_p2 <- ggplot(random_effects_samples_brms, aes(x = .value, y = .variable)) +
     y = "Random effects (variance)"
   ) +
   theme_classic() 
-brms_p1/brms_p2
+brms_eg1_1 <- brms_p1/brms_p2
+
+metafor_eg1_1 |brms_eg1_1
