@@ -606,10 +606,23 @@ Both the Bayesian model (`brms`) and the frequentist model (`metafor`) consisten
 We can also fit phylogenetic meta-analysis models using the `glmmTMB` package.
 
 ```{r}
+## this is necessary the first time you run meta-analysis by glmmTMB
+# remove.packages("glmmTMB")
+# remotes::install_github("coraliewilliams/glmmTMB", 
+#                         ref = "equalto_covstruc", 
+#                         subdir = "glmmTMB")
+# library(glmmTMB)
+# # check the available covstruc (you should see equalto in number 13)
+# (glmmTMB:::.valid_covstruct)
 
-dat1_BM_tmb <- glmmTMB(d ~ 1 + equalto(0 + id|g, var) + 
+Huberty_Denno_2004_1$g <- 1 
+V <- vcalc(var, cluster = Study_id, obs = Effect_id, data = Huberty_Denno_2004_1, rho=0.2) #'[how to define rho?]
+
+colnames(V) <- 1:nrow(Huberty_Denno_2004_1)
+row.names(V) <- 1:nrow(Huberty_Denno_2004_1)
+
+dat1_BM_tmb <- glmmTMB(d ~ 1 + equalto(0 + Effect_id|g, var) + 
                        (1|Study_id) + 
-                       (1|Effect_id) +
                        (1|Species) +
                        propto(0 + Phylo|g, A),
                        data = Huberty_Denno_2004_1,
