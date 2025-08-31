@@ -5,7 +5,6 @@ rm(list = ls())
 dat_scholer <- read.csv(here("data", "Scholer_2020", "Scholer_2020.csv"))
 dat_scholer$effect_id <- seq_len(nrow(dat_scholer))
 dat_scholer$non_phylo <- dat_scholer$tip_label
-V <- vcalc(se^2, cluster = Cohort_ID, subgroup = Obs_ID, data = dat_pred)
 
 tr_scholer <- read.nexus(here("data", "Scholer_2020", "Scholer.nex"))
 tree <- tr_scholer[[1]]
@@ -38,7 +37,9 @@ BM <- rma.mv(logit_survival, se^2,
                               ~ 1 | non_phylo, 
                               ~ 1 | tip_label),
                 R = list(tip_label = A), 
-                data = dat_scholer)
+                data = dat_scholer,
+                sparse = TRUE,
+                verbose = TRUE)
 
 summary(BM)
 # Multivariate Meta-Analysis Model (k = 821; method: REML)
@@ -62,9 +63,26 @@ summary(BM)
 #   
 #   estimate      se    zval    pval   ci.lb   ci.ub      
 # 0.7559  0.1742  4.3393  <.0001  0.4145  1.0973  *** 
+
 orchaRd::i2_ml(BM)
 # I2_Total       I2_ref I2_effect_id  I2_non_phyo I2_tip_label 
 # 99.890015    19.127454    18.550809     1.471464    60.740288 
+
+confint(BM)
+
+dat_scholer$cMass <- scale(log(dat_scholer$mass), center = TRUE, scale = FALSE)
+
+BM_1 <- rma.mv(logit_survival, se^2,
+               mod = ~ + cMass,
+             random = list(~ 1 | ref, 
+                           ~ 1 | effect_id, 
+                           ~ 1 | non_phylo, 
+                           ~ 1 | tip_label),
+             R = list(tip_label = A), 
+             data = dat_scholer)
+
+summary(BM_1)
+orchaRd::i2_ml(BM_1)
 
 
 ### multiple tree ----
@@ -154,10 +172,9 @@ summary(spatial)
 
 
 ## OU model ----
-rho <- spatial$rho
-alpha <- 1/rho
+# rho <- spatial$rho
+alpha <- 0.9
 A_OU <- exp(-alpha * D)
-A_OU[1:10, 1:10]
 OU <- rma.mv(logit_survival, se^2,
                 random = list(~ 1 | ref, 
                               ~ 1 | effect_id, 
@@ -190,11 +207,125 @@ summary(OU)
 #   estimate       se    zval    pval      ci.lb     ci.ub    
 # 0.7559  68.5075  0.0110  0.9912  -133.5164  135.0282    
 
+I <- matrix(1, nrow = 530, ncol = 530)
+D <- I - A 
+
+alphas <- c(0.9, 0.7, 0.5, 0.3, 0.1, 0.05, 0.01)
+out <- vector("list", length(alphas))
+
+fmt_dur <- function(sec) sprintf("%02d:%02d:%02d",
+                                floor(sec/3600),
+                                floor((sec %% 3600)/60),
+                                round(sec %% 60))
+
+pb <- txtProgressBar(min = 0, max = length(alphas), style = 3)
+t0 <- Sys.time()
+
+for (i in seq_along(alphas)) {
+  a <- alphas[i]
+  t_iter0 <- Sys.time()
+
+  A <- exp(-a * D)
+
+  fit <- rma.mv(
+    yi     = logit_survival,
+    V      = se^2,
+    random = list(~ 1 | ref,
+                  ~ 1 | effect_id,
+                  ~ 1 | non_phylo,
+                  ~ 1 | tip_label),
+    R      = list(tip_label = A),
+    data   = dat_scholer,
+    method = "REML"
+  )
+
+  out[[i]] <- data.frame(
+    alpha        = a,
+    k            = fit$k,
+    logLik       = as.numeric(logLik(fit)),
+    AIC          = AIC(fit),
+    BIC          = BIC(fit),
+    beta0        = unname(coef(fit))[1],
+    se_beta0     = fit$se[1],
+    sigma2_ref        = fit$sigma2[1],
+    sigma2_effect_id  = fit$sigma2[2],
+    sigma2_non_phylo  = fit$sigma2[3],
+    sigma2_tip_label  = fit$sigma2[4],
+    row.names = NULL, check.names = FALSE
+  )
+
+  setTxtProgressBar(pb, i)
+  t_iter   <- as.numeric(difftime(Sys.time(), t_iter0, units = "secs"))
+  t_elapsed <- as.numeric(difftime(Sys.time(), t0, units = "secs"))
+  eta_sec  <- (t_elapsed / i) * (length(alphas) - i)
+  cat(sprintf("\r  [%d/%d] alpha=%.2f | iter=%s | elapsed=%s | ETA=%s",
+              i, length(alphas), a, fmt_dur(t_iter),
+              fmt_dur(t_elapsed), fmt_dur(eta_sec)))
+  flush.console()
+
+}
+close(pb)
+
+results_ou <- do.call(rbind, out)
+library(knitr)
+kable(results_ou)
 
 
 
+### brms ----
+norm_utf8 <- function(x) iconv(x, from = "", to = "UTF-8", sub = " ")
 
+clean_whitespace <- function(x) {
+  x <- norm_utf8(as.character(x))
+    x <- gsub("[\\p{Z}\\p{C}\u00A0\u202F\u2007\u2009\u200A\u200B\u200C\u200D\u2060\uFEFF]+",
+            " ", x, perl = TRUE)
+  trimws(x)
+}
 
+dat_scholer <- transform(
+  dat_scholer,
+  ref       = factor(clean_whitespace(ref)),
+  effect_id = factor(clean_whitespace(effect_id)),
+  species   = factor(clean_whitespace(species)),
+  tip_label = factor(clean_whitespace(tip_label))
+)
+
+fit_brms1 <- bf(logit_survival | se(se) ~ 1 + 
+                  (1 | ref) + 
+                  (1 | effect_id) + 
+                  # (1 | species) + 
+                  (1 | gr(tip_label, cov = A))
+)
+
+prior_brms1 <- get_prior(
+  formula = fit_brms1,
+  data = dat_scholer,
+  data2 = list(A = A),
+  family = gaussian()
+)
+
+max_cores <- 10
+num_chains <- 2
+threads_per_chain <- floor(max_cores / num_chains)
+options(mc.cores = num_chains) 
+
+m_brms1 <- brm(
+  formula = fit_brms1,
+  family = gaussian(),
+  data = dat_scholer,
+  data2 = list(A = A),
+  prior = prior_brms1,
+  iter = 6000, 
+  warmup = 4000,  
+  chains = num_chains,
+  backend = "cmdstanr",
+  threads = threading(threads_per_chain), 
+  control = list(adapt_delta = 0.95)
+)
+
+summary(m_brms1)
+
+pairs(m_brms1)
 # spatial meta-analysis ----
 ## organise data ----
 ## make Euclidian distance matrix ----

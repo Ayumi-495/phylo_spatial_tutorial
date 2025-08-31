@@ -8,7 +8,7 @@ pacman::p_load(brms, metafor, metadat, tidyverse, data.table, crayon, here, ape,
 #                         subdir = "glmmTMB")
 # library(glmmTMB)
 # # check the available covstruc (you should see equalto in number 13)
-# (glmmTMB:::.valid_covstruct)
+(glmmTMB:::.valid_covstruct)
 
 
 rm(list = ls())
@@ -37,25 +37,69 @@ drop_species <- setdiff(tree$tip.label, unique(dat_scholer$tip_label))
 tree <- drop.tip(tree, drop_species)
 
 A <- vcv.phylo(tree, corr = TRUE)
-
+A <- A[sort(rownames(A)), sort(rownames(A))]
 
 dat_scholer$g <- 1 
-# V <- vcalc(var, cluster = Study_id, obs = Effect_id, data = Huberty_Denno_2004_1, rho=0.2) 
-#'[how to define rho?]
-
-# colnames(V) <- 1:nrow(Huberty_Denno_2004_1)
-# row.names(V) <- 1:nrow(Huberty_Denno_2004_1)
-head(dat_scholer)
 dat_scholer$var <- (dat_scholer$se)^2
 
-BM_tmb <- glmmTMB(logit_survival ~ 1 + equalto(0 + effect_id|g, var) + 
+VCV <- diag(dat_scholer$var, nrow = nrow(dat_scholer)) 
+rownames(VCV)<- colnames(VCV)<- dat_scholer$effect_id
+
+dat_scholer$effect_id <- as.factor(dat_scholer$effect_id)
+head(dat_scholer)
+
+
+BM_tmb <- glmmTMB(logit_survival ~ 1 + equalto(0 + effect_id|g, VCV) +
                          (1|ref) + 
                          (1|non_phylo) +
                          propto(0 + tip_label|g, A),
                        data = dat_scholer,
                        REML = T)
 
+confint(BM_tmb)
+sigma(BM_tmb)^2
+summary(BM_tmb)
+BM_tmb_varcor <- VarCorr(BM_tmb)$cond
 
+# 
+est = unlist(fixef(BM_tmb))[[1]] #overal mean
+se = as.numeric(sqrt(vcov(BM_tmb)[[1]])) #overall mean SE
+zval = summary(BM_tmb)$coefficients$cond[3]
+pval = summary(BM_tmb)$coefficients$cond[4]
+sigma2.u = BM_tmb_varcor$ref[1] ##among study variance estimate
+sigma2.non.phylo = BM_tmb_varcor$non_phylo[1] ##non-phylo variance estimate
+sigma2.phylo = BM_tmb_varcor$g.1[1] ##phylo variance component
+sigma2.m = sigma(BM_tmb) ##within study variance estimate
+sigma2.total = sum(sigma2.u+sigma2.non.phylo+sigma2.phylo+sigma2.m)
+
+
+metafor_1 <- data.frame(model = "BM_1", 
+                      est = BM_1$b[[1]], 
+                      se = BM_1$se[[1]], 
+                      zval = BM_1$zval,
+                      pval = BM_1$pval,
+                      sigma.u = sqrt(BM_1$sigma2[1]), ## among study variance
+                      sigma.m = sqrt(BM_1$sigma2[2]), ## withins study variance
+                      sigma.total = sum(sqrt((BM_1$sigma2))),
+                      logLik = logLik(BM_1)[1],
+                      df = attr(logLik(BM_1), "df"), ## model-based 
+                      df.res = df.residual(BM_1)) ## residual df
+
+glmmTMB_1 <- data.frame(model = "BM_tmb",
+                      est = unlist(fixef(BM_tmb))[[1]], #overall mean
+                      se = as.numeric(sqrt(vcov(BM_tmb)[[1]])), #overall mean SE
+                      zval = summary(BM_tmb)$coefficients$cond[3],
+                      pval = summary(BM_tmb)$coefficients$cond[4],
+                      sigma2.u = BM_tmb_varcor$ref[1], ##among study variance estimate
+                      sigma2.non.phylo = BM_tmb_varcor$non_phylo[1], ##non-phylo variance estimate
+                      sigma2.phylo = BM_tmb_varcor$g.1[1], ##phylo variance component
+                      sigma2.m = sigma(BM_tmb) ##within study variance estimate
+                      # sigma2.total = sum(sigma2.u+sigma2.non.phylo+sigma2.phylo+sigma2.m)
+                      )
+
+output <- rbind(metafor_1, glmmTMB_1)
+kable(output)            
+  
 # Huberty_Denno_2004 ----
 Huberty_Denno_2004 <- read_csv(here("data", "Huberty_Denno_2004", "Huberty_Denno_2004_cleaned.csv"))
 HubDen_tree <- read.tree(here("data", "Huberty_Denno_2004", "Huberty_Denno_2004_tree.txt"))
