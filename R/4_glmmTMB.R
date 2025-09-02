@@ -56,16 +56,14 @@ BM_tmb <- glmmTMB(logit_survival ~ 1 + equalto(0 + effect_id|g, VCV) +
                        data = dat_scholer,
                        REML = T)
 
-confint(BM_tmb)
+head(confint(BM_tmb), 10)
 sigma(BM_tmb)^2
 summary(BM_tmb)
 BM_tmb_varcor <- VarCorr(BM_tmb)$cond
-
+head(BM_tmb_varcor, 10)
 # 
 est = unlist(fixef(BM_tmb))[[1]] #overal mean
 se = as.numeric(sqrt(vcov(BM_tmb)[[1]])) #overall mean SE
-zval = summary(BM_tmb)$coefficients$cond[3]
-pval = summary(BM_tmb)$coefficients$cond[4]
 sigma2.u = BM_tmb_varcor$ref[1] ##among study variance estimate
 sigma2.non.phylo = BM_tmb_varcor$non_phylo[1] ##non-phylo variance estimate
 sigma2.phylo = BM_tmb_varcor$g.1[1] ##phylo variance component
@@ -73,32 +71,29 @@ sigma2.m = sigma(BM_tmb) ##within study variance estimate
 sigma2.total = sum(sigma2.u+sigma2.non.phylo+sigma2.phylo+sigma2.m)
 
 
-metafor_1 <- data.frame(model = "BM_1", 
-                      est = BM_1$b[[1]], 
-                      se = BM_1$se[[1]], 
-                      zval = BM_1$zval,
-                      pval = BM_1$pval,
-                      sigma.u = sqrt(BM_1$sigma2[1]), ## among study variance
-                      sigma.m = sqrt(BM_1$sigma2[2]), ## withins study variance
-                      sigma.total = sum(sqrt((BM_1$sigma2))),
-                      logLik = logLik(BM_1)[1],
-                      df = attr(logLik(BM_1), "df"), ## model-based 
-                      df.res = df.residual(BM_1)) ## residual df
+metafor_1 <- data.frame(model = "BM_metafor", 
+                      logLik = logLik(BM),
+                      est = BM$b[[1]], 
+                      se = BM$se[[1]], 
+                      sigma2.u = sqrt(BM$sigma2[1]), ## among study variance
+                      sigma2.m = sqrt(BM$sigma2[2]), ## within study variance
+                      sigma2.non.phylo = sqrt(BM$sigma2[3]),
+                      sigma2.phylo = sqrt(BM$sigma2[4])
+                      )
+
 
 glmmTMB_1 <- data.frame(model = "BM_tmb",
+                      logLik = logLik(BM_tmb)[1],
                       est = unlist(fixef(BM_tmb))[[1]], #overall mean
                       se = as.numeric(sqrt(vcov(BM_tmb)[[1]])), #overall mean SE
-                      zval = summary(BM_tmb)$coefficients$cond[3],
-                      pval = summary(BM_tmb)$coefficients$cond[4],
-                      sigma2.u = BM_tmb_varcor$ref[1], ##among study variance estimate
-                      sigma2.non.phylo = BM_tmb_varcor$non_phylo[1], ##non-phylo variance estimate
-                      sigma2.phylo = BM_tmb_varcor$g.1[1], ##phylo variance component
-                      sigma2.m = sigma(BM_tmb) ##within study variance estimate
-                      # sigma2.total = sum(sigma2.u+sigma2.non.phylo+sigma2.phylo+sigma2.m)
+                      sigma2.u = sqrt(BM_tmb_varcor$ref[1]), ##among study variance estimate
+                      sigma2.m = sigma(BM_tmb), ##within study variance estimate
+                      sigma2.non.phylo = sqrt(BM_tmb_varcor$non_phylo[1]), ##non-phylo variance estimate
+                      sigma2.phylo = sqrt(BM_tmb_varcor$g.1[1]) ##phylo variance component
                       )
 
 output <- rbind(metafor_1, glmmTMB_1)
-kable(output)            
+knitr::kable(output)            
   
 # Huberty_Denno_2004 ----
 Huberty_Denno_2004 <- read_csv(here("data", "Huberty_Denno_2004", "Huberty_Denno_2004_cleaned.csv"))

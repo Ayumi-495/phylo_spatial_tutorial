@@ -31,7 +31,7 @@ rownames(dist_matrix_euclid) <- dat_coetzee$datapt_id
 colnames(dist_matrix_euclid) <- dat_coetzee$datapt_id
 
 ## linear ----
-view(dat_coetzee)
+head(dat_coetzee)
 ### metafor ----
 metafor_1 <- rma.mv(
   yi, vi,
@@ -125,6 +125,32 @@ metafor_2 <- rma.mv(yi, vi,
    
 summary(metafor_2)
 
+# Multivariate Meta-Analysis Model (k = 1484; method: REML)
+
+#     logLik    Deviance         AIC         BIC        AICc   
+# -2927.4735   5854.9470   5864.9470   5891.4561   5864.9876   
+
+# Variance Components:
+
+#             estim    sqrt  nlvls  fixed     factor 
+# sigma^2.1  1.5639  1.2506   1484     no  datapt_id 
+# sigma^2.2  0.7205  0.8488    127     no   study_id 
+
+# outer factor: const        (nlvls = 1)
+# inner term:   ~x_km + y_km (nlvls = 100)
+
+#                    estim    sqrt  fixed 
+# tau^2             0.0005  0.0227     no 
+# rho        22091692.2263             no 
+
+# Test for Heterogeneity:
+# Q(df = 1483) = 10075.9124, p-val < .0001
+
+# Model Results:
+
+# estimate      se    zval    pval   ci.lb   ci.ub      
+#   0.4386  0.0983  4.4639  <.0001  0.2460  0.6312  *** 
+a
 ### brms ----
 fit_1 <- bf(
   yi | se(sqrt(vi)) ~ 1 + 
@@ -337,7 +363,7 @@ confint(metafor_US1)
 
 #### glmmTMB ----
 library(glmmTMB)
-
+head(america_dat_coetzee, 10)
 america_dat_coetzee$datapt_id <- factor(america_dat_coetzee$datapt_id)
 
 D <- dist_matrix_euclid[sort(rownames(dist_matrix_euclid)), sort(rownames(dist_matrix_euclid))]
@@ -349,22 +375,19 @@ VCV <- diag(america_dat_coetzee$vi, nrow = nrow(america_dat_coetzee))
 rownames(VCV)<- colnames(VCV)<- america_dat_coetzee$datapt_id
 VCV[1:5, 1:5]
 # equalto(): the component that fixes each data point's known sampling variance
-# propto(): the component that estimates spatial autocorrelation as "sigma^2 * correlation matrix" derived geographic distance
 
-# okay - let's make D correlation matrix… using exponential kernel
-alpha <- 0.005
-R <- exp(-alpha * D)
-R[1:50, 1:50]
-diag(R) <- 1
+america_dat_coetzee$pos <- numFactor(america_dat_coetzee$x_km, america_dat_coetzee$y_km)
 
 tmb_1 <- glmmTMB(
   yi ~ 1 +
     equalto(0 + datapt_id | const, VCV) + 
     (1 | study_id) +
-    propto(0 + datapt_id | const, R),     
+    exp(pos + 0 | const),     
   data = america_dat_coetzee,
   REML = TRUE
 )
+
+head(confint(tmb_1), 10)
 
 #### brms ----
 fit_3 <- bf(

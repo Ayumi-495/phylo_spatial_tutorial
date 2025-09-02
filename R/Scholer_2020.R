@@ -293,7 +293,7 @@ dat_scholer <- transform(
 fit_brms1 <- bf(logit_survival | se(se) ~ 1 + 
                   (1 | ref) + 
                   (1 | effect_id) + 
-                  # (1 | species) + 
+                  (1 | species) + 
                   (1 | gr(tip_label, cov = A))
 )
 
@@ -315,16 +315,46 @@ m_brms1 <- brm(
   data = dat_scholer,
   data2 = list(A = A),
   prior = prior_brms1,
-  iter = 6000, 
-  warmup = 4000,  
+  iter = 10000, 
+  warmup = 7000,  
   chains = num_chains,
   backend = "cmdstanr",
   threads = threading(threads_per_chain), 
-  control = list(adapt_delta = 0.95)
+  control = list(adapt_delta = 0.95, max_treedepth = 15)
 )
 
 summary(m_brms1)
+#  Family: gaussian 
+#   Links: mu = identity; sigma = identity 
+# Formula: logit_survival | se(se) ~ 1 + (1 | ref) + (1 | effect_id) + (1 | species) + (1 | gr(tip_label, cov = A)) 
+#    Data: dat_scholer (Number of observations: 821) 
+#   Draws: 2 chains, each with iter = 10000; warmup = 7000; thin = 1;
+#          total post-warmup draws = 6000
 
+# Multilevel Hyperparameters:
+# ~effect_id (Number of levels: 821) 
+#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# sd(Intercept)     0.34      0.01     0.32     0.37 1.00     1824     3868
+
+# ~ref (Number of levels: 189) 
+#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# sd(Intercept)     0.35      0.04     0.28     0.43 1.00     2753     3841
+
+# ~species (Number of levels: 540) 
+#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# sd(Intercept)     0.09      0.05     0.00     0.19 1.00      368      691
+
+# ~tip_label (Number of levels: 530) 
+#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# sd(Intercept)     0.62      0.05     0.53     0.72 1.00     1655     2404
+
+# Regression Coefficients:
+#           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# Intercept     0.76      0.18     0.42     1.10 1.00     5286     4903
+
+# Further Distributional Parameters:
+#       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# sigma     0.00      0.00     0.00     0.00   NA       NA       NA
 pairs(m_brms1)
 # spatial meta-analysis ----
 ## organise data ----
