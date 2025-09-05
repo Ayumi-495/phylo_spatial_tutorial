@@ -54,6 +54,13 @@ summary(BM_metafor)
 # ---
 # Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
+confint(BM_metafor)
+
+orchaRd::i2_ml(BM_metafor)
+
+phylo_heritability <- BM_metafor$sigma2[4]^2 / (BM_metafor$sigma2[4]^2 + BM_metafor$sigma2[3]^2)
+
+
 ## glmmTMB ----
 A <- A[sort(rownames(A)), sort(rownames(A))]
 
@@ -273,6 +280,7 @@ system.time(
    )
 #     user   system  elapsed 
 # 1155.914   36.850 1214.621 
+
 summary(spatial_metafor)
 # Multivariate Meta-Analysis Model (k = 1828; method: REML)
 
@@ -320,4 +328,31 @@ system.time(
    verbose = TRUE,
    sparse = TRUE)
 )
+#    user   system  elapsed 
+# 2756.764   53.458 2857.989 
 summary(OU_metafor)
+# Multivariate Meta-Analysis Model (k = 1828; method: REML)
+
+#    logLik   Deviance        AIC        BIC       AICc   
+# -160.3783   320.7567   330.7567   358.3088   330.7896   
+
+# Variance Components:
+
+#             estim    sqrt  nlvls  fixed          factor    R 
+# sigma^2.1  0.0157  0.1254    457     no        study.id   no 
+# sigma^2.2  0.0144  0.1201   1828     no  effect.size.id   no 
+# sigma^2.3  0.0000  0.0000    341     no      species.id   no 
+# sigma^2.4  0.1029  0.3208    341     no  species.id.phy  yes 
+
+# Test for Heterogeneity:
+# Q(df = 1827) = 10743.8076, p-val < .0001
+
+# Model Results:
+
+# estimate      se    zval    pval   ci.lb   ci.ub      
+#   0.3514  0.0355  9.9090  <.0001  0.2819  0.4209  *** 
+
+saveRDS(spatial_metafor, file = here("Rdata", "OU_spatial_metafor.rds"))
+
+BM_metafor$sigma2[3] + BM_metafor$sigma2[1] + BM_metafor$sigma2[2]  + BM_metafor$sigma2[4]
+OU_metafor$sigma2[3] + OU_metafor$sigma2[1] + OU_metafor$sigma2[2]  + OU_metafor$sigma2[4]
