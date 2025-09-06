@@ -93,6 +93,33 @@ system.time(
 )
 summary(fit)
 
+# Multivariate Meta-Analysis Model (k = 5000; method: REML)
+# 
+# logLik    Deviance         AIC         BIC        AICc   
+# -1659.0752   3318.1505   3328.1505   3360.7354   3328.1625   
+# 
+# Variance Components:
+#   
+#   estim    sqrt  nlvls  fixed    factor 
+# sigma^2.1  0.0930  0.3049    500     no  study_id 
+# sigma^2.2  0.0507  0.2251   5000     no     es_id 
+# 
+# outer factor: const        (nlvls = 1)
+# inner term:   ~x_km + y_km (nlvls = 500)
+# 
+# estim    sqrt  fixed 
+# tau^2         0.1623  0.4028     no 
+# rho        2792.9064             no 
+# 
+# Test for Heterogeneity:
+#   Q(df = 4999) = 82763.9277, p-val < .0001
+# 
+# Model Results:
+#   
+#   estimate      se    zval    pval    ci.lb   ci.ub    
+# 0.2743  0.2338  1.1730  0.2408  -0.1840  0.7325    
+# 
+# ---
 dat$es_id <- factor(dat$es_id)
 VCV <- diag(dat$vi, nrow = nrow(dat)) 
 rownames(VCV)<- colnames(VCV)<- dat$es_id
