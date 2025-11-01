@@ -691,7 +691,7 @@ knitr::kable(output_eg3)
 #   |glmmTMB | -200.8246| 190.8255| 41.22806| 1653.527| 819.5016| 8548.023|  97.30914|
 #   |brms    |        NA| 192.5790| 42.74387| 4004.832| 876.2053| 6955.341| 105.02247|
 
-# example 4 dat_Roger et al. 2024----
+# example 4 Roger et al. 2024----
 
 dat_Roger <- read.csv(here("data", "examples", "Roger_etal_2024", "Roger_etal_2024.csv"))
 
@@ -765,7 +765,16 @@ summary(EXP_eg4)
 #   
 saveRDS(EXP_eg4, here("Rdata", "EXP_eg4_metafor.rds"))
 confint(EXP_eg4)
-
+# estimate  ci.lb  ci.ub 
+# sigma^2   0.7935 0.7257 0.8678 
+# sigma     0.8908 0.8519 0.9316 
+# 
+# estimate  ci.lb  ci.ub 
+# tau^2   1.2330 1.0147 1.4976 
+# tau     1.1104 1.0073 1.2238 
+# 
+# estimate   ci.lb  ci.ub 
+# rho   0.1744 <0.0174 0.8572 
 
 
 ## glmmTMB ----
@@ -821,6 +830,35 @@ system.time(
 # 34.897    7.331 4689.072 
 
 summary(m_exp4_brms)
+# Family: gaussian 
+# Links: mu = identity 
+# Formula: d_Hedges | se(sqrt(var_Hedges)) ~ 1 + (1 | effect_id) + gp(x_km, y_km, cov = "exponential", scale = FALSE) 
+# Data: dat_Roger (Number of observations: 2361) 
+# Draws: 2 chains, each with iter = 2000; warmup = 1000; thin = 1;
+# total post-warmup draws = 2000
+# 
+# Gaussian Process Hyperparameters:
+#   Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# sdgp(gpx_kmy_km)       1.14      0.07     1.00     1.30 1.01      696      955
+# lscale(gpx_kmy_km)   125.13     25.60    83.76   184.93 1.00      578     1156
+# 
+# Multilevel Hyperparameters:
+#   ~effect_id (Number of levels: 2361) 
+# Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# sd(Intercept)     0.96      0.02     0.92     1.01 1.01      498      846
+# 
+# Regression Coefficients:
+#   Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# Intercept    -0.32      0.09    -0.50    -0.14 1.00      511      752
+# 
+# Further Distributional Parameters:
+#   Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# sigma     0.00      0.00     0.00     0.00   NA       NA       NA
+# 
+# Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
+# and Tail_ESS are effective sample size measures, and Rhat is the potential
+# scale reduction factor on split chains (at convergence, Rhat = 1).
+
 saveRDS(m_exp4_brms, here("Rdata", "EXP_eg4_brms.rds"))
 
 ### summarise ----
