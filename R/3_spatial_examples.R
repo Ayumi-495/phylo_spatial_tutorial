@@ -694,7 +694,7 @@ knitr::kable(output_eg3)
 # example 4 Roger et al. 2024----
 
 dat_Roger <- read.csv(here("data", "examples", "Roger_etal_2024", "Roger_etal_2024.csv"))
-
+head(dat_Roger)
 
 
 dat_Roger$const <- 1 # add constant for spatial models
@@ -702,6 +702,8 @@ dat_Roger$effect_id <- seq_len(nrow(dat_Roger))
 
 names(dat_Roger)
 summary(dat_Roger)
+table(dat_Roger$response)
+
 
 dat_Roger <- dat_Roger %>%
   filter(!is.na(longitude))
@@ -776,6 +778,23 @@ confint(EXP_eg4)
 # estimate   ci.lb  ci.ub 
 # rho   0.1744 <0.0174 0.8572 
 
+
+system.time(EXP_eg4_1 <- rma.mv(d_Hedges, var_Hedges, 
+                              mods = ~ response - 1,
+                              random = list(
+                                ~ 1|effect_id,
+                                # ~ 1|study_id,
+                                ~ x_km + y_km |const
+                              ), 
+                              struct = "SPEXP", 
+                              data = dat_Roger,
+                              sparse = TRUE,
+                              verbose = TRUE
+)
+)
+
+saveRDS(EXP_eg4_1, here("Rdata", "EXP_eg4_1_metafor.rds"))
+summary(EXP_eg4_1)
 
 ## glmmTMB ----
 dat_Roger$effect_id <- factor(dat_Roger$effect_id)
@@ -861,6 +880,33 @@ summary(m_exp4_brms)
 
 saveRDS(m_exp4_brms, here("Rdata", "EXP_eg4_brms.rds"))
 
+
+fit_eg4_1 <- bf(d_Hedges | se(sqrt(var_Hedges)) ~ response - 1 + 
+                # (1 | site) + 
+                (1 | effect_id) + 
+                gp(x_km, y_km, 
+                   cov = "exponential",
+                   scale = FALSE))
+
+prior <- get_prior(formula = fit_eg4_1,
+                   data = dat_Roger,
+                   family = gaussian()
+)
+
+system.time(
+  m_exp4_1_brms <- brm(formula = fit_eg4_1,
+                     data = dat_Roger,
+                     family = gaussian(),
+                     prior = prior,
+                     iter = 2000,
+                     warmup = 1000,
+                     chain = 2, 
+                     thin = 1,
+                     control = list(adapt_delta = 0.98, max_treedepth = 15)
+  )
+)
+# saveRDS(m_exp4_1_brms, here("Rdata", "EXP_eg4_1_brms.rds"))
+summary(m_exp4_1_brms)
 ### summarise ----
 metafor4 <- data.frame(model = "metafor", 
                        logLik = logLik(EXP_eg4),
