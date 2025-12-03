@@ -350,4 +350,173 @@ metafor_p2 <- ggplot(tbl_var, aes(x = label, y = estimate)) +
   scale_y_continuous(breaks = seq(0, 10.0, 1), limits = c(0, 10.0)) + 
   theme_classic(base_size = 12)
 
+#### brms ----
+summary(m_exp4_brms)
 
+get_variables_dynamic <- function(model, pattern) {
+  variables <- get_variables(model)
+  variables[grep(pattern, variables)]
+}
+
+rename_vars_exp4 <- function(variable) {
+  # fixed
+  variable <- gsub("b_Intercept", "mu (overall mean)", variable)
+  
+  # random
+  variable <- gsub("sd_effect_id__Intercept", "_effect (SD of effect_id)", variable)
+  
+  # GP hyperparameters
+  variable <- gsub("sdgp_gpx_kmy_km", "SD_GP (spatial GP)", variable)
+  variable <- gsub("lscale_gpx_kmy_km", "ℓ_GP (length-scale, km)", variable)
+  
+  # #
+  # variable <- gsub("^sigma$", "σ_resid", variable)
+  
+  return(variable)
+}
+
+### fixed effect ----
+visualize_fixed_effects_exp4 <- function(model) {
+  fixed_effect_vars <- get_variables_dynamic(model, "^b_")
+  if (length(fixed_effect_vars) == 0) {
+    message("No fixed effects found")
+    return(NULL)
+  }
+  
+  tryCatch({
+    fixed_effects_samples <- model %>%
+      spread_draws(!!!syms(fixed_effect_vars)) %>%
+      tidyr::pivot_longer(
+        cols      = dplyr::all_of(fixed_effect_vars),
+        names_to  = ".variable",
+        values_to = ".value"
+      ) %>%
+      dplyr::mutate(.variable = rename_vars_exp4(.variable))
+    
+    ggplot(fixed_effects_samples, aes(x = .value, y = .variable)) +
+      ggdist::stat_halfeye(
+        normalize      = "xy",
+        point_interval = "mean_qi",
+        fill           = "lightcyan3",
+        color          = "lightcyan4"
+      ) +
+      geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
+      labs(y = "Fixed effects", x = "Posterior values") +
+      theme_classic()
+  }, error = function(e) {
+    message("Error in visualize_fixed_effects_exp4: ", e$message)
+    return(NULL)
+  })
+}
+
+visualize_random_effects_exp4 <- function(model) {
+  
+  random_effect_vars <- get_variables_dynamic(model, "^sd_")
+  # random_effect_vars <- setdiff(random_effect_vars, "sd…")
+  
+  if (length(random_effect_vars) == 0) {
+    message("No random effects found")
+    return(NULL)
+  }
+  
+  tryCatch({
+    random_effects_samples <- model %>%
+      spread_draws(!!!syms(random_effect_vars)) %>%
+      tidyr::pivot_longer(
+        cols      = dplyr::all_of(random_effect_vars),
+        names_to  = ".variable",
+        values_to = ".value"
+      ) %>%
+      dplyr::mutate(.variable = rename_vars_exp4(.variable))
+    
+    ggplot(random_effects_samples, aes(x = .value, y = .variable)) +
+      ggdist::stat_halfeye(
+        normalize      = "xy",
+        point_interval = "mean_qi",
+        fill           = "olivedrab3",
+        color          = "olivedrab4"
+      ) +
+      geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
+      labs(y = "Random effects (SD)", x = "Posterior values") +
+      theme_classic()
+  }, error = function(e) {
+    message("Error in visualize_random_effects_exp4: ", e$message)
+    return(NULL)
+  })
+}
+
+visualize_gp_sd_exp4 <- function(model) {
+  gp_sd_vars <- get_variables_dynamic(model, "^sdgp_")
+  if (length(gp_sd_vars) == 0) {
+    message("No GP SD parameters found")
+    return(NULL)
+  }
+  
+  tryCatch({
+    gp_sd_samples <- model %>%
+      spread_draws(!!!syms(gp_sd_vars)) %>%
+      tidyr::pivot_longer(
+        cols      = dplyr::all_of(gp_sd_vars),
+        names_to  = ".variable",
+        values_to = ".value"
+      ) %>%
+      dplyr::mutate(.variable = rename_vars_exp4(.variable))
+    
+    ggplot(gp_sd_samples, aes(x = .value, y = .variable)) +
+      ggdist::stat_halfeye(
+        normalize      = "xy",
+        point_interval = "mean_qi",
+        fill           = "#FF6347",
+        color          = "#8B3626"
+      ) +
+      geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
+      labs(y = "GP hyperparameters", x = "Posterior values") +
+      theme_classic()
+  }, error = function(e) {
+    message("Error in visualize_gp_sd_exp4: ", e$message)
+    return(NULL)
+  })
+}
+
+visualize_gp_lscale_exp4 <- function(model) {
+  gp_ls_vars <- get_variables_dynamic(model, "^lscale_")
+  if (length(gp_ls_vars) == 0) {
+    message("No GP length-scale parameters found")
+    return(NULL)
+  }
+  
+  tryCatch({
+    gp_ls_samples <- model %>%
+      spread_draws(!!!syms(gp_ls_vars)) %>%
+      tidyr::pivot_longer(
+        cols      = dplyr::all_of(gp_ls_vars),
+        names_to  = ".variable",
+        values_to = ".value"
+      ) %>%
+      dplyr::mutate(.variable = rename_vars_exp4(.variable))
+    
+    ggplot(gp_ls_samples, aes(x = .value, y = .variable)) +
+      ggdist::stat_halfeye(
+        normalize      = "xy",
+        point_interval = "mean_qi",
+        fill           = "#FF6347",
+        color          = "#8B3626"
+      ) +
+      geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
+      labs(y = "GP hyperparameters", x = "Posterior values") +
+      theme_classic()
+  }, error = function(e) {
+    message("Error in visualize_gp_lscale_exp4: ", e$message)
+    return(NULL)
+  })
+}
+
+p_fix  <- visualize_fixed_effects_exp4(m_exp4_brms)
+p_re   <- visualize_random_effects_exp4(m_exp4_brms)
+p_gp_sd  <- visualize_gp_sd_exp4(m_exp4_brms)
+p_gp_lsc <- visualize_gp_lscale_exp4(m_exp4_brms)
+
+p_fix
+p_re
+p_gp_sd
+p_gp_lsc
