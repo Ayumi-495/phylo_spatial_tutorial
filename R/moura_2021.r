@@ -12,14 +12,15 @@ dat_moura2021 <- escalc(measure="ZCOR", ri=ri, ni=ni, data=dat_moura2021)
 tree <- compute.brlen(tree)
 
 # compute phylogenetic correlation matrix
-A <- vcv(tree, corr=TRUE)
+A <- vcv(tree, corr = TRUE)
 
 # make copy of the species.id variable
 dat_moura2021$species.id.phy <- dat_moura2021$species.id
 
 # BM model ----
 ## metafor ----
-BM_metafor <- rma.mv(yi, vi,
+system.time(
+    BM_metafor <- rma.mv(yi, vi,
    random = list(~ 1 | study.id, 
    ~ 1 | effect.size.id, 
    ~ 1 | species.id, 
@@ -28,6 +29,7 @@ BM_metafor <- rma.mv(yi, vi,
    data = dat_moura2021,
    verbose = TRUE,
    sparse = TRUE)
+)
 
 summary(BM_metafor)
 # Multivariate Meta-Analysis Model (k = 1828; method: REML)
@@ -56,11 +58,44 @@ summary(BM_metafor)
 
 confint(BM_metafor)
 
+#           estimate  ci.lb  ci.ub 
+# sigma^2.1   0.0192 0.0108 0.0325 
+# sigma.1     0.1384 0.1038 0.1802 
+
+#           estimate  ci.lb  ci.ub 
+# sigma^2.2   0.0145 0.0121 0.0172 
+# sigma.2     0.1202 0.1099 0.1311 
+
+#           estimate  ci.lb  ci.ub 
+# sigma^2.3   0.0557 0.0334 0.0788 
+# sigma.3     0.2359 0.1827 0.2807 
+
+#           estimate  ci.lb  ci.ub 
+# sigma^2.4   0.0512 0.0179 0.1792 
+# sigma.4     0.2263 0.1336 0.4233 
+
 orchaRd::i2_ml(BM_metafor)
 
 phylo_heritability <- BM_metafor$sigma2[4]^2 / (BM_metafor$sigma2[4]^2 + BM_metafor$sigma2[3]^2)
 
-
+### add one explanatory variable ----
+system.time(
+    BM_metafor1 <- rma.mv(yi, vi,
+    mod = ~ 1 + spatially.pooled ,
+   random = list(~ 1 | study.id, 
+   ~ 1 | effect.size.id, 
+   ~ 1 | species.id, 
+   ~ 1 | species.id.phy),
+   R = list(species.id.phy = A), 
+   data = dat_moura2021,
+   verbose = TRUE,
+   sparse = TRUE)
+)
+#    user  system elapsed 
+# 402.725  11.616 426.134 
+View(dat_moura2021)
+summary(BM_metafor1)
+# saveRDS(BM_metafor1, here("Rdata", "moura2021_BM_metafor1.rds"))
 ## glmmTMB ----
 A <- A[sort(rownames(A)), sort(rownames(A))]
 
@@ -72,66 +107,70 @@ rownames(VCV)<- colnames(VCV)<- dat_moura2021$effect.size.id
 dat_moura2021$effect.size.id <- as.factor(dat_moura2021$effect.size.id)
 head(dat_moura2021)
 
-BM_tmb <- glmmTMB(yi ~ 1 + equalto(0 + effect.size.id|g, VCV) +
+system.time(
+    BM_tmb1 <- glmmTMB(yi ~ 1 + spatially.pooled + equalto(0 + effect.size.id|g, VCV) +
                          (1|study.id) + 
                          (1|species.id.phy) +
                          propto(0 + species.id.phy|g, A),
                        data = dat_moura2021,
                        REML = T)
-# saveRDS(BM_tmb, here("Rdata", "moura2021_BM_tmb.rds"))
+)
+#  user  system elapsed 
+#  23.254   0.502  23.86
+# saveRDS(BM_tmb1, here("Rdata", "moura2021_BM_tmb1.rds"))
 
-head(confint(BM_tmb), 10)
-
-# (Intercept)                                                            0.1132610
-# Std.Dev.(Intercept)|study.id                                           0.1056462
-# Std.Dev.(Intercept)|species.id.phy                                     0.1932854
-# Std.Dev.species.id.phyAcanthurus_leucosternon_ott388125|g.1            0.1293612
-# Std.Dev.species.id.phyAcanthurus_nigricans_ott467313|g.1               0.1293612
-# Std.Dev.species.id.phyAcanthurus_nigrofuscus_ott605289|g.1             0.1293612
-# Std.Dev.species.id.phyAchatina_fulica_ott997087|g.1                    0.1293612
-# Std.Dev.species.id.phyAegithalos_glaucogularis_vinaceus_ott5560982|g.1 0.1293612
-# Std.Dev.species.id.phyAethia_pusilla_ott855484|g.1                     0.1293612
-# Std.Dev.species.id.phyAgalychnis_callidryas_ott9483|g.1                0.1293612
+head(confint(BM_tmb1), 10)
+#                                                                    2.5 %
+# (Intercept)                                                             0.10679928
+# spatially.pooledyes                                                    -0.01118452
+# Std.Dev.(Intercept)|study.id                                            0.10562538
+# Std.Dev.(Intercept)|species.id.phy                                     0.19247823
+# Std.Dev.species.id.phyAcanthurus_leucosternon_ott388125|g.1             0.13029865
+# Std.Dev.species.id.phyAcanthurus_nigricans_ott467313|g.1                0.13029865
+# Std.Dev.species.id.phyAcanthurus_nigrofuscus_ott605289|g.1              0.13029865
+# Std.Dev.species.id.phyAchatina_fulica_ott997087|g.1                     0.13029865
+# Std.Dev.species.id.phyAegithalos_glaucogularis_vinaceus_ott5560982|g.1  0.13029865
+# Std.Dev.species.id.phyAethia_pusilla_ott855484|g.1                      0.13029865
 #                                                                           97.5 %
-# (Intercept)                                                            0.6230707
-# Std.Dev.(Intercept)|study.id                                           0.1813458
-# Std.Dev.(Intercept)|species.id.phy                                     0.2879763
-# Std.Dev.species.id.phyAcanthurus_leucosternon_ott388125|g.1            0.3959730
-# Std.Dev.species.id.phyAcanthurus_nigricans_ott467313|g.1               0.3959730
-# Std.Dev.species.id.phyAcanthurus_nigrofuscus_ott605289|g.1             0.3959730
-# Std.Dev.species.id.phyAchatina_fulica_ott997087|g.1                    0.3959730
-# Std.Dev.species.id.phyAegithalos_glaucogularis_vinaceus_ott5560982|g.1 0.3959730
-# Std.Dev.species.id.phyAethia_pusilla_ott855484|g.1                     0.3959730
-# Std.Dev.species.id.phyAgalychnis_callidryas_ott9483|g.1                0.3959730
-#                                                                         Estimate
-# (Intercept)                                                            0.3681658
-# Std.Dev.(Intercept)|study.id                                           0.1384142
-# Std.Dev.(Intercept)|species.id.phy                                     0.2359271
-# Std.Dev.species.id.phyAcanthurus_leucosternon_ott388125|g.1            0.2263262
-# Std.Dev.species.id.phyAcanthurus_nigricans_ott467313|g.1               0.2263262
-# Std.Dev.species.id.phyAcanthurus_nigrofuscus_ott605289|g.1             0.2263262
-# Std.Dev.species.id.phyAchatina_fulica_ott997087|g.1                    0.2263262
-# Std.Dev.species.id.phyAegithalos_glaucogularis_vinaceus_ott5560982|g.1 0.2263262
-# Std.Dev.species.id.phyAethia_pusilla_ott855484|g.1                     0.2263262
-# Std.Dev.species.id.phyAgalychnis_callidryas_ott9483|g.1                0.2263262
+# (Intercept)                                                            0.6204510
+# spatially.pooledyes                                                    0.0983696
+# Std.Dev.(Intercept)|study.id                                           0.1817868
+# Std.Dev.(Intercept)|species.id.phy                                     0.2874944
+# Std.Dev.species.id.phyAcanthurus_leucosternon_ott388125|g.1            0.3990331
+# Std.Dev.species.id.phyAcanthurus_nigricans_ott467313|g.1               0.3990331
+# Std.Dev.species.id.phyAcanthurus_nigrofuscus_ott605289|g.1             0.3990331
+# Std.Dev.species.id.phyAchatina_fulica_ott997087|g.1                    0.3990331
+# Std.Dev.species.id.phyAegithalos_glaucogularis_vinaceus_ott5560982|g.1 0.3990331
+# Std.Dev.species.id.phyAethia_pusilla_ott855484|g.1                     0.3990331
+#                                                                          Estimate
+# (Intercept)                                                            0.36362512
+# spatially.pooledyes                                                    0.04359254
+# Std.Dev.(Intercept)|study.id                                           0.13856875
+# Std.Dev.(Intercept)|species.id.phy                                     0.23523692
+# Std.Dev.species.id.phyAcanthurus_leucosternon_ott388125|g.1            0.22802077
+# Std.Dev.species.id.phyAcanthurus_nigricans_ott467313|g.1               0.22802077
+# Std.Dev.species.id.phyAcanthurus_nigrofuscus_ott605289|g.1             0.22802077
+# Std.Dev.species.id.phyAchatina_fulica_ott997087|g.1                    0.22802077
+# Std.Dev.species.id.phyAegithalos_glaucogularis_vinaceus_ott5560982|g.1 0.22802077
+# Std.Dev.species.id.phyAethia_pusilla_ott855484|g.1                     0.22802077
 
-sigma(BM_tmb)^2
-# 0.01445014
+sigma(BM_tmb1)^2
+# 0.01441594
 # summary(BM_tmb)
-BM_tmb_varcor <- VarCorr(BM_tmb)$cond
+BM_tmb_varcor <- VarCorr(BM_tmb1)$cond
 head(BM_tmb_varcor, 10)
 
 ## brms ----
 
-fit_brms1 <- bf(yi | se(sqrt(vi)) ~ 1 + 
+fit_brms2 <- bf(yi | se(sqrt(vi)) ~ 1 + spatially.pooled + 
                   (1 | study.id) + 
                   (1 | effect.size.id) + 
                   (1 | species.id) + 
                   (1 | gr(species.id.phy, cov = A))
 )
 
-prior_brms1 <- get_prior(
-  formula = fit_brms1,
+prior_brms2 <- get_prior(
+  formula = fit_brms2,
   data = dat_moura2021,
   data2 = list(A = A),
   family = gaussian()
@@ -142,12 +181,13 @@ num_chains <- 2
 threads_per_chain <- floor(max_cores / num_chains)
 options(mc.cores = num_chains) 
 
-m_brms1 <- brm(
-  formula = fit_brms1,
+system.time(
+    m_brms2 <- brm(
+  formula = fit_brms2,
   family = gaussian(),
   data = dat_moura2021,
   data2 = list(A = A),
-  prior = prior_brms1,
+  prior = prior_brms2,
   iter = 10000, 
   warmup = 7000,  
   chains = num_chains,
@@ -155,11 +195,11 @@ m_brms1 <- brm(
   threads = threading(threads_per_chain), 
   control = list(adapt_delta = 0.95, max_treedepth = 15)
 )
-# saveRDS(m_brms1, here("Rdata", "moura2021_BM_brms.rds"))
-summary(m_brms1)
+)
+summary(m_brms2)
 #  Family: gaussian 
 #   Links: mu = identity; sigma = identity 
-# Formula: yi | se(sqrt(vi)) ~ 1 + (1 | study.id) + (1 | effect.size.id) + (1 | species.id) + (1 | gr(species.id.phy, cov = A)) 
+# Formula: yi | se(sqrt(vi)) ~ 1 + spatially.pooled + (1 | study.id) + (1 | effect.size.id) + (1 | species.id) + (1 | gr(species.id.phy, cov = A)) 
 #    Data: dat_moura2021 (Number of observations: 1828) 
 #   Draws: 2 chains, each with iter = 10000; warmup = 7000; thin = 1;
 #          total post-warmup draws = 6000
@@ -167,27 +207,32 @@ summary(m_brms1)
 # Multilevel Hyperparameters:
 # ~effect.size.id (Number of levels: 1828) 
 #               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sd(Intercept)     0.12      0.01     0.11     0.13 1.00     1702     3408
+# sd(Intercept)     0.12      0.01     0.11     0.13 1.00     1494     2868
 
 # ~species.id (Number of levels: 341) 
 #               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sd(Intercept)     0.23      0.03     0.17     0.28 1.00      636      912
+# sd(Intercept)     0.23      0.03     0.17     0.28 1.00      535      624
 
 # ~species.id.phy (Number of levels: 341) 
 #               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sd(Intercept)     0.28      0.09     0.15     0.51 1.00      827      784
+# sd(Intercept)     0.27      0.09     0.15     0.49 1.00      611      467
 
 # ~study.id (Number of levels: 457) 
 #               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sd(Intercept)     0.14      0.02     0.10     0.18 1.00      588     1121
+# sd(Intercept)     0.14      0.02     0.10     0.19 1.00      454      794
 
 # Regression Coefficients:
-#           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# Intercept     0.37      0.16     0.03     0.68 1.00     2163     2207
+#                     Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# Intercept               0.36      0.16     0.04     0.68 1.00     2050     2076
+# spatially.pooledyes     0.04      0.03    -0.01     0.10 1.00     1800     2714
 
 # Further Distributional Parameters:
 #       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
 # sigma     0.00      0.00     0.00     0.00   NA       NA       NA
+
+# Draws were sampled using sample(hmc). For each parameter, Bulk_ESS
+# and Tail_ESS are effective sample size measures, and Rhat is the potential
+# scale reduction factor on split chains (at convergence, Rhat = 1).
 
 ## summarise ----  
 
@@ -247,7 +292,7 @@ brms_1 <- data.frame(
 
 output <- rbind(metafor_1, glmmTMB_1, brms_1)
 knitr::kable(output)     
-|model      |    logLik|       est|        se|  sigma2.u|  sigma2.m| sigma2.non.phylo| sigma2.phylo|
+# |model      |    logLik|       est|        se|  sigma2.u|  sigma2.m| sigma2.non.phylo| sigma2.phylo|
 # |:----------|---------:|---------:|---------:|---------:|---------:|----------------:|------------:|
 # |BM_metafor | -167.6726| 0.3681659| 0.1300448| 0.1384141| 0.1202087|        0.2359274|    0.2263264|
 # |BM_tmb     | -171.4281| 0.3681658| 0.1300559| 0.1384142| 0.1202088|        0.2359271|    0.2263262|

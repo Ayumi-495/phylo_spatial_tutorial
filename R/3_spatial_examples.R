@@ -608,9 +608,9 @@ summary(m_exp)
 # Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
 # and Tail_ESS are effective sample size measures, and Rhat is the potential
 # scale reduction factor on split chains (at convergence, Rhat = 1).
-pp_check(m_exp, ndraws = 200)
+# pp_check(m_exp, ndraws = 200)
 
-
+saveRDS(m_exp, here("Rdata", "EXP_eg3_brms.rds"))
 
 fit_eg3_gau <- bf(s1 | se(sqrt(vars1)) ~ 1 + 
                 (1 | site) + 
@@ -636,6 +636,7 @@ m_gau <- brm(formula = fit_eg3_gau,
 )
 
 summary(m_gau)
+saveRDS(m_gau, here("Rdata", "GAU_eg3_brms.rds"))
 
 ## summary of results ----
 metafor3 <- data.frame(model = "metafor", 
@@ -691,6 +692,7 @@ knitr::kable(output_eg3)
 #   |glmmTMB | -200.8246| 190.8255| 41.22806| 1653.527| 819.5016| 8548.023|  97.30914|
 #   |brms    |        NA| 192.5790| 42.74387| 4004.832| 876.2053| 6955.341| 105.02247|
 
+
 # example 4 Roger et al. 2024----
 
 dat_Roger <- read.csv(here("data", "examples", "Roger_etal_2024", "Roger_etal_2024.csv"))
@@ -703,7 +705,7 @@ dat_Roger$effect_id <- seq_len(nrow(dat_Roger))
 names(dat_Roger)
 summary(dat_Roger)
 table(dat_Roger$response)
-
+head( dat_Roger)
 
 dat_Roger <- dat_Roger %>%
   filter(!is.na(longitude))
@@ -765,7 +767,7 @@ summary(EXP_eg4)
 #   estimate      se     zval    pval    ci.lb    ci.ub      
 # -0.3349  0.0644  -5.2006  <.0001  -0.4612  -0.2087  *** 
 #   
-saveRDS(EXP_eg4, here("Rdata", "EXP_eg4_metafor.rds"))
+EXP_eg4_metafor <- readRDS(here("Rdata", "EXP_eg4_metafor.rds"))
 confint(EXP_eg4)
 # estimate  ci.lb  ci.ub 
 # sigma^2   0.7935 0.7257 0.8678 
@@ -780,7 +782,7 @@ confint(EXP_eg4)
 
 
 system.time(EXP_eg4_1 <- rma.mv(d_Hedges, var_Hedges, 
-                              mods = ~ response - 1,
+                              mods = ~ 1 + response,
                               random = list(
                                 ~ 1|effect_id,
                                 # ~ 1|study_id,
@@ -879,7 +881,7 @@ summary(m_exp4_brms)
 # scale reduction factor on split chains (at convergence, Rhat = 1).
 
 saveRDS(m_exp4_brms, here("Rdata", "EXP_eg4_brms.rds"))
-
+m_exp4_brms <- readRDS(here("Rdata", "EXP_eg4_brms.rds"))
 
 fit_eg4_1 <- bf(d_Hedges | se(sqrt(var_Hedges)) ~ response - 1 + 
                 # (1 | site) + 
@@ -954,3 +956,16 @@ brms4 <- data.frame(
 output_eg4 <- rbind(metafor4, tmb4, brms4)
 
 knitr::kable(output_eg4)
+
+# make figures ----
+## metafor ----
+library(orchaRd)
+eg4_metafor_orc <- orchaRd::mod_results(EXP_eg4_metafor, mod = "1",
+                                 at = NULL, group = "study_id")
+p_eg4_metafor <- orchard_plot(eg4_metafor_orc, mod = "1", 
+                              group = "study_id", xlab = "SMD", 
+                              transfm = "none", twig.size = 0.5, trunk.size = 1) + 
+  theme_classic()
+p_eg4_metafor
+
+orchaRd::mod_results(EXP_eg4_1, mod = "response", group = "study_id")

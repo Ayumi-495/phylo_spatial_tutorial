@@ -1,88 +1,101 @@
-set.seed(42)
-n_study <- 500
-beta0_r <- 0.30
-theta2 <- 7.5
-tau2 <- 0.08
-sigma2_study <- 0.10
-sigma2_es <- 0.05
+set.seed(357)
 
-sd_x_km    <- 1200
-sd_y_km    <-  900
-center_lat <- 50
-center_lon <- 10
+# True parameters (meta-analysis scale: Fisher's Z)
+k.studies    <- 300
+k.per.study  <- 20
+k            <- k.studies * k.per.study
 
-n_meanlog <- 3.7   
-n_sdlog   <- 1.0
+mu_z         <- atanh(0.20)
+sigma2.u     <- 0.20     # between-study (non-spatial)
+sigma2.s     <- 0.30     # within-study extra (non-spatial)
+tau2         <- 0.40     # spatial variance
+rho_within   <- 0.50     # within-study correlation in sampling error
 
-# study location ----
-x_km <- rnorm(n_study, 0, sd_x_km)
-y_km <- rnorm(n_study, 0, sd_y_km)
-
-km_per_deg_lat <- 111
-km_per_deg_lon <- 111 * cos(center_lat * pi/180)
-lat <- center_lat + y_km / km_per_deg_lat
-lon <- center_lon + x_km / km_per_deg_lon
-
-coords <- data.frame(
-  study_id = factor(seq_len(n_study)),
-  x_km = x_km, y_km = y_km, lat = lat, lon = lon
+# Spatial domain (study-level coords)
+sd_x_km <- 800; sd_y_km <- 600
+loc <- data.frame(
+  study = seq_len(k.studies),
+  x_km  = rnorm(k.studies, 0, sd_x_km),
+  y_km  = rnorm(k.studies, 0, sd_y_km)
 )
 
-# distance matrix ----
-D   <- as.matrix(dist(cbind(x_km, y_km)))  
-phi <- exp(-theta2)
-R   <- exp(-phi * D)
-d_half <- log(2) / phi
+D_study  <- as.matrix(dist(loc[, c("x_km","y_km")]))
+d_half   <- 800
+rho_dec  <- log(2) / d_half
+R_study  <- exp(-rho_dec * D_study)
 
-# spatial random effect ----
-eps  <- 1e-10
-Sigma_sp <- tau2 * R + diag(eps, n_study)
+# Spatial random effect: s_study ~ N(0, tau2 * R)
+eps <- 1e-8
+Sigma_sp <- tau2 * R_study + diag(eps, k.studies)
 L <- chol(Sigma_sp)
-s <- as.vector(t(L) %*% rnorm(n_study))
+s_study <- as.vector(t(L) %*% rnorm(k.studies))
 
-# between study random effect -----
-a <- rnorm(n_study, 0, sqrt(sigma2_study))
+# IDs
+study <- rep(loc$study, each = k.per.study)
+esid  <- ave(study, study, FUN = seq_along)
+id    <- seq_len(k)
 
-# each study have 10 datapoints ----
-m_i <- rep(10, n_study)
-beta0_z <- atanh(beta0_r)
+# Non-spatial random effects
+u_study <- rnorm(k.studies, 0, sqrt(sigma2.u))
+u_u <- u_study[study] # between-study mapped to effects
+u_s <- rnorm(k, 0, sqrt(sigma2.s)) # within-study extra per effect
 
-dat <- vector("list", n_study)
-for(i in seq_len(n_study)){
-  k <- m_i[i]
-  n_ij <- pmax(10, round(rlnorm(k, n_meanlog, n_sdlog)))
-  vi <- 1/pmax(7, n_ij-3)
-  u_ij <- rnorm(k, 0, sqrt(sigma2_es))
-  
-  z_true <- beta0_z + s[i] + a[i] + u_ij
-  yi <- rnorm(k, mean = z_true, sd = sqrt(vi))
-  r_obs <- tanh(yi)
-  
-  dat[[i]] <- data.frame(
-    study_id = coords$study_id[i],
-    x_km = coords$x_km[i],
-    y_km = coords$y_km[i],
-    lat = coords$lat[i],
-    lon = coords$lon[i],
-    n = n_ij,
-    vi = vi,
-    yi_z = yi,
-    r = r_obs
-  )
+# Sampling sizes (lognormal) & variances on Z 
+n_meanlog <- 3.7 # mean(log n)
+n_sdlog <- 1.0 # sd(log n)
+
+n_ij <- pmax(10L, round(rlnorm(k, meanlog = n_meanlog, sdlog = n_sdlog)))
+vi   <- 1 / pmax(7, n_ij - 3) # Var(Z) ≈ 1/(n-3), guard small n
+
+# Sampling error VCV: block-diagonal by study with rho_within
+VCV <- matrix(0, nrow = k, ncol = k)
+for (st in unique(study)) {
+  idx <- which(study == st)
+  S <- matrix(rho_within, nrow = length(idx), ncol = length(idx))
+  diag(S) <- 1
+  S <- S * sqrt(outer(vi[idx], vi[idx]))   # scale by sqrt(vi_i * vi_j)
+  VCV[idx, idx] <- S
 }
-dat <- do.call(rbind, dat)
-dat$es_id <- seq_len(nrow(dat))
+VCV[upper.tri(VCV)] <- t(VCV)[upper.tri(VCV)]
+diag(VCV) <- vi
+
+# Sampling error draw: mi ~ N(0, VCV)
+mi <- MASS::mvrnorm(n = 1, mu = rep(0, k), Sigma = VCV)
+
+# Observed effects (Z)
+s  <- s_study[study]
+yi <- mu_z + s + u_u + u_s + mi
+
+# Combine 
+dat <- data.frame(
+  study = factor(study),
+  esid  = esid,
+  id = factor(id),
+  yi = yi,
+  vi = vi,
+  x_km = loc$x_km[study],
+  y_km  = loc$y_km[study],
+  n = n_ij
+)
+
+head(dat, 30)
+mean(dat$yi)
+var(dat$yi)
+mean(dat_vars$yi)
+var(dat_means$yi)
+dat_means <- aggregate(yi ~ study, data = dat, mean) 
+var(dat_means$yi)
+mean(dat$vi)
+
 dat$const <- 1
-# write_csv(dat, here("data", "simulated_v1.csv"))
-View(dat)
 
 system.time(
   fit <- rma.mv(
-    yi = yi_z, 
+    yi = yi, 
     V = vi,
     random = list(
-      ~ 1 | study_id,
-      ~ 1 | es_id, 
+      ~ 1 | study,
+      ~ 1 | id, 
     ~ x_km + y_km |const
     ), 
     struct = "SPEXP", 
@@ -91,54 +104,107 @@ system.time(
     verbose = TRUE
     )
 )
+# user   system  elapsed 
+# 12384.22   262.65 20069.32 
 summary(fit)
-
-# Multivariate Meta-Analysis Model (k = 5000; method: REML)
+# Multivariate Meta-Analysis Model (k = 6000; method: REML)
 # 
 # logLik    Deviance         AIC         BIC        AICc   
-# -1659.0752   3318.1505   3328.1505   3360.7354   3328.1625   
+# -5610.7329  11221.4657  11231.4657  11264.9625  11231.4757   
 # 
 # Variance Components:
 #   
-#   estim    sqrt  nlvls  fixed    factor 
-# sigma^2.1  0.0930  0.3049    500     no  study_id 
-# sigma^2.2  0.0507  0.2251   5000     no     es_id 
+#   estim    sqrt  nlvls  fixed  factor 
+# sigma^2.1  0.2205  0.4696    300     no   study 
+# sigma^2.2  0.2879  0.5366   6000     no      id 
 # 
 # outer factor: const        (nlvls = 1)
-# inner term:   ~x_km + y_km (nlvls = 500)
+# inner term:   ~x_km + y_km (nlvls = 300)
 # 
 # estim    sqrt  fixed 
-# tau^2         0.1623  0.4028     no 
-# rho        2792.9064             no 
+# tau^2        0.2762  0.5255     no 
+# rho        721.7237             no 
 # 
 # Test for Heterogeneity:
-#   Q(df = 4999) = 82763.9277, p-val < .0001
+#   Q(df = 5999) = 280705.5665, p-val < .0001
 # 
 # Model Results:
 #   
-#   estimate      se    zval    pval    ci.lb   ci.ub    
-# 0.2743  0.2338  1.1730  0.2408  -0.1840  0.7325    
-# 
-# ---
-dat$es_id <- factor(dat$es_id)
+#   estimate      se    zval    pval   ci.lb   ci.ub     
+# 0.5723  0.2083  2.7473  0.0060  0.1640  0.9806  ** 
+
+
+dat$id <- factor(dat$id)
 VCV <- diag(dat$vi, nrow = nrow(dat)) 
-rownames(VCV)<- colnames(VCV)<- dat$es_id
+rownames(VCV)<- colnames(VCV)<- dat$id
 VCV[1:5, 1:5]
 
 dat$pos <- numFactor(dat$x_km, dat$y_km)
 
-tmb <- system.time(
-  glmmTMB(
-  yi ~ 1 +
-    equalto(0 + effect_id | const, VCV) + 
-    (1 | Study) +
+system.time(
+  tmb <- glmmTMB(yi ~ 1 +
+    equalto(0 + id | const, VCV) + 
+    (1 | study) +
     exp(pos + 0 | const),     
   data = dat,
   REML = TRUE
+  )
 )
+# user  system elapsed 
+#812.421  11.121 834.193 
+
+head(confint(tmb), 10)
+#                                          2.5 %    97.5 %  Estimate
+# (Intercept)                                              0.1527657 0.9918287 0.5722972
+# Std.Dev.(Intercept)|study                                0.4155384 0.5306493 0.4695798
+# Std.Dev.pos(-551.252000853363,-1370.3045899935)|const.1  0.3433570 0.8042729 0.5255024
+# Std.Dev.pos(-218.706116577143,-1328.96626646076)|const.1 0.3433570 0.8042729 0.5255024
+# Std.Dev.pos(378.931902660787,-1285.05806598531)|const.1  0.3433570 0.8042729 0.5255024
+# Std.Dev.pos(-1073.8917378376,-1280.66200353426)|const.1  0.3433570 0.8042729 0.5255024
+# Std.Dev.pos(44.5099736530509,-1220.60786402491)|const.1  0.3433570 0.8042729 0.5255024
+# Std.Dev.pos(34.0059462884198,-1174.32729886188)|const.1  0.3433570 0.8042729 0.5255024
+# Std.Dev.pos(104.067536928893,-1159.07462992095)|const.1  0.3433570 0.8042729 0.5255024
+# Std.Dev.pos(-777.775431059205,-1136.9892610501)|const.1  0.3433570 0.8042729 0.5255024
+# > 
+
+sigma(tmb)^2
+# 0.05065844
+tmb_varcor <- VarCorr(tmb)$cond
+# head(tmb_2_varcor, 10)
+
+tmb$fit$par[[4]]
+
+
+
+metafor_1 <- data.frame(model = "metafor", 
+                        logLik = logLik(fit),
+                        est = fit$b[[1]], 
+                        se = fit$se[[1]], 
+                        sigma2.u = fit$sigma2[1],  # among study variance
+                        sigma2.m = fit$sigma2[2],  # within study variance
+                        tau2 = fit$tau2,
+                        rho = fit$rho)
+
+
+glmmTMB_1 <- data.frame(model = "glmmTMB",
+                        logLik = logLik(tmb)[1],
+                        est = unlist(fixef(tmb))[[1]], #overall mean
+                        se = as.numeric(sqrt(vcov(tmb)[[1]])), #overall mean SE
+                        sigma2.u = (tmb_varcor$study_id[1]),  #among study variance estimate
+                        sigma2.m = sigma(tmb)^2,  #within study variance estimate
+                        tau2 = (tmb_varcor$const.1[1]),  #spatial variance estimate
+                        rho = exp(tmb$fit$par[[4]])  # rho
 )
 
-### ---- ####
+output <- rbind(metafor_1, glmmTMB_1)
+knitr::kable(output)
+# |model   |    logLik|       est|        se|  sigma2.u|  sigma2.m|      tau2|      rho|
+#   |:-------|---------:|---------:|---------:|---------:|---------:|---------:|--------:|
+#   |metafor | -1659.075| 0.2742624| 0.2338043| 0.3048980| 0.2250742| 0.1622631| 2792.906|
+#   |glmmTMB | -1663.334| 0.2742563| 0.2641737| 0.0929624| 0.0506584| 0.1622714| 2793.032|
+
+
+ ## ----  # #
 coords <- data.frame(
   study_id = factor(seq_len(n_studies)),
   x_km = x_km, y_km = y_km, lat = lat, lon = lon

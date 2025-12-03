@@ -265,3 +265,89 @@ brms_p4 <- ggplot(random_effects_samples_brms, aes(x = .value, y = .variable)) +
 brms_eg1_2 <- brms_p3/brms_p4
 
 metafor_eg1_2 |brms_eg1_2
+
+## spatial e.g. 1 ----
+# use metafor_eg3_gau, metafor_eg3_exp, 
+# m_exp, m_gau
+
+# metafor
+summary(metafor_eg3_gau)
+s_metafor_p1 <- orchaRd::orchard_plot(metafor_eg3_gau, 
+                           group = "site",
+                           xlab = "Effect size",
+                           angle = 45) + 
+  scale_x_discrete(labels = c("Overall effect")) +
+  scale_color_manual(values = "#CDBE70") +
+  scale_fill_manual(values = "#EEDC82") + 
+#  scale_y_continuous(breaks = seq(-4.0, 4.0, 1), limits = c(-4.0, 4.0)) + 
+  theme_classic()
+
+## random effect
+ci_var <- confint(HD_BM, level = 0.95) 
+tbl <- tibble::as_tibble(ci_var, rownames = "term")
+
+label_map <- c("Phylo", "Study_id", "Species", "Effect_id")
+tbl_var <- tbl %>%
+  filter(str_detect(term, "^sigma\\^2\\.")) %>%
+  mutate(
+    idx   = as.integer(str_match(term, "\\.(\\d+)$")[,2]),
+    label = case_when(
+      idx == 1 ~ "Study_id",
+      idx == 2 ~ "Effect_id",
+      idx == 3 ~ "Species",
+      idx == 4 ~ "Phylo"
+    ),
+    label = factor(label, levels = label_map) 
+  )
+
+metafor_p2 <- ggplot(tbl_var, aes(x = label, y = estimate)) +
+  geom_point(size = 3.0, color = "#9AC0CD") +
+  geom_errorbar(aes(ymin = ci.lb, ymax = ci.ub), width = 0.25, color = "#9AC0CD") +
+  coord_flip() +
+  labs(x = NULL, y = "Variance 95% CI") +
+  scale_y_continuous(breaks = seq(0, 10.0, 1), limits = c(0, 10.0)) + 
+  theme_classic(base_size = 12)
+
+metafor_eg1_1 <- metafor_p1 / metafor_p2
+
+## spatial e.g. 2 ----
+# EXP_eg4_metafor, m_exp4_brms
+dat_Roger <- read.csv(here("data", "examples", "Roger_etal_2024", "Roger_etal_2024.csv"))
+
+summary(EXP_eg4_metafor)
+s_metafor_p1 <- orchaRd::orchard_plot(EXP_eg4_metafor, 
+                                      group = "effect_id",
+                                      xlab = "Effect size",
+                                      angle = 45) + 
+  scale_x_discrete(labels = c("Overall effect")) +
+  scale_color_manual(values = "#CDBE70") +
+  scale_fill_manual(values = "#EEDC82") + 
+  #  scale_y_continuous(breaks = seq(-4.0, 4.0, 1), limits = c(-4.0, 4.0)) + 
+  theme_classic()
+
+ci_var <- confint(EXP_eg4_metafor, level = 0.95) 
+tbl <- tibble::as_tibble(ci_var, rownames = "term")
+
+label_map <- c("Phylo", "Study_id", "Species", "Effect_id")
+tbl_var <- tbl %>%
+  filter(str_detect(term, "^sigma\\^2\\.")) %>%
+  mutate(
+    idx   = as.integer(str_match(term, "\\.(\\d+)$")[,2]),
+    label = case_when(
+      idx == 1 ~ "Study_id",
+      idx == 2 ~ "Effect_id",
+      idx == 3 ~ "Species",
+      idx == 4 ~ "Phylo"
+    ),
+    label = factor(label, levels = label_map) 
+  )
+
+metafor_p2 <- ggplot(tbl_var, aes(x = label, y = estimate)) +
+  geom_point(size = 3.0, color = "#9AC0CD") +
+  geom_errorbar(aes(ymin = ci.lb, ymax = ci.ub), width = 0.25, color = "#9AC0CD") +
+  coord_flip() +
+  labs(x = NULL, y = "Variance 95% CI") +
+  scale_y_continuous(breaks = seq(0, 10.0, 1), limits = c(0, 10.0)) + 
+  theme_classic(base_size = 12)
+
+
