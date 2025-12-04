@@ -314,6 +314,7 @@ metafor_eg1_1 <- metafor_p1 / metafor_p2
 # EXP_eg4_metafor, m_exp4_brms
 dat_Roger <- read.csv(here("data", "examples", "Roger_etal_2024", "Roger_etal_2024.csv"))
 
+### metafor ----
 summary(EXP_eg4_metafor)
 s_metafor_p1 <- orchaRd::orchard_plot(EXP_eg4_metafor, 
                                       group = "effect_id",
@@ -327,30 +328,38 @@ s_metafor_p1 <- orchaRd::orchard_plot(EXP_eg4_metafor,
 
 ci_var <- confint(EXP_eg4_metafor, level = 0.95) 
 tbl <- tibble::as_tibble(ci_var, rownames = "term")
+# > tbl 
+# # A tibble: 5 × 4
+# term    estimate  ci.lb ci.ub
+# <chr>      <dbl>  <dbl> <dbl>
+#   1 sigma^2    0.793 0.726  0.868
+# 2 sigma      0.891 0.852  0.932
+# 3 tau^2      1.23  1.01   1.50 
+# 4 tau        1.11  1.01   1.22 
+# 5 rho        0.174 0.0174 0.857
 
-label_map <- c("Phylo", "Study_id", "Species", "Effect_id")
-tbl_var <- tbl %>%
-  filter(str_detect(term, "^sigma\\^2\\.")) %>%
-  mutate(
-    idx   = as.integer(str_match(term, "\\.(\\d+)$")[,2]),
-    label = case_when(
-      idx == 1 ~ "Study_id",
-      idx == 2 ~ "Effect_id",
-      idx == 3 ~ "Species",
-      idx == 4 ~ "Phylo"
-    ),
-    label = factor(label, levels = label_map) 
-  )
+tbl_var <- tbl %>% 
+  filter(term %in% c("tau^2","sigma^2")) %>% 
+  mutate(term = factor(term, levels = c("tau^2","sigma^2")))
 
-metafor_p2 <- ggplot(tbl_var, aes(x = label, y = estimate)) +
-  geom_point(size = 3.0, color = "#9AC0CD") +
-  geom_errorbar(aes(ymin = ci.lb, ymax = ci.ub), width = 0.25, color = "#9AC0CD") +
-  coord_flip() +
-  labs(x = NULL, y = "Variance 95% CI") +
-  scale_y_continuous(breaks = seq(0, 10.0, 1), limits = c(0, 10.0)) + 
+s_metafor_p1var <- ggplot(tbl_var, aes(x = estimate, y = term)) +
+  geom_point(size = 3, color = "#9AC0CD") +
+  geom_errorbar(aes(xmin = ci.lb, xmax = ci.ub), height = 0.25, color = "#9AC0CD") +
+  labs(x = "Variance (estimate with 95% CI)", y = NULL) +
+  theme_classic(base_size = 12)
+
+tbl_rho <- tbl %>% 
+  filter(term == "rho")
+
+s_metafor_p1rho <- ggplot(tbl_rho, aes(x = estimate, y = term)) +
+  geom_point(size = 3, color = "#CD6090") +
+  geom_errorbar(aes(xmin = ci.lb, xmax = ci.ub), 
+                height = 0.25, color = "#CD6090") +
+  labs(x = "Correlation (rho) 95% CI", y = NULL) +
   theme_classic(base_size = 12)
 
 #### brms ----
+
 summary(m_exp4_brms)
 
 get_variables_dynamic <- function(model, pattern) {
@@ -397,8 +406,8 @@ visualize_fixed_effects_exp4 <- function(model) {
       ggdist::stat_halfeye(
         normalize      = "xy",
         point_interval = "mean_qi",
-        fill           = "lightcyan3",
-        color          = "lightcyan4"
+        fill           = "#CDBE70",
+        color          = "#EEDC82"
       ) +
       geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
       labs(y = "Fixed effects", x = "Posterior values") +
@@ -499,8 +508,8 @@ visualize_gp_lscale_exp4 <- function(model) {
       ggdist::stat_halfeye(
         normalize      = "xy",
         point_interval = "mean_qi",
-        fill           = "#FF6347",
-        color          = "#8B3626"
+        fill           = "#CD6090",
+        color          = "#8B3A62"
       ) +
       geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
       labs(y = "GP hyperparameters", x = "Posterior values") +
@@ -520,3 +529,7 @@ p_fix
 p_re
 p_gp_sd
 p_gp_lsc
+
+metafor_sp2.1 <- s_metafor_p1 / (s_metafor_p1var + s_metafor_p1rho)
+metafor_sp2.1
+brms_sp2.1 <- 
