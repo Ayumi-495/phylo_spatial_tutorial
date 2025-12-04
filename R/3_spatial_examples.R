@@ -917,13 +917,13 @@ system.time(
 summary(m_exp4_1_brms)
 ### summarise ----
 metafor4 <- data.frame(model = "metafor", 
-                       logLik = logLik(EXP_eg4),
-                       est = EXP_eg4$b[[1]], 
-                       se = EXP_eg4$se[[1]], 
+                       logLik = logLik(EXP_eg4_metafor),
+                       est = EXP_eg4_metafor$b[[1]], 
+                       se = EXP_eg4_metafor$se[[1]], 
                        # sigma2.u = EXP_eg4$sigma2[2], ## among study variance
-                       sigma2.m = EXP_eg4$sigma2[1], ## within study variance
-                       tau2 = EXP_eg4$tau2,
-                       rho = EXP_eg4$rho
+                       sigma2.m = EXP_eg4_metafor$sigma2[1], ## within study variance
+                       tau2 = EXP_eg4_metafor$tau2,
+                       rho = EXP_eg4_metafor$rho
 )
 
 
