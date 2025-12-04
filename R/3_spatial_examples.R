@@ -702,11 +702,6 @@ head(dat_Roger)
 dat_Roger$const <- 1 # add constant for spatial models
 dat_Roger$effect_id <- seq_len(nrow(dat_Roger))
 
-names(dat_Roger)
-summary(dat_Roger)
-table(dat_Roger$response)
-head( dat_Roger)
-
 dat_Roger <- dat_Roger %>%
   filter(!is.na(longitude))
 coords2 <- cbind(dat_Roger$longitude, dat_Roger$latitude)
@@ -805,21 +800,32 @@ rownames(VCV)<- colnames(VCV)<- dat_Roger$effect_id
 VCV[1:5, 1:5]
 
 dat_Roger$pos <- numFactor(dat_Roger$x_km, dat_Roger$y_km)
-
 ## Each primary study includes only one location, so we can simplify the model by removing the study-level random effect
 system.time(
-  tmb_4 <- glmmTMB(d_Hedges ~ 1 + equalto(0+effect_id|const, VCV) 
+  tmb_4 <- glmmTMB(d_Hedges ~ 1 
+                   + equalto(0+effect_id|const, VCV)
                    + exp(pos+0|const),
                    data = dat_Roger, REML=TRUE)
-)
+  )
 
 head(confint(tmb_4), 10)
+# 2.5 %     97.5 %   Estimate
+# (Intercept)                                              -0.461234 -0.2086251 -0.3349296
+# Std.Dev.pos(16262.6644099893,-5204.51951303405)|const.1   1.007168  1.2242221  1.1104039
+# Std.Dev.pos(16280.4755285163,-5116.14629455727)|const.1   1.007168  1.2242221  1.1104039
+# Std.Dev.pos(-7965.96086752978,-5019.4733863405)|const.1   1.007168  1.2242221  1.1104039
+# Std.Dev.pos(-7959.34359171906,-4693.06364429579)|const.1  1.007168  1.2242221  1.1104039
+# Std.Dev.pos(-7960.45678662699,-4691.63535918108)|const.1  1.007168  1.2242221  1.1104039
+# Std.Dev.pos(-7096.61753807119,-4685.92422115392)|const.1  1.007168  1.2242221  1.1104039
+# Std.Dev.pos(-7992.73943895704,-4607.717759142)|const.1    1.007168  1.2242221  1.1104039
+# Std.Dev.pos(-7903.68384632242,-4579.4258128701)|const.1   1.007168  1.2242221  1.1104039
+# Std.Dev.pos(16237.0609271069,-4578.0132445546)|const.1    1.007168  1.2242221  1.1104039
 
 sigma(tmb_4) 
-
+# 0.8907814
 tmb_4_varcor <- VarCorr(tmb_4)$cond
 exp(tmb_4$fit$par[[2]])
-
+# 1.110404
 
 ## brms ----
 
