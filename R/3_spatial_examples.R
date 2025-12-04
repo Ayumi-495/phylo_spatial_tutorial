@@ -693,7 +693,7 @@ knitr::kable(output_eg3)
 #   |brms    |        NA| 192.5790| 42.74387| 4004.832| 876.2053| 6955.341| 105.02247|
 
 
-# example 4 Roger et al. 2024----
+# example 4 Roger et al. 2024 ----
 
 dat_Roger <- read.csv(here("data", "examples", "Roger_etal_2024", "Roger_etal_2024.csv"))
 head(dat_Roger)
