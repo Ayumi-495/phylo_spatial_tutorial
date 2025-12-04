@@ -345,7 +345,7 @@ tbl_var <- tbl %>%
 s_metafor_p1var <- ggplot(tbl_var, aes(x = estimate, y = term)) +
   geom_point(size = 3, color = "#9AC0CD") +
   geom_errorbar(aes(xmin = ci.lb, xmax = ci.ub), height = 0.25, color = "#9AC0CD") +
-  labs(x = "Variance (estimate with 95% CI)", y = NULL) +
+  labs(x = "Variance with with 95% CI", y = NULL) +
   theme_classic(base_size = 12)
 
 tbl_rho <- tbl %>% 
@@ -355,7 +355,7 @@ s_metafor_p1rho <- ggplot(tbl_rho, aes(x = estimate, y = term)) +
   geom_point(size = 3, color = "#CD6090") +
   geom_errorbar(aes(xmin = ci.lb, xmax = ci.ub), 
                 height = 0.25, color = "#CD6090") +
-  labs(x = "Correlation (rho) 95% CI", y = NULL) +
+  labs(x = "rho with 95% CI", y = NULL) +
   theme_classic(base_size = 12)
 
 #### brms ----
@@ -367,16 +367,18 @@ get_variables_dynamic <- function(model, pattern) {
   variables[grep(pattern, variables)]
 }
 
+get_variables(m_exp4_brms)
+
 rename_vars_exp4 <- function(variable) {
   # fixed
-  variable <- gsub("b_Intercept", "mu (overall mean)", variable)
+  variable <- gsub("b_Intercept", "Overall effect", variable)
   
   # random
-  variable <- gsub("sd_effect_id__Intercept", "_effect (SD of effect_id)", variable)
+  variable <- gsub("sd_effect_id__Intercept", "SD of effect_id", variable)
   
   # GP hyperparameters
-  variable <- gsub("sdgp_gpx_kmy_km", "SD_GP (spatial GP)", variable)
-  variable <- gsub("lscale_gpx_kmy_km", "ℓ_GP (length-scale, km)", variable)
+  variable <- gsub("sdgp_gpx_kmy_km", "sdgp_gpx", variable)
+  variable <- gsub("lscale_gpx_kmy_km", "lscale", variable)
   
   # #
   # variable <- gsub("^sigma$", "σ_resid", variable)
@@ -406,8 +408,8 @@ visualize_fixed_effects_exp4 <- function(model) {
       ggdist::stat_halfeye(
         normalize      = "xy",
         point_interval = "mean_qi",
-        fill           = "#CDBE70",
-        color          = "#EEDC82"
+        fill           = "#EEDC82",
+        color          = "#CDBE70"
       ) +
       geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
       labs(y = "Fixed effects", x = "Posterior values") +
@@ -418,9 +420,10 @@ visualize_fixed_effects_exp4 <- function(model) {
   })
 }
 
+### random effect ----
 visualize_random_effects_exp4 <- function(model) {
   
-  random_effect_vars <- get_variables_dynamic(model, "^sd_")
+  random_effect_vars <- get_variables_dynamic(model, "^sd")
   # random_effect_vars <- setdiff(random_effect_vars, "sd…")
   
   if (length(random_effect_vars) == 0) {
@@ -442,47 +445,14 @@ visualize_random_effects_exp4 <- function(model) {
       ggdist::stat_halfeye(
         normalize      = "xy",
         point_interval = "mean_qi",
-        fill           = "olivedrab3",
-        color          = "olivedrab4"
+        fill           = "#9AC0CD",
+        color          = "#68838B"
       ) +
       geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
       labs(y = "Random effects (SD)", x = "Posterior values") +
       theme_classic()
   }, error = function(e) {
     message("Error in visualize_random_effects_exp4: ", e$message)
-    return(NULL)
-  })
-}
-
-visualize_gp_sd_exp4 <- function(model) {
-  gp_sd_vars <- get_variables_dynamic(model, "^sdgp_")
-  if (length(gp_sd_vars) == 0) {
-    message("No GP SD parameters found")
-    return(NULL)
-  }
-  
-  tryCatch({
-    gp_sd_samples <- model %>%
-      spread_draws(!!!syms(gp_sd_vars)) %>%
-      tidyr::pivot_longer(
-        cols      = dplyr::all_of(gp_sd_vars),
-        names_to  = ".variable",
-        values_to = ".value"
-      ) %>%
-      dplyr::mutate(.variable = rename_vars_exp4(.variable))
-    
-    ggplot(gp_sd_samples, aes(x = .value, y = .variable)) +
-      ggdist::stat_halfeye(
-        normalize      = "xy",
-        point_interval = "mean_qi",
-        fill           = "#FF6347",
-        color          = "#8B3626"
-      ) +
-      geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
-      labs(y = "GP hyperparameters", x = "Posterior values") +
-      theme_classic()
-  }, error = function(e) {
-    message("Error in visualize_gp_sd_exp4: ", e$message)
     return(NULL)
   })
 }
@@ -512,7 +482,7 @@ visualize_gp_lscale_exp4 <- function(model) {
         color          = "#8B3A62"
       ) +
       geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
-      labs(y = "GP hyperparameters", x = "Posterior values") +
+      labs(y = "lscale", x = "Posterior values") +
       theme_classic()
   }, error = function(e) {
     message("Error in visualize_gp_lscale_exp4: ", e$message)
@@ -520,16 +490,15 @@ visualize_gp_lscale_exp4 <- function(model) {
   })
 }
 
-p_fix  <- visualize_fixed_effects_exp4(m_exp4_brms)
-p_re   <- visualize_random_effects_exp4(m_exp4_brms)
-p_gp_sd  <- visualize_gp_sd_exp4(m_exp4_brms)
-p_gp_lsc <- visualize_gp_lscale_exp4(m_exp4_brms)
+s_brms_p1  <- visualize_fixed_effects_exp4(m_exp4_brms)
+s_metafor_p1sd <- visualize_random_effects_exp4(m_exp4_brms)
+s_metafor_p1lscale <- visualize_gp_lscale_exp4(m_exp4_brms)
 
 p_fix
 p_re
-p_gp_sd
 p_gp_lsc
 
 metafor_sp2.1 <- s_metafor_p1 / (s_metafor_p1var + s_metafor_p1rho)
 metafor_sp2.1
-brms_sp2.1 <- 
+brms_sp2.1 <- s_brms_p1 / (s_metafor_p1sd + s_metafor_p1lscale)
+brms_sp2.1
