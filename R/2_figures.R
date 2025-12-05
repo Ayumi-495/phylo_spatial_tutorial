@@ -1,6 +1,6 @@
 pacman::p_load("coda", "tidyverse", "here", 
                "MCMCglmm", "brms", "MASS", "patchwork", 
-               "phytools", "patchwork", "bayesplot", "tidybayes")
+               "phytools", "patchwork", "bayesplot", "tidybayes", "orchaRd")
 
 
 # Figure 1 ----
@@ -53,14 +53,14 @@ ggplot(df, aes(distance, correlation, color = model)) +
 
 #### metafor ----
 ## fixed effect
-metafor_p1 <- orchard_plot(HD_BM, 
-                           group = "Study_id",
-                           xlab = "Effect size (Hedges' d)",
+metafor_p1 <- orchard::orchard_plot(moura_BM_metafor1, 
+                           group = "study.id",
+                           xlab = "Effect size",
                            angle = 45) + 
   scale_x_discrete(labels = c("Overall effect")) +
   scale_color_manual(values = "#CDBE70") +
   scale_fill_manual(values = "#EEDC82") + 
-  scale_y_continuous(breaks = seq(-4.0, 4.0, 1), limits = c(-4.0, 4.0)) + 
+  # scale_y_continuous(breaks = seq(-4.0, 4.0, 1), limits = c(-4.0, 4.0)) + 
   theme_classic()
 
 ## random effect
