@@ -52,8 +52,9 @@ ggplot(df, aes(distance, correlation, color = model)) +
 ### intercept-only model ----
 
 #### metafor ----
+summary(moura_BM_metafor1)
 ## fixed effect
-metafor_p1 <- orchard::orchard_plot(moura_BM_metafor1, 
+metafor_p1 <- orchaRd::orchard_plot(moura_BM_metafor1, 
                            group = "study.id",
                            xlab = "Effect size",
                            angle = 45) + 
@@ -64,10 +65,26 @@ metafor_p1 <- orchard::orchard_plot(moura_BM_metafor1,
   theme_classic()
 
 ## random effect
-ci_var <- confint(HD_BM, level = 0.95) 
+ci_var <- confint(moura_BM_metafor1, level = 0.95) 
+# estimate  ci.lb  ci.ub 
+# sigma^2.1   0.0192 0.0108 0.0325 
+# sigma.1     0.1384 0.1038 0.1802 
+# 
+# estimate  ci.lb  ci.ub 
+# sigma^2.2   0.0145 0.0121 0.0172 
+# sigma.2     0.1202 0.1099 0.1311 
+# 
+# estimate  ci.lb  ci.ub 
+# sigma^2.3   0.0557 0.0334 0.0788 
+# sigma.3     0.2359 0.1827 0.2807 
+# 
+# estimate  ci.lb  ci.ub 
+# sigma^2.4   0.0512 0.0179 0.1792 
+# sigma.4     0.2263 0.1336 0.4233 
+
 tbl <- tibble::as_tibble(ci_var, rownames = "term")
 
-label_map <- c("Phylo", "Study_id", "Species", "Effect_id")
+label_map <- c("Effect_id", "Study_id", "Species", "Phylo")
 tbl_var <- tbl %>%
   filter(str_detect(term, "^sigma\\^2\\.")) %>%
   mutate(
@@ -86,16 +103,18 @@ metafor_p2 <- ggplot(tbl_var, aes(x = label, y = estimate)) +
   geom_errorbar(aes(ymin = ci.lb, ymax = ci.ub), width = 0.25, color = "#9AC0CD") +
   coord_flip() +
   labs(x = NULL, y = "Variance 95% CI") +
-  scale_y_continuous(breaks = seq(0, 10.0, 1), limits = c(0, 10.0)) + 
+  # scale_y_continuous(breaks = seq(0, 10.0, 1), limits = c(0, 10.0)) + 
   theme_classic(base_size = 12)
 
 metafor_eg1_1 <- metafor_p1 / metafor_p2
+metafor_eg1_1
 
 #### brms ----
-get_variables(dat1_BM_brms)
+moura_BM_brms1 <- readRDS(here("Rdata", "moura2021_BM_brms.rds"))
+get_variables(moura_BM_brms1)
 
 ## fixed effects
-fixed_effects_samples_brms <- dat1_BM_brms %>%
+fixed_effects_samples_brms <- moura_BM_brms1 %>%
   spread_draws(b_Intercept)
 fixed_effects_samples_brms <- fixed_effects_samples_brms %>%
   pivot_longer(cols = starts_with("b_"), 
@@ -110,35 +129,34 @@ brms_p1 <- ggplot(fixed_effects_samples_brms, aes(x = .value, y = .variable)) +
     color = "#CDBE70"
   ) +
   geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
-  scale_x_continuous(breaks = seq(-4.0, 4.0, 1), limits = c(-4.0, 4.0)) + 
-  labs(title = "Posterior distributions of fixed effects - brms",
-       y = "Fixed effect (variance)"
+  scale_x_continuous(breaks = seq(-1.0, 2.0, 1)) + 
+  labs(y = "Overall effect"
   ) +
   theme_classic()
 head(fixed_effects_samples_brms)
 
 ## random effects
-random_effects_samples_brms <- dat1_BM_brms %>%
-  spread_draws(sd_Phylo__Intercept, sd_Effect_id__Intercept, sd_Species__Intercept, sd_Study_id__Intercept)
+random_effects_samples_brms <- moura_BM_brms1 %>%
+  spread_draws(sd_species.id.phy__Intercept, sd_effect.size.id__Intercept, sd_species.id__Intercept, sd_study.id__Intercept)
 random_effects_samples_brms <- random_effects_samples_brms %>%
   pivot_longer(cols = starts_with("sd_"), 
                names_to = ".variable", 
                values_to = ".value")　%>% 
   mutate(.value = .value^2,
          .variable = case_when(
-           .variable == "sd_Phylo__Intercept"      ~ "Phylo",
-           .variable == "sd_Study_id__Intercept"   ~ "Study",
-           .variable == "sd_Species__Intercept"    ~ "Species",
-           .variable == "sd_Effect_id__Intercept"  ~ "Effect_id"
+           .variable == "sd_species.id.phy__Intercept" ~ "Phylo",
+           .variable == "sd_study.id__Intercept" ~ "Study",
+           .variable == "sd_species.id__Intercept" ~ "Species",
+           .variable == "sd_effect.size.id__Intercept" ~ "Effect_id"
          ),
          .variable = factor(.variable, 
-                            levels = c("Phylo", "Study", "Species", "Effect_id")
+                            levels = c("Effect_id", "Study", "Species", "Phylo")
                             )
          )
 
 head(random_effects_samples_brms)
 
-brms_p2 <- ggplot(random_effects_samples_brms, aes(x = .value, y = .variable)) +
+brms_p2 <- ggplot(random_effects_samples_brms, aes(x = .value^2, y = .variable)) +
   stat_halfeye(
     normalize = "xy",
     point_interval = "mean_qi", 
@@ -146,15 +164,14 @@ brms_p2 <- ggplot(random_effects_samples_brms, aes(x = .value, y = .variable)) +
     color = "#9AC0CD"
   ) +
   geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
-  scale_x_continuous(breaks = seq(0, 10.0, 1), limits = c(0, 10.0)) + 
+　scale_x_continuous(breaks = seq(0, 0.15, 0.05), limits = c(0, 0.15)) + 
   labs(
-    title = "Posterior distributions of random effects - brms",
+    # title = "Posterior distributions of random effects - brms",
     y = "Random effects (variance)"
   ) +
   theme_classic() 
-brms_eg1_1 <- brms_p1/brms_p2
-
-metafor_eg1_1 |brms_eg1_1
+brms_eg1_1 <- brms_p1 /brms_p2
+brms_eg1_1
 
 ### meta-regression ----
 #### metafor ----
@@ -229,17 +246,17 @@ head(fixed_effects_samples_brms)
 
 ## random effects
 random_effects_samples_brms <- dat1_BM_brms2 %>%
-  spread_draws(sd_Phylo__Intercept, sd_Effect_id__Intercept, sd_Species__Intercept, sd_Study_id__Intercept)
+  spread_draws(sd_species.id.phy__Intercept, sd_effect.size.id__Intercept, sd_species.id.phy__Intercept, sd_study.id__Intercept)
 random_effects_samples_brms <- random_effects_samples_brms %>%
   pivot_longer(cols = starts_with("sd_"), 
                names_to = ".variable", 
                values_to = ".value")　%>% 
   mutate(.value = .value^2,
          .variable = case_when(
-           .variable == "sd_Phylo__Intercept"      ~ "Phylo",
-           .variable == "sd_Study_id__Intercept"   ~ "Study",
-           .variable == "sd_Species__Intercept"    ~ "Species",
-           .variable == "sd_Effect_id__Intercept"  ~ "Effect_id"
+           .variable == "sd_species.id.phy__Intercept" ~ "Phylo",
+           .variable == "sd_study.id__Intercept" ~ "Study",
+           .variable == "sd_species.id.phy__Intercept" ~ "Species",
+           .variable == "sd_effect.size.id__Intercept" ~ "Effect_id"
          ),
          .variable = factor(.variable, 
                             levels = c("Phylo", "Study", "Species", "Effect_id")
