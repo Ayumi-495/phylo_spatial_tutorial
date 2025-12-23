@@ -726,7 +726,7 @@ colnames(dist_matrix_euclid2) <- dat_Roger$effect_id
 system.time(EXP_eg4 <- rma.mv(d_Hedges, var_Hedges, 
                               random = list(
                                 ~ 1|effect_id,
-                                # ~ 1|study_id,
+                                ~ 1|study_id,
                                 ~ x_km + y_km |const
                               ), 
                               struct = "SPEXP", 
@@ -735,24 +735,26 @@ system.time(EXP_eg4 <- rma.mv(d_Hedges, var_Hedges,
                               verbose = TRUE
 )
 )
-#     user    system   elapsed
-#  459.339  17.234 483.179 
+#     user   system  elapsed 
+# 1087.269   34.320 1137.728 
 
 summary(EXP_eg4)
+
 # logLik    Deviance         AIC         BIC        AICc   
-# -4034.4852   8068.9704   8076.9704   8100.0360   8076.9874   
+# -4017.7686   8035.5372   8045.5372   8074.3693   8045.5627   
 # 
 # Variance Components:
 #   
 #   estim    sqrt  nlvls  fixed     factor 
-# sigma^2    0.7935  0.8908   2361     no  effect_id 
+# sigma^2.1  0.7753  0.8805   2361     no  effect_id 
+# sigma^2.2  1.1636  1.0787    393     no   study_id 
 # 
 # outer factor: const        (nlvls = 1)
 # inner term:   ~x_km + y_km (nlvls = 383)
 # 
 # estim    sqrt  fixed 
-# tau^2      1.2330  1.1104     no 
-# rho        0.1744             no 
+# tau^2        0.0635  0.2520     no 
+# rho        488.4450             no 
 # 
 # Test for Heterogeneity:
 #   Q(df = 2360) = 21273.5149, p-val < .0001
@@ -760,20 +762,26 @@ summary(EXP_eg4)
 # Model Results:
 #   
 #   estimate      se     zval    pval    ci.lb    ci.ub      
-# -0.3349  0.0644  -5.2006  <.0001  -0.4612  -0.2087  *** 
+# -0.3504  0.0726  -4.8295  <.0001  -0.4926  -0.2082  *** 
 #   
-EXP_eg4_metafor <- readRDS(here("Rdata", "EXP_eg4_metafor.rds"))
+
+saveRDS(EXP_eg4, here(here("Rdata","EXP_eg4_metafor")))
+# EXP_eg4_metafor <- readRDS(here("Rdata", "EXP_eg4_metafor.rds"))
 confint(EXP_eg4)
 # estimate  ci.lb  ci.ub 
-# sigma^2   0.7935 0.7257 0.8678 
-# sigma     0.8908 0.8519 0.9316 
+# sigma^2.1   0.7753 0.7089 0.8481 
+# sigma.1     0.8805 0.8419 0.9209 
 # 
 # estimate  ci.lb  ci.ub 
-# tau^2   1.2330 1.0147 1.4976 
-# tau     1.1104 1.0073 1.2238 
+# sigma^2.2   1.1636 0.8821 1.4659 
+# sigma.2     1.0787 0.9392 1.2107 
 # 
-# estimate   ci.lb  ci.ub 
-# rho   0.1744 <0.0174 0.8572 
+# estimate  ci.lb    ci.ub 
+# tau^2   0.0635 0.0000 >10.0000 
+# tau     0.2520 0.0000  >3.1623 
+# 
+# estimate    ci.lb      ci.ub 
+# rho 488.4450 <48.8445 >4884.4501 
 
 
 system.time(EXP_eg4_1 <- rma.mv(d_Hedges, var_Hedges, 
@@ -830,7 +838,7 @@ exp(tmb_4$fit$par[[2]])
 ## brms ----
 
 fit_eg4 <- bf(d_Hedges | se(sqrt(var_Hedges)) ~ 1 + 
-                # (1 | site) + 
+                 (1 | study_id) + 
                 (1 | effect_id) + 
                 gp(x_km, y_km, 
                    cov = "exponential",
@@ -846,37 +854,41 @@ system.time(
              data = dat_Roger,
              family = gaussian(),
              prior = prior,
-             iter = 2000,
-             warmup = 1000,
+             iter = 6000,
+             warmup = 3000,
              chain = 2, 
              thin = 1,
              control = list(adapt_delta = 0.98, max_treedepth = 15)
 )
 )
 #   user   system  elapsed 
-# 34.897    7.331 4689.072 
+# 23276.560   588.641 76759.311
 
 summary(m_exp4_brms)
 # Family: gaussian 
 # Links: mu = identity 
-# Formula: d_Hedges | se(sqrt(var_Hedges)) ~ 1 + (1 | effect_id) + gp(x_km, y_km, cov = "exponential", scale = FALSE) 
+# Formula: d_Hedges | se(sqrt(var_Hedges)) ~ 1 + (1 | study_id) + (1 | effect_id) + gp(x_km, y_km, cov = "exponential", scale = FALSE) 
 # Data: dat_Roger (Number of observations: 2361) 
-# Draws: 2 chains, each with iter = 2000; warmup = 1000; thin = 1;
-# total post-warmup draws = 2000
+# Draws: 2 chains, each with iter = 6000; warmup = 3000; thin = 1;
+# total post-warmup draws = 6000
 # 
 # Gaussian Process Hyperparameters:
 #   Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sdgp(gpx_kmy_km)       1.14      0.07     1.00     1.30 1.01      696      955
-# lscale(gpx_kmy_km)   125.13     25.60    83.76   184.93 1.00      578     1156
+# sdgp(gpx_kmy_km)       0.22      0.14     0.01     0.52 1.00      270      734
+# lscale(gpx_kmy_km)  6184.77  81608.27   419.46 23837.67 1.00      506     1264
 # 
 # Multilevel Hyperparameters:
 #   ~effect_id (Number of levels: 2361) 
 # Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sd(Intercept)     0.96      0.02     0.92     1.01 1.01      498      846
+# sd(Intercept)     0.88      0.02     0.84     0.92 1.00     1223     2935
+# 
+# ~study_id (Number of levels: 393) 
+# Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# sd(Intercept)     1.09      0.06     0.98     1.21 1.00      947     1414
 # 
 # Regression Coefficients:
 #   Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# Intercept    -0.32      0.09    -0.50    -0.14 1.00      511      752
+# Intercept    -0.33      0.11    -0.53    -0.09 1.00     1119     1057
 # 
 # Further Distributional Parameters:
 #   Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
@@ -885,6 +897,7 @@ summary(m_exp4_brms)
 # Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
 # and Tail_ESS are effective sample size measures, and Rhat is the potential
 # scale reduction factor on split chains (at convergence, Rhat = 1).
+
 
 saveRDS(m_exp4_brms, here("Rdata", "EXP_eg4_brms.rds"))
 m_exp4_brms <- readRDS(here("Rdata", "EXP_eg4_brms.rds"))
