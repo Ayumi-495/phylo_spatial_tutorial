@@ -812,6 +812,7 @@ dat_Roger$pos <- numFactor(dat_Roger$x_km, dat_Roger$y_km)
 system.time(
   tmb_4 <- glmmTMB(d_Hedges ~ 1 
                    + equalto(0+effect_id|const, VCV)
+                   + (1|study_id)
                    + exp(pos+0|const),
                    data = dat_Roger, REML=TRUE)
   )
