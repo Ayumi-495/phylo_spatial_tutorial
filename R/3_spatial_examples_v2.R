@@ -722,11 +722,18 @@ dist_matrix_euclid2 <- as.matrix(dist(coords_km))
 rownames(dist_matrix_euclid2) <- dat_Roger$effect_id
 colnames(dist_matrix_euclid2) <- dat_Roger$effect_id
 
+dat_Roger <- dat_Roger %>%
+  group_by(latitude, longitude) %>%
+  mutate(site_id = cur_group_id()) %>%
+  ungroup()
+names(dat_Roger)
+
+
 ## metafor ----
 system.time(EXP_eg4 <- rma.mv(d_Hedges, var_Hedges, 
                               random = list(
                                 ~ 1|effect_id,
-                                # ~ 1|study_id,
+                                ~ 1|site_id,
                                 ~ x_km + y_km |const
                               ), 
                               struct = "SPEXP", 
@@ -736,72 +743,44 @@ system.time(EXP_eg4 <- rma.mv(d_Hedges, var_Hedges,
 )
 )
 #     user   system  elapsed 
-#  466.990  16.933 491.450
+#   969.641   24.550 1018.565 
 
 summary(EXP_eg4)
-
 # logLik    Deviance         AIC         BIC        AICc   
-# -4034.4852   8068.9704   8076.9704   8100.0360   8076.9874   
-# 
+# -4031.5291   8063.0583   8073.0583   8101.8903   8073.0837   
+
 # Variance Components:
-#   
-#   estim    sqrt  nlvls  fixed     factor 
-# sigma^2    0.7935  0.8908   2361     no  effect_id 
-# 
+
+#             estim    sqrt  nlvls  fixed     factor 
+# sigma^2.1  0.7940  0.8911   2361     no  effect_id 
+# sigma^2.2  0.9288  0.9637    383     no    site_id 
+
 # outer factor: const        (nlvls = 1)
 # inner term:   ~x_km + y_km (nlvls = 383)
-# 
-# estim    sqrt  fixed 
-# tau^2      1.2330  1.1104     no 
-# rho        0.1744             no 
-# 
+
+#               estim    sqrt  fixed 
+# tau^2        0.2989  0.5467     no 
+# rho        188.1869             no 
+
 # Test for Heterogeneity:
-#   Q(df = 2360) = 21273.5149, p-val < .0001
-# 
+# Q(df = 2360) = 21273.5149, p-val < .0001
+
 # Model Results:
-#   
-#   estimate      se     zval    pval    ci.lb    ci.ub      
-# -0.3349  0.0644  -5.2006  <.0001  -0.4612  -0.2087  *** 
-#   
 
-saveRDS(EXP_eg4, here(here("Rdata","EXP_eg4_metafor")))
-# EXP_eg4_metafor <- readRDS(here("Rdata", "EXP_eg4_metafor.rds"))
+# estimate      se     zval    pval    ci.lb    ci.ub      
+#  -0.3347  0.0765  -4.3727  <.0001  -0.4846  -0.1847  *** 
+
+saveRDS(EXP_eg4, here("Rdata","EXP_eg4_metafor_site_id"))
+
+EXP_eg4_metafor <- readRDS(here("Rdata", "EXP_eg4_metafor_site_id.rds"))
+
 confint(EXP_eg4)
-# estimate  ci.lb  ci.ub 
-# sigma^2.1   0.7753 0.7089 0.8481 
-# sigma.1     0.8805 0.8419 0.9209 
-# 
-# estimate  ci.lb  ci.ub 
-# sigma^2.2   1.1636 0.8821 1.4659 
-# sigma.2     1.0787 0.9392 1.2107 
-# 
-# estimate  ci.lb    ci.ub 
-# tau^2   0.0635 0.0000 >10.0000 
-# tau     0.2520 0.0000  >3.1623 
-# 
-# estimate    ci.lb      ci.ub 
-# rho 488.4450 <48.8445 >4884.4501 
 
-
-system.time(EXP_eg4_1 <- rma.mv(d_Hedges, var_Hedges, 
-                              mods = ~ 1 + response,
-                              random = list(
-                                ~ 1|effect_id,
-                                # ~ 1|study_id,
-                                ~ x_km + y_km |const
-                              ), 
-                              struct = "SPEXP", 
-                              data = dat_Roger,
-                              sparse = TRUE,
-                              verbose = TRUE
-)
-)
-
-saveRDS(EXP_eg4_1, here("Rdata", "EXP_eg4_1_metafor.rds"))
-summary(EXP_eg4_1)
 
 ## glmmTMB ----
 dat_Roger$effect_id <- factor(dat_Roger$effect_id)
+dat_Roger$site_id <- factor(dat_Roger$site_id)
+
 VCV <- diag(dat_Roger$var_Hedges, nrow = nrow(dat_Roger)) 
 rownames(VCV)<- colnames(VCV)<- dat_Roger$effect_id
 VCV[1:5, 1:5]
@@ -811,27 +790,27 @@ dat_Roger$pos <- numFactor(dat_Roger$x_km, dat_Roger$y_km)
 system.time(
   tmb_4 <- glmmTMB(d_Hedges ~ 1 
                    + equalto(0+effect_id|const, VCV)
-                   + (1|study_id)
+                   + (1|site_id)
                    + exp(pos+0|const),
                    data = dat_Roger, 
                    REML=TRUE)
-  )
+)
 
 head(confint(tmb_4), 10)
-# 2.5 %     97.5 %   Estimate
-# (Intercept)                                              -0.461234 -0.2086251 -0.3349296
-# Std.Dev.pos(16262.6644099893,-5204.51951303405)|const.1   1.007168  1.2242221  1.1104039
-# Std.Dev.pos(16280.4755285163,-5116.14629455727)|const.1   1.007168  1.2242221  1.1104039
-# Std.Dev.pos(-7965.96086752978,-5019.4733863405)|const.1   1.007168  1.2242221  1.1104039
-# Std.Dev.pos(-7959.34359171906,-4693.06364429579)|const.1  1.007168  1.2242221  1.1104039
-# Std.Dev.pos(-7960.45678662699,-4691.63535918108)|const.1  1.007168  1.2242221  1.1104039
-# Std.Dev.pos(-7096.61753807119,-4685.92422115392)|const.1  1.007168  1.2242221  1.1104039
-# Std.Dev.pos(-7992.73943895704,-4607.717759142)|const.1    1.007168  1.2242221  1.1104039
-# Std.Dev.pos(-7903.68384632242,-4579.4258128701)|const.1   1.007168  1.2242221  1.1104039
-# Std.Dev.pos(16237.0609271069,-4578.0132445546)|const.1    1.007168  1.2242221  1.1104039
+#                                                               2.5 %     97.5 %   Estimate
+# (Intercept)                                              -0.46105870 -0.2085821 -0.3348204
+# Std.Dev.(Intercept)|site_id                               0.05190986  6.8087100  0.5945075
+# Std.Dev.pos(16262.6644099893,-5204.51951303405)|const.1   0.34802159  2.5227325  0.9369981
+# Std.Dev.pos(16280.4755285163,-5116.14629455727)|const.1   0.34802159  2.5227325  0.9369981
+# Std.Dev.pos(-7965.96086752978,-5019.4733863405)|const.1   0.34802159  2.5227325  0.9369981
+# Std.Dev.pos(-7959.34359171906,-4693.06364429579)|const.1  0.34802159  2.5227325  0.9369981
+# Std.Dev.pos(-7960.45678662699,-4691.63535918108)|const.1  0.34802159  2.5227325  0.9369981
+# Std.Dev.pos(-7096.61753807119,-4685.92422115392)|const.1  0.34802159  2.5227325  0.9369981
+# Std.Dev.pos(-7992.73943895704,-4607.717759142)|const.1    0.34802159  2.5227325  0.9369981
+# Std.Dev.pos(-7903.68384632242,-4579.4258128701)|const.1   0.34802159  2.5227325  0.9369981
 
 sigma(tmb_4) 
-# 0.8907814
+# 0.8907115
 tmb_4_varcor <- VarCorr(tmb_4)$cond
 exp(tmb_4$fit$par[[2]])
 # 1.110404
@@ -941,15 +920,17 @@ metafor4 <- data.frame(model = "metafor",
 )
 
 
+
 tmb4 <- data.frame(model = "glmmTMB",
                    logLik = logLik(tmb_4)[1],
                    est = unlist(fixef(tmb_4))[[1]], #overall mean
                    se = as.numeric(sqrt(vcov(tmb_4)[[1]])), #overall mean SE
-                   # sigma2.u = (tmb_4$site[1]), ## among study variance estimate
-                   sigma2.m = sigma(tmb_4)^2, ## within study variance estimate
+                   sigma2.u = (tmb_4_varcor$site_id[1]), ## among site variance estimate
+                   sigma2.m = sigma(tmb_4)^2, ## within study variance estimate -> effect id
                    tau2 = (tmb_4_varcor$const.1[1]), ##spatial variance estimate
-                   rho = exp(tmb_4$fit$par[[3]]) ## rho
+                   rho = exp(tmb_4$fit$par[]) ## rho
 )
+
 
 
 posterior_summary(m_exp4_brms)
@@ -976,16 +957,3 @@ brms4 <- data.frame(
 output_eg4 <- rbind(metafor4, tmb4, brms4)
 
 knitr::kable(output_eg4)
-
-# make figures ----
-## metafor ----
-library(orchaRd)
-eg4_metafor_orc <- orchaRd::mod_results(EXP_eg4_metafor, mod = "1",
-                                 at = NULL, group = "study_id")
-p_eg4_metafor <- orchard_plot(eg4_metafor_orc, mod = "1", 
-                              group = "study_id", xlab = "SMD", 
-                              transfm = "none", twig.size = 0.5, trunk.size = 1) + 
-  theme_classic()
-p_eg4_metafor
-
-orchaRd::mod_results(EXP_eg4_1, mod = "response", group = "study_id")
