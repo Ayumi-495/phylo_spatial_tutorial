@@ -1,0 +1,425 @@
+---
+title: "Phylo spatial meta-analysis"
+date: "`r Sys.Date()`"
+# author: " "
+format: 
+  html:
+    toc: true
+    toc-location: left
+    toc-depth: 3
+    toc-float: true
+    toc-title: "**CONTENTS**"
+    output-file: "AM_worked_example.html"
+    embed-resources: true
+    # code-fold: true
+    code-tools: 
+      source: false
+    number-sections: false
+    # bibliography: ./bib/ref.bib
+    fontsize: "12"
+    mainfont: "Roboto"
+    monofont: "Roboto"
+    # fontcolor: ""
+    page-layout: article
+    code-overflow: wrap
+    df_print: paged
+    theme: united
+    code-line-numbers: false
+    grid:
+      margin-width: 180px
+crossref: 
+  fig-title: Figure     # (default is "Figure")
+  tbl-title: Table     # (default is "Table")
+  title-delim: "—"     # (default is ":")
+  fig-prefix: Fig.     # (default is "Figure")
+  tbl-prefix: Table.   # (default is "Table")
+editor_options: 
+  chunk_output_type: console
+execute:
+  warning: false
+  message: false
+  tidy: true
+  # cache: true
+---
+
+# Setup
+
+# Phylogenetic meta-analysis
+
+## How to make phylogenetic correlation matrix?
+```{r}
+
+```
+
+### Using a specific phylogenetic tree {#using-a-specific-phylogenetic-tree}
+```{r}
+
+```
+
+### Using the `rotl` package (Open Tree of Life) {#using-the-rotl-package-open-tree-of-life}
+```{r}
+
+```
+
+## Examples
+
+::: panel-tabset
+### 1
+
+#### Brownian motion
+
+##### metafor
+
+##### brms
+```{r}
+
+```
+
+##### glmmTMB
+```{r}
+
+```
+
+#### Ornstein-Uhlenbeck
+
+##### metafor
+```{r}
+
+```
+
+### 2
+
+#### Brownian motion
+
+##### metafor
+```{r}
+
+```
+
+##### brms
+```{r}
+
+```
+
+##### glmmTMB
+```{r}
+
+```
+
+#### Ornstein-Uhlenbeck
+
+##### metafor
+```{r}
+
+```
+
+:::
+
+# Spatial meta-analysis
+
+## How to make spatial correlation matrix?
+
+## Examples
+
+::: panel-tabset
+### 1. Grau-Andrés et al. (2024)
+
+```{r}
+
+dat_Roger <- read.csv(here("data", "examples", "Roger_etal_2024", "Roger_etal_2024.csv"))
+head(dat_Roger)
+
+dat_Roger$const <- 1 # add constant for spatial models
+dat_Roger$effect_id <- seq_len(nrow(dat_Roger))
+
+dat_Roger <- dat_Roger %>%
+  filter(!is.na(longitude))
+coords2 <- cbind(dat_Roger$longitude, dat_Roger$latitude)
+
+# project to a planar coordinate system and convert to kilometers
+dat_sf2 <- st_as_sf(dat_Roger, coords = c("longitude", "latitude"), crs = 4326)
+dat_sf2_proj <- st_transform(dat_sf2, crs = 3857)
+
+coords_m <- st_coordinates(dat_sf2_proj)
+dat_Roger$x_km <- coords_m[,1] / 1000
+dat_Roger$y_km <- coords_m[,2] / 1000
+
+coords_km <- cbind(dat_Roger$x_km, dat_Roger$y_km)
+dist_matrix_euclid2 <- as.matrix(dist(coords_km))
+
+# row and column names
+rownames(dist_matrix_euclid2) <- dat_Roger$effect_id
+colnames(dist_matrix_euclid2) <- dat_Roger$effect_id
+
+dat_Roger <- dat_Roger %>%
+  group_by(latitude, longitude) %>%
+  mutate(site_id = cur_group_id()) %>%
+  ungroup()
+names(dat_Roger)
+```
+
+#### Exponential kernel
+
+##### metafor
+```{r}
+
+```
+##### brms
+```{r}
+
+```
+##### glmmTMB
+```{r}
+
+```
+
+#### Gaussian process
+
+##### metafor
+```{r}
+
+```
+##### brms
+```{r}
+
+```
+
+### 2. Maire et al. (2019)
+We use a dataset from the `metadat` package as our second illustrative example. In the original study, spatial correlations among sampling stations were modelled using station-level coordinates along river networks. 
+However, precise latitude and longitude information for individual stations is not available in the published dataset; only the locations of study sites can be geo-referenced. 
+We therefore used site-level coordinates as proxies for station-level positions. Although this approximation allows us to compare the implementation of spatial meta-analytic models across `metafor`, `brms`, and `glmmTMB`, the resulting estimates are not directly comparable to those reported by Maire et al. (2019), where station-level spatial random effects were explicitly modelled.
+
+```{r}
+dat <- dat.maire2019$dat
+dmat <- dat.maire2019$dmat
+dmat[1:35,1:35]
+
+sites <- tribble(
+  ~site_id, ~site_name,   ~lat,    ~lon,
+  "site1",  "Belleville",  47.5,    2.65,
+  "site2",  "Bugey",       45.8,    5.27,
+  "site3",  "Chinon",      47.2,    0.18,
+  "site4",  "Chooz",       50.1,    4.80,
+  "site5",  "Civaux",      46.4,    0.65,
+  "site6",  "Cruas",       44.6,    4.76,
+  "site7",  "Dampierre",   47.7,    2.51,
+  "site8",  "Nogent",      48.5,    3.52,
+  "site9",  "St Alban",    45.3,    4.75,
+  "site10", "St Laurent",  47.7,    2.53,
+  "site11", "Tricastin",   44.3,    4.73
+)
+
+
+dat_maire2019 <- dat %>%
+  left_join(sites, by = c("site" = "site_id")) |> 
+  mutate(id = row_number())
+
+dat_maire2019$const <- 1 # add constant for spatial models
+
+# project to a planar coordinate system and convert to kilometers
+dat_sf <- st_as_sf(dat_maire2019, coords = c("lon", "lat"), crs = 4326)
+dat_sf_proj <- st_transform(dat_sf, crs = 3857)
+
+coords_m <- st_coordinates(dat_sf_proj)
+dat_maire2019$x_km <- coords_m[,1] / 1000
+dat_maire2019$y_km <- coords_m[,2] / 1000
+
+coords_km <- cbind(dat_maire2019$x_km, dat_maire2019$y_km)
+dist_matrix_euclid <- as.matrix(dist(coords_km))
+
+# row and column names
+rownames(dist_matrix_euclid) <- dat_maire2019$id
+colnames(dist_matrix_euclid) <- dat_maire2019$id
+
+head(dat_maire2019)
+```
+
+#### Exponential kernel
+##### metafor
+```{r}
+#| eval: false
+
+ma_sp2_exp <- rma.mv(s1, vars1, 
+             random = list(
+                       ~ 1|id,
+                       ~ 1|site,
+                       ~ x_km + y_km | const), 
+             struct = "SPEXP", 
+             data = dat_maire2019,
+             test = "t",
+             method = "REML",
+             sparse = TRUE,
+             verbose = TRUE
+             )
+
+summary(ma_sp2_exp)
+# Multivariate Meta-Analysis Model (k = 35; method: REML)
+# 
+# logLik   Deviance        AIC        BIC       AICc   
+# -199.0469   398.0939   408.0939   415.7257   410.2367   
+# 
+# Variance Components:
+#   
+#   estim     sqrt  nlvls  fixed  factor 
+# sigma^2.1   819.5017  28.6269     35     no      id 
+# sigma^2.2  1653.5229  40.6635     11     no    site 
+# 
+# outer factor: const        (nlvls = 1)
+# inner term:   ~x_km + y_km (nlvls = 11)
+# 
+# estim     sqrt  fixed 
+# tau^2      8548.0233  92.4555     no 
+# rho          97.3090              no 
+# 
+# Test for Heterogeneity:
+#   Q(df = 34) = 191.4837, p-val < .0001
+# 
+# Model Results:
+#   
+#   estimate       se    zval    pval     ci.lb     ci.ub      
+# 190.8255  40.9187  4.6635  <.0001  110.6263  271.0246  ***
+
+confint(ma_sp2_exp)
+# estimate  ci.lb     ci.ub 
+# sigma^2.1 819.5017 0.0000 4240.3900 
+# sigma.1    28.6269 0.0000   65.1183 
+# 
+# estimate  ci.lb      ci.ub 
+# sigma^2.2 1653.5229 0.0000 21698.5229 
+# sigma.2     40.6635 0.0000   147.3042 
+# 
+# estimate  ci.lb        ci.ub 
+# tau^2 8548.0233 0.0000 >854802.3263 
+# tau     92.4555 0.0000    >924.5552 
+# 
+# estimate   ci.lb     ci.ub 
+# rho  97.3090 <9.7309 >973.0899 
+
+```
+
+```{r}
+
+```
+
+##### brms
+```{r}
+
+```
+
+##### glmmTMB
+```{r}
+
+dat_maire2019$id <- factor(dat_maire2019$id)
+VCV <- diag(dat_maire2019$vars1, nrow = nrow(dat_maire2019)) 
+rownames(VCV)<- colnames(VCV)<- dat_maire2019$id
+VCV[1:5, 1:5]
+
+dat_maire2019$pos <- numFactor(dat_maire2019$x_km, dat_maire2019$y_km)
+
+tmb_sp2_exp <- glmmTMB(
+  s1 ~ 1 +
+    equalto(0 + id | const, VCV) + 
+    (1 | site) +
+    exp(pos + 0 | const),     
+  data = dat_maire2019,
+  REML = TRUE
+  )
+
+
+head(confint(tmb_sp2_exp), 10)
+
+sigma(tmb_sp2_exp) # for id
+
+tmb_sp2_exp_varcor <- VarCorr(tmb_sp2_exp)$cond
+exp(tmb_sp2_exp$fit$par[[4]]) # for spatial range parameter rho
+
+
+```
+
+#### Gaussian process
+
+##### metafor
+```{r}
+
+ma_sp2_gau <- rma.mv(s1, vars1, 
+                          random = list(
+                            ~ 1|id,
+                            ~ 1|site,
+                            ~ x_km + y_km | const), 
+                          struct = "SPGAU", 
+                          data = dat_maire2019,
+                          sparse = TRUE,
+                          verbose = TRUE
+)
+
+summary(ma_sp2_gau)
+# Multivariate Meta-Analysis Model (k = 35; method: REML)
+# 
+# logLik   Deviance        AIC        BIC       AICc   
+# -199.1047   398.2094   408.2094   415.8412   410.3522   
+# 
+# Variance Components:
+#   
+#   estim     sqrt  nlvls  fixed  factor 
+# sigma^2.1   805.9835  28.3898     35     no      id 
+# sigma^2.2  3557.3247  59.6433     11     no    site 
+# 
+# outer factor: const        (nlvls = 1)
+# inner term:   ~x_km + y_km (nlvls = 11)
+# 
+# estim     sqrt  fixed 
+# tau^2      6637.4779  81.4707     no 
+# rho         143.9412              no 
+# 
+# Test for Heterogeneity:
+#   Q(df = 34) = 191.4837, p-val < .0001
+# 
+# Model Results:
+#   
+#   estimate       se    zval    pval     ci.lb     ci.ub      
+# 186.2795  40.6944  4.5775  <.0001  106.5199  266.0392  *** 
+
+confint(ma_sp2_gau)
+
+```
+
+##### brms
+```{r}
+
+
+```
+
+##### glmmTMB
+```{r}
+
+tmb_sp2_gau <- glmmTMB(
+  s1 ~ 1 +
+    equalto(0 + id | const, VCV) + 
+    (1 | site) +
+    gau(pos + 0 | const),     
+  data = dat_maire2019,
+  REML = TRUE
+)
+
+head(confint(tmb_sp2_gau), 10)
+
+tmb_sp2_gau_varcor <- VarCorr(tmb_sp2_gau)$cond
+exp(tmb_sp2_gau$fit$par[[4]]) # for spatial range parameter rho
+```
+
+:::
+
+# Software and package versions
+
+```{r}
+#| echo: false
+
+sessionInfo()
+
+```
+
+
+# References
+-   Maire, A., Thierry, E., Viechtbauer, W., & Daufresne, M. (2019). Poleward shift in large-river fish communities detected with a novel meta-analysis framework. Freshwater Biology, 64(6), 1143–1156. <https://doi.org/10.1111/fwb.13291>
+-   Grau‐Andrés, R., Moreira, B., & Pausas, J. G. (2024). Global plant responses to intensified fire regimes. Global Ecology and Biogeography, 33(8), e13858. <https://doi.org/10.1111/geb.13858>
+-    Viechtbauer, W., White, T., Noble, D., Senior, A., & Hamilton, W. K. (2025). metadat: Meta-analysis datasets (Version 1.5-2) [R package]. <https://github.com/wviechtb/metadat>
