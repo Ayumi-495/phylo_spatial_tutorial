@@ -4,7 +4,7 @@ pacman::p_load(brms, metafor, metadat, tidyverse, data.table, crayon, here, sf, 
 dat_coetzee <- read.xlsx(here("data", "examples", "Coetzee_2014.xlsx"), sheet = 2)
 dat_coetzee$const <- 1 # add constant for spatial models
 
-# project to a planar coordinate system and convert to kilometers
+# project to a planar coordinate system and convert to kilometres
 dat_sf <- st_as_sf(dat_coetzee, coords = c("long", "lat"), crs = 4326)
 dat_sf_proj <- st_transform(dat_sf, crs = 3857)
 
@@ -739,9 +739,11 @@ system.time(EXP_eg4 <- rma.mv(d_Hedges, var_Hedges,
                               struct = "SPEXP", 
                               data = dat_Roger,
                               sparse = TRUE,
-                              verbose = TRUE
-)
-)
+                              verbose = TRUE,
+                              method = "REML",
+                              test = "t"
+                              )
+            )
 #     user   system  elapsed 
 #   969.641   24.550 1018.565 
 
@@ -775,7 +777,20 @@ saveRDS(EXP_eg4, here("Rdata","EXP_eg4_metafor_site_id"))
 EXP_eg4_metafor <- readRDS(here("Rdata", "EXP_eg4_metafor_site_id.rds"))
 
 confint(EXP_eg4)
-
+# estimate  ci.lb  ci.ub 
+# sigma^2.1   0.7940 0.7262 0.8684 
+# sigma.1     0.8911 0.8522 0.9319 
+# 
+# estimate  ci.lb  ci.ub 
+# sigma^2.2   0.9288 0.6287 1.2893 
+# sigma.2     0.9637 0.7929 1.1355 
+# 
+# estimate ci.lb ci.ub 
+# tau^2   0.2989    NA    NA 
+# tau     0.5467    NA    NA 
+# 
+# estimate   ci.lb      ci.ub 
+# rho 188.1869 37.0656 >1881.8688 
 
 ## glmmTMB ----
 dat_Roger$effect_id <- factor(dat_Roger$effect_id)
@@ -786,7 +801,7 @@ rownames(VCV)<- colnames(VCV)<- dat_Roger$effect_id
 VCV[1:5, 1:5]
 
 dat_Roger$pos <- numFactor(dat_Roger$x_km, dat_Roger$y_km)
-## Each primary study includes only one location, so we can simplify the model by removing the study-level random effect
+
 system.time(
   tmb_4 <- glmmTMB(d_Hedges ~ 1 
                    + equalto(0+effect_id|const, VCV)
@@ -881,6 +896,43 @@ summary(m_exp4_brms)
 
 saveRDS(m_exp4_brms, here("Rdata", "EXP_eg4_brms.rds"))
 m_exp4_brms <- readRDS(here("Rdata", "EXP_eg4_brms.rds"))
+
+### different way to specify vcv matrix ----
+# dat_Roger$effect_id <- seq_len(nrow(dat_Roger))
+dat_Roger$effect_id <- as.character(dat_Roger$effect_id)
+vcv <- diag(dat_Roger$var_Hedges)
+
+rownames(vcv) <- colnames(vcv) <- dat_Roger$effect_id
+
+fit_eg4_v1 <- bf(d_Hedges ~ 1 +
+                 (1|study_id) + # this is u_l (the between-study effect)
+                 (1|gr(effect_id, cov = vcv)) + # this is m (sampling error)
+                gp(x_km, y_km, 
+                   cov = "exponential",
+                   scale = FALSE)
+                )
+
+# generate default priors
+prior <- default_prior(fit_eg4_v1, 
+                           data=dat_Roger, 
+                           data2=list(vcv=vcv),
+                           family=gaussian())
+prior$prior[5] = "constant(1)" # meta-analysis assumes sampling variance is known so fixing this to 1
+prior
+
+# fitting model
+fit_exp4_brms_v1 <- brm(
+  formula = fit_eg4_v1,
+  data = dat_Roger,
+  data2 = list(vcv=vcv),
+  chains = 2,
+  iter = 6000,
+  warmup = 3000,
+  prior = prior,
+  control = list(adapt_delta=0.95, max_treedepth=15)
+)
+summary(fit_exp4_brms_v1)
+
 
 fit_eg4_1 <- bf(d_Hedges | se(sqrt(var_Hedges)) ~ response - 1 + 
                 # (1 | site) + 

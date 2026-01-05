@@ -22,3 +22,9 @@ data/Yefeng_2024/README.md
 my.tr.tre
 .RDataTmp
 *.rds
+*.ai
+/figs
+/figs
+Rplot.pdf
+Rplot01.pdf
+/Rdata

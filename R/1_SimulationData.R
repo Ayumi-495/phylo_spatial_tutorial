@@ -81,7 +81,7 @@ dat <- data.frame(
 head(dat, 30)
 mean(dat$yi)
 var(dat$yi)
-mean(dat_vars$yi)
+mean(dat_means$yi)
 var(dat_means$yi)
 dat_means <- aggregate(yi ~ study, data = dat, mean) 
 var(dat_means$yi)
@@ -170,11 +170,9 @@ head(confint(tmb), 10)
 sigma(tmb)^2
 # 0.05065844
 tmb_varcor <- VarCorr(tmb)$cond
-# head(tmb_2_varcor, 10)
 
 tmb$fit$par[[4]]
-
-
+# 721.7127
 
 metafor_1 <- data.frame(model = "metafor", 
                         logLik = logLik(fit),
@@ -190,14 +188,14 @@ glmmTMB_1 <- data.frame(model = "glmmTMB",
                         logLik = logLik(tmb)[1],
                         est = unlist(fixef(tmb))[[1]], #overall mean
                         se = as.numeric(sqrt(vcov(tmb)[[1]])), #overall mean SE
-                        sigma2.u = (tmb_varcor$study_id[1]),  #among study variance estimate
+                        sigma2.u = (tmb_varcor$study[1]),  #among study variance estimate
                         sigma2.m = sigma(tmb)^2,  #within study variance estimate
                         tau2 = (tmb_varcor$const.1[1]),  #spatial variance estimate
                         rho = exp(tmb$fit$par[[4]])  # rho
 )
 
 output <- rbind(metafor_1, glmmTMB_1)
-knitr::kable(output)
+knitr::kable(glmmTMB_1)
 # |model   |    logLik|       est|        se|  sigma2.u|  sigma2.m|      tau2|      rho|
 #   |:-------|---------:|---------:|---------:|---------:|---------:|---------:|--------:|
 #   |metafor | -1659.075| 0.2742624| 0.2338043| 0.3048980| 0.2250742| 0.1622631| 2792.906|

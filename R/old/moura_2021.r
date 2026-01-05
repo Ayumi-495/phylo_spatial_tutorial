@@ -1,5 +1,5 @@
 pacman::p_load(brms, metafor, metadat, glmmTMB, tidyverse, data.table, crayon, here, ape,
-               purrr, stringr, readr, lubridate, magrittr, janitor, rotl)
+               purrr, stringr, readr, lubridate, magrittr, janitor, rotl, orchaRd)
 
 # data  ----
 dat_moura2021 <- dat.moura2021$dat
@@ -30,8 +30,8 @@ system.time(
    verbose = TRUE,
    sparse = TRUE)
 )
-
-summary(BM_metafor)
+moura_BM_metafor1 <- readRDS(here("Rdata","moura2021_BM_metafor.rds"))
+summary(moura_BM_metafor1)
 # Multivariate Meta-Analysis Model (k = 1828; method: REML)
 
 #    logLik   Deviance        AIC        BIC       AICc   
@@ -96,6 +96,16 @@ system.time(
 View(dat_moura2021)
 summary(BM_metafor1)
 # saveRDS(BM_metafor1, here("Rdata", "moura2021_BM_metafor1.rds"))
+
+
+### plot ----
+# use moura_BM_metafor1
+
+
+
+
+
+
 ## glmmTMB ----
 A <- A[sort(rownames(A)), sort(rownames(A))]
 

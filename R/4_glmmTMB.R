@@ -2,13 +2,13 @@ pacman::p_load(brms, metafor, metadat, tidyverse, data.table, crayon, here, ape,
                purrr, stringr, readr, lubridate, magrittr, janitor, glmmTMB, rotl)
 
 ## this is necessary the first time you run meta-analysis by glmmTMB
-# remove.packages("glmmTMB")
-# remotes::install_github("coraliewilliams/glmmTMB", 
-#                         ref = "equalto_covstruc", 
-#                         subdir = "glmmTMB")
-# library(glmmTMB)
+remove.packages("glmmTMB")
+remotes::install_github("coraliewilliams/glmmTMB",
+                        ref = "equalto_covstruc",
+                        subdir = "glmmTMB")
+library(glmmTMB)
 # # check the available covstruc (you should see equalto in number 13)
-(glmmTMB:::.valid_covstruct)
+glmmTMB:::.valid_covstruct
 
 
 rm(list = ls())
@@ -137,7 +137,7 @@ plot(tr_um)
 
 A <- vcv(tr_um, corr = TRUE)
 
-# change the variable name (sub-guild) to sub_guild using data.table package
+# change the variable name (sub-guild) to sub_guild
 
 Huberty_Denno_2004 <- Huberty_Denno_2004 |> 
   rename(

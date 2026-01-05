@@ -48,7 +48,7 @@ execute:
 #| label: setup
 # Load required packages
 rm(list = ls())
-
+install.packages("pacman")
 pacman::p_load(brms, MCMCglmm, metafor, metadat, tidyverse, data.table, crayon, here, ape, glmmTMB,
                dplyr, tidyr, purrr, stringr, readr, readxl, lubridate, magrittr, janitor, orchaRd,
                flextable, kableExtra, geosphere, rotl, data.table, openxlsx, cmdstanr, rstan)

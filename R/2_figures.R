@@ -59,8 +59,8 @@ metafor_p1 <- orchaRd::orchard_plot(moura_BM_metafor1,
                            xlab = "Effect size",
                            angle = 45) + 
   scale_x_discrete(labels = c("Overall effect")) +
-  scale_color_manual(values = "#CDBE70") +
-  scale_fill_manual(values = "#EEDC82") + 
+  scale_color_manual(values = "#CDAD00") +
+  scale_fill_manual(values = "#FFD700") + 
   # scale_y_continuous(breaks = seq(-4.0, 4.0, 1), limits = c(-4.0, 4.0)) + 
   theme_classic()
 
@@ -99,8 +99,8 @@ tbl_var <- tbl %>%
   )
 
 metafor_p2 <- ggplot(tbl_var, aes(x = label, y = estimate)) +
-  geom_point(size = 3.0, color = "#9AC0CD") +
-  geom_errorbar(aes(ymin = ci.lb, ymax = ci.ub), width = 0.25, color = "#9AC0CD") +
+  geom_point(size = 3.0, color = "#528B8B") +
+  geom_errorbar(aes(ymin = ci.lb, ymax = ci.ub), width = 0.25, color = "#528B8B") +
   coord_flip() +
   labs(x = NULL, y = "Variance 95% CI") +
   # scale_y_continuous(breaks = seq(0, 10.0, 1), limits = c(0, 10.0)) + 
@@ -125,8 +125,8 @@ brms_p1 <- ggplot(fixed_effects_samples_brms, aes(x = .value, y = .variable)) +
   stat_halfeye(
     normalize = "xy", 
     point_interval = "mean_qi", 
-    fill = "#EEDC82", 
-    color = "#CDBE70"
+    fill           = "#FFD700",
+    color          = "#CDAD00"
   ) +
   geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
   scale_x_continuous(breaks = seq(-1.0, 2.0, 1)) + 
@@ -160,11 +160,11 @@ brms_p2 <- ggplot(random_effects_samples_brms, aes(x = .value^2, y = .variable))
   stat_halfeye(
     normalize = "xy",
     point_interval = "mean_qi", 
-    fill = "#B2DFEE", 
-    color = "#9AC0CD"
+    fill = "#98F5FF",
+    color = "#528B8B"
   ) +
   geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
-　scale_x_continuous(breaks = seq(0, 0.15, 0.05), limits = c(0, 0.15)) + 
+　scale_x_continuous(breaks = seq(0, 0.08, 0.02), limits = c(0, 0.08)) + 
   labs(
     # title = "Posterior distributions of random effects - brms",
     y = "Random effects (variance)"
@@ -209,8 +209,8 @@ tbl_var <- tbl %>%
   )
 
 metafor_p4 <- ggplot(tbl_var, aes(x = label, y = estimate)) +
-  geom_point(size = 3.0, color = "#9AC0CD") +
-  geom_errorbar(aes(ymin = ci.lb, ymax = ci.ub), width = 0.25, color = "#9AC0CD") +
+  geom_point(size = 3.0, color = "#528B8B") +
+  geom_errorbar(aes(ymin = ci.lb, ymax = ci.ub), width = 0.25, color = "#528B8B") +
   coord_flip() +
   labs(x = NULL, y = "Variance 95% CI") +
   scale_y_continuous(breaks = seq(0, 11.0, 1), limits = c(0, 11.0)) + 
@@ -233,9 +233,9 @@ brms_p3 <- ggplot(fixed_effects_samples_brms, aes(x = .value, y = .variable)) +
   stat_halfeye(
     normalize = "xy", 
     point_interval = "mean_qi", 
-    fill = "#EEDC82", 
-    color = "#CDBE70"
-  ) +
+    fill           = "#FFD700",
+    color          = "#CDAD00"
+    ) +
   geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
   scale_x_continuous(breaks = seq(-4.0, 4.0, 1), limits = c(-4.0, 4.0)) + 
   labs(title = "Posterior distributions of fixed effects - brms",
@@ -269,8 +269,8 @@ brms_p4 <- ggplot(random_effects_samples_brms, aes(x = .value, y = .variable)) +
   stat_halfeye(
     normalize = "xy",
     point_interval = "mean_qi", 
-    fill = "#B2DFEE", 
-    color = "#9AC0CD"
+    fill = "#79CDCD",
+    color = "#528B8B"
   ) +
   geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
   scale_x_continuous(breaks = seq(0, 10.0, 1), limits = c(0, 10.0)) + 
@@ -284,48 +284,48 @@ brms_eg1_2 <- brms_p3/brms_p4
 metafor_eg1_2 |brms_eg1_2
 
 ## spatial e.g. 1 ----
-# use metafor_eg3_gau, metafor_eg3_exp, 
-# m_exp, m_gau
-
-# metafor
-summary(metafor_eg3_gau)
-s_metafor_p1 <- orchaRd::orchard_plot(metafor_eg3_gau, 
-                           group = "site",
-                           xlab = "Effect size",
-                           angle = 45) + 
-  scale_x_discrete(labels = c("Overall effect")) +
-  scale_color_manual(values = "#CDBE70") +
-  scale_fill_manual(values = "#EEDC82") + 
-#  scale_y_continuous(breaks = seq(-4.0, 4.0, 1), limits = c(-4.0, 4.0)) + 
-  theme_classic()
-
-## random effect
-ci_var <- confint(HD_BM, level = 0.95) 
-tbl <- tibble::as_tibble(ci_var, rownames = "term")
-
-label_map <- c("Phylo", "Study_id", "Species", "Effect_id")
-tbl_var <- tbl %>%
-  filter(str_detect(term, "^sigma\\^2\\.")) %>%
-  mutate(
-    idx   = as.integer(str_match(term, "\\.(\\d+)$")[,2]),
-    label = case_when(
-      idx == 1 ~ "Study_id",
-      idx == 2 ~ "Effect_id",
-      idx == 3 ~ "Species",
-      idx == 4 ~ "Phylo"
-    ),
-    label = factor(label, levels = label_map) 
-  )
-
-metafor_p2 <- ggplot(tbl_var, aes(x = label, y = estimate)) +
-  geom_point(size = 3.0, color = "#9AC0CD") +
-  geom_errorbar(aes(ymin = ci.lb, ymax = ci.ub), width = 0.25, color = "#9AC0CD") +
-  coord_flip() +
-  labs(x = NULL, y = "Variance 95% CI") +
-  scale_y_continuous(breaks = seq(0, 10.0, 1), limits = c(0, 10.0)) + 
-  theme_classic(base_size = 12)
-
-metafor_eg1_1 <- metafor_p1 / metafor_p2
+# # use metafor_eg3_gau, metafor_eg3_exp, 
+# # m_exp, m_gau
+# 
+# # metafor
+# summary(metafor_eg3_gau)
+# s_metafor_p1 <- orchaRd::orchard_plot(metafor_eg3_gau, 
+#                            group = "site",
+#                            xlab = "Effect size",
+#                            angle = 45) + 
+#   scale_x_discrete(labels = c("Overall effect")) +
+#   scale_color_manual(values = "#CDBE70") +
+#   scale_fill_manual(values = "#EEDC82") + 
+# #  scale_y_continuous(breaks = seq(-4.0, 4.0, 1), limits = c(-4.0, 4.0)) + 
+#   theme_classic()
+# 
+# ## random effect
+# ci_var <- confint(HD_BM, level = 0.95) 
+# tbl <- tibble::as_tibble(ci_var, rownames = "term")
+# 
+# label_map <- c("Phylo", "Study_id", "Species", "Effect_id")
+# tbl_var <- tbl %>%
+#   filter(str_detect(term, "^sigma\\^2\\.")) %>%
+#   mutate(
+#     idx   = as.integer(str_match(term, "\\.(\\d+)$")[,2]),
+#     label = case_when(
+#       idx == 1 ~ "Study_id",
+#       idx == 2 ~ "Effect_id",
+#       idx == 3 ~ "Species",
+#       idx == 4 ~ "Phylo"
+#     ),
+#     label = factor(label, levels = label_map) 
+#   )
+# 
+# metafor_p2 <- ggplot(tbl_var, aes(x = label, y = estimate)) +
+#   geom_point(size = 3.0, color = "#9AC0CD") +
+#   geom_errorbar(aes(ymin = ci.lb, ymax = ci.ub), width = 0.25, color = "#9AC0CD") +
+#   coord_flip() +
+#   labs(x = NULL, y = "Variance 95% CI") +
+#   scale_y_continuous(breaks = seq(0, 10.0, 1), limits = c(0, 10.0)) + 
+#   theme_classic(base_size = 12)
+# 
+# metafor_eg1_1 <- metafor_p1 / metafor_p2
 
 ## spatial e.g. 2 ----
 # EXP_eg4_metafor, m_exp4_brms
@@ -336,16 +336,19 @@ summary(EXP_eg4_metafor)
 s_metafor_p1 <- orchaRd::orchard_plot(EXP_eg4_metafor, 
                                       group = "effect_id",
                                       xlab = "Effect size",
-                                      angle = 45) + 
+                                      angle = 45,
+                                      twig.size = 0.3,
+                                      trunk.size = 0.5
+                                      ) + 
   scale_x_discrete(labels = c("Overall effect")) +
-  scale_color_manual(values = "#CDBE70") +
-  scale_fill_manual(values = "#EEDC82") + 
+  scale_color_manual(values = "#FFD700") +
+  scale_fill_manual(values = "#CDAD00") + 
   #  scale_y_continuous(breaks = seq(-4.0, 4.0, 1), limits = c(-4.0, 4.0)) + 
   theme_classic()
 
-ci_var <- confint(EXP_eg4_metafor, level = 0.95) 
-tbl <- tibble::as_tibble(ci_var, rownames = "term")
-# > tbl 
+ci_var2 <- confint(EXP_eg4_metafor, level = 0.95)
+tbl2 <- tibble::as_tibble(ci_var2, rownames = "term")
+# > tbl2
 # # A tibble: 5 × 4
 # term    estimate  ci.lb ci.ub
 # <chr>      <dbl>  <dbl> <dbl>
@@ -355,20 +358,21 @@ tbl <- tibble::as_tibble(ci_var, rownames = "term")
 # 4 tau        1.11  1.01   1.22 
 # 5 rho        0.174 0.0174 0.857
 
-tbl_var <- tbl %>% 
+tbl_var2 <- tbl2 %>% 
   filter(term %in% c("tau^2","sigma^2")) %>% 
   mutate(term = factor(term, levels = c("tau^2","sigma^2")))
 
-s_metafor_p1var <- ggplot(tbl_var, aes(x = estimate, y = term)) +
-  geom_point(size = 3, color = "#9AC0CD") +
-  geom_errorbar(aes(xmin = ci.lb, xmax = ci.ub), height = 0.25, color = "#9AC0CD") +
+s_metafor_p1var <- ggplot(tbl_var2, aes(x = estimate, y = term)) +
+  geom_point(size = 3, color = "#528B8B") +
+  geom_errorbar(aes(xmin = ci.lb, xmax = ci.ub), height = 0.25, color = "#528B8B") +
+  # scale_x_continuous(limits = c(0.0, 1.80)) + 
   labs(x = "Variance with with 95% CI", y = NULL) +
   theme_classic(base_size = 12)
 
-tbl_rho <- tbl %>% 
+tbl_rho2 <- tbl2 %>% 
   filter(term == "rho")
 
-s_metafor_p1rho <- ggplot(tbl_rho, aes(x = estimate, y = term)) +
+s_metafor_p1rho <- ggplot(tbl_rho2, aes(x = estimate, y = term)) +
   geom_point(size = 3, color = "#CD6090") +
   geom_errorbar(aes(xmin = ci.lb, xmax = ci.ub), 
                 height = 0.25, color = "#CD6090") +
@@ -390,15 +394,14 @@ rename_vars_exp4 <- function(variable) {
   # fixed
   variable <- gsub("b_Intercept", "Overall effect", variable)
   
-  # random
+  # random SD
   variable <- gsub("sd_effect_id__Intercept", "SD of effect_id", variable)
   
-  # GP hyperparameters
-  variable <- gsub("sdgp_gpx_kmy_km", "sdgp_gpx", variable)
-  variable <- gsub("lscale_gpx_kmy_km", "lscale", variable)
+  # GP SD
+  variable <- gsub("sdgp_gpx_kmy_km", "SD of gp_x", variable)
   
-  # #
-  # variable <- gsub("^sigma$", "σ_resid", variable)
+  # GP length-scale
+  variable <- gsub("lscale_gpx_kmy_km", "lscale", variable)
   
   return(variable)
 }
@@ -425,8 +428,8 @@ visualize_fixed_effects_exp4 <- function(model) {
       ggdist::stat_halfeye(
         normalize      = "xy",
         point_interval = "mean_qi",
-        fill           = "#EEDC82",
-        color          = "#CDBE70"
+        fill           = "#FFD700",
+        color          = "#CDAD00"
       ) +
       geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
       labs(y = "Fixed effects", x = "Posterior values") +
@@ -438,38 +441,51 @@ visualize_fixed_effects_exp4 <- function(model) {
 }
 
 ### random effect ----
-visualize_random_effects_exp4 <- function(model) {
+sd_to_var <- function(df) {
+  df %>%
+    dplyr::mutate(
+      .value    = (.value)^2,
+      .variable = gsub("^SD of ", "Var of ", .variable)
+    )
+}
+
+#### random effect (Var) ----
+visualize_random_and_gp_var_exp4 <- function(model) {
   
-  random_effect_vars <- get_variables_dynamic(model, "^sd")
-  # random_effect_vars <- setdiff(random_effect_vars, "sd…")
+  re_vars <- get_variables_dynamic(model, "^(sd_|sdgp_)")
   
-  if (length(random_effect_vars) == 0) {
-    message("No random effects found")
+  if (length(re_vars) == 0) {
+    message("No random or GP SD parameters found")
     return(NULL)
   }
   
   tryCatch({
-    random_effects_samples <- model %>%
-      spread_draws(!!!syms(random_effect_vars)) %>%
+    samples <- model %>%
+      spread_draws(!!!syms(re_vars)) %>%
       tidyr::pivot_longer(
-        cols      = dplyr::all_of(random_effect_vars),
+        cols      = dplyr::all_of(re_vars),
         names_to  = ".variable",
         values_to = ".value"
       ) %>%
-      dplyr::mutate(.variable = rename_vars_exp4(.variable))
+      dplyr::mutate(.variable = rename_vars_exp4(.variable)) %>%
+      sd_to_var()
     
-    ggplot(random_effects_samples, aes(x = .value, y = .variable)) +
+    ggplot(samples, aes(x = .value, y = .variable)) +
       ggdist::stat_halfeye(
         normalize      = "xy",
         point_interval = "mean_qi",
-        fill           = "#9AC0CD",
-        color          = "#68838B"
+        fill           = "#B0E2FF",
+        color          = "#4F94CD"
       ) +
       geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
-      labs(y = "Random effects (SD)", x = "Posterior values") +
+      labs(
+        y = "Random and GP effects (variance)",
+        x = "Posterior values (variance)"
+      ) +
       theme_classic()
+    
   }, error = function(e) {
-    message("Error in visualize_random_effects_exp4: ", e$message)
+    message("Error in visualize_random_and_gp_var_exp4: ", e$message)
     return(NULL)
   })
 }
@@ -508,12 +524,9 @@ visualize_gp_lscale_exp4 <- function(model) {
 }
 
 s_brms_p1  <- visualize_fixed_effects_exp4(m_exp4_brms)
-s_metafor_p1sd <- visualize_random_effects_exp4(m_exp4_brms)
+s_metafor_p1sd <- visualize_random_and_gp_var_exp4(m_exp4_brms)
 s_metafor_p1lscale <- visualize_gp_lscale_exp4(m_exp4_brms)
 
-p_fix
-p_re
-p_gp_lsc
 
 metafor_sp2.1 <- s_metafor_p1 / (s_metafor_p1var + s_metafor_p1rho)
 metafor_sp2.1
