@@ -168,6 +168,71 @@ names(dat_Roger)
 ```{r}
 
 ```
+
+```{r}
+dat_Roger$effect_id <- as.character(dat_Roger$effect_id)
+vcv <- diag(dat_Roger$var_Hedges)
+
+rownames(vcv) <- colnames(vcv) <- dat_Roger$effect_id
+
+fit_eg4_v1 <- bf(d_Hedges ~ 1 +
+                 (1|study_id) + # this is u_l (the between-study effect)
+                 (1|gr(effect_id, cov = vcv)) + # this is m (sampling error)
+                gp(x_km, y_km, 
+                   cov = "exponential",
+                   scale = FALSE)
+                )
+
+# generate default priors
+prior <- default_prior(fit_eg4_v1, 
+                           data=dat_Roger, 
+                           data2=list(vcv=vcv),
+                           family=gaussian())
+prior$prior[5] = "constant(1)" # meta-analysis assumes sampling variance is known so fixing this to 1
+prior
+
+# fitting model
+fit_exp4_brms_v1 <- brm(
+  formula = fit_eg4_v1,
+  data = dat_Roger,
+  data2 = list(vcv=vcv),
+  chains = 2,
+  iter = 6000,
+  warmup = 3000,
+  prior = prior,
+  control = list(adapt_delta=0.95, max_treedepth=15)
+)
+summary(fit_exp4_brms_v1)
+# Family: gaussian 
+#   Links: mu = identity 
+# Formula: d_Hedges ~ 1 + (1 | study_id) + (1 | gr(effect_id, cov = vcv)) + gp(x_km, y_km, cov = "exponential", scale = FALSE) 
+#    Data: dat_Roger (Number of observations: 2361) 
+#   Draws: 2 chains, each with iter = 6000; warmup = 3000; thin = 1;
+#          total post-warmup draws = 6000
+# 
+# Gaussian Process Hyperparameters:
+#                    Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# sdgp(gpx_kmy_km)       0.20      0.12     0.01     0.47 1.00      344     1056
+# lscale(gpx_kmy_km)  5258.38  31234.81   440.25 24312.38 1.00      822     1513
+# 
+# Multilevel Hyperparameters:
+# ~effect_id (Number of levels: 2361) 
+#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# sd(Intercept)     1.00      0.00     1.00     1.00   NA       NA       NA
+# 
+# ~study_id (Number of levels: 393) 
+#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# sd(Intercept)     1.10      0.06     0.99     1.21 1.00     1331     2059
+# 
+# Regression Coefficients:
+#           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# Intercept    -0.34      0.10    -0.53    -0.12 1.00     1794     2030
+# 
+# Further Distributional Parameters:
+#       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# sigma     0.88      0.02     0.84     0.92 1.00     2663     3946
+```
+
 ##### glmmTMB
 ```{r}
 
