@@ -48,7 +48,13 @@ install.packages("pacman")
 pacman::p_load(brms, metafor, metadat, tidyverse, data.table, crayon, here, ape, patchwork,
                dplyr, tidyr,MCMCglmm, bayesplot, tidybayes, orchaRd,purrr, stringr, readr,
                lubridate, magrittr, janitor, glmmTMB, rotl, sf)
+
+max_cores <- 10
+num_chains <- 2
+threads_per_chain <- floor(max_cores / num_chains)
+options(mc.cores = num_chains) 
 ```
+
 # Phylogenetic meta-analysis
 
 ## How to make phylogenetic correlation matrix?
@@ -66,10 +72,10 @@ pacman::p_load(brms, metafor, metadat, tidyverse, data.table, crayon, here, ape,
 
 ```
 
-## Examples
+## Example
 
 ::: panel-tabset
-### 1
+###  Moura et al. (2021)
 ```{r}
 dat_moura2021 <- dat.moura2021$dat
 tree <- dat.moura2021$tree
@@ -91,49 +97,302 @@ dat_moura2021$species.id.phy <- dat_moura2021$species.id
 #### Brownian motion
 
 ##### metafor
+```{r}
+#| echo: false
+
+phylo_eg1_meta_BM <- readRDS(here("Rdata", "tutorial_v2", "moura2021_BM_metafor.rds"))
+
+```
+
+```{r}
+
+system.time(
+  phylo_eg1_meta_BM <- rma.mv(yi, vi,
+         random = list(~ 1 | study.id, 
+         ~ 1 | effect.size.id, 
+         ~ 1 | species.id, 
+         ~ 1 | species.id.phy),
+         R = list(species.id.phy=A), 
+         data = dat_moura2021,
+         verbose = TRUE,
+         sparse = TRUE,
+         method = "REML"
+         )
+  )
+
+summary(phylo_eg1_meta_BM)
+# Multivariate Meta-Analysis Model (k = 1828; method: REML)
+
+#    logLik   Deviance        AIC        BIC       AICc   
+# -167.6726   335.3453   345.3453   372.8974   345.3782   
+
+# Variance Components:
+
+#             estim    sqrt  nlvls  fixed          factor    R 
+# sigma^2.1  0.0192  0.1384    457     no        study.id   no 
+# sigma^2.2  0.0145  0.1202   1828     no  effect.size.id   no 
+# sigma^2.3  0.0557  0.2359    341     no      species.id   no 
+# sigma^2.4  0.0512  0.2263    341     no  species.id.phy  yes 
+
+# Test for Heterogeneity:
+# Q(df = 1827) = 10743.8076, p-val < .0001
+
+# Model Results:
+
+# estimate      se    zval    pval   ci.lb   ci.ub     
+#   0.3682  0.1300  2.8311  0.0046  0.1133  0.6230  ** 
+
+# ---
+# Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+confint(phylo_eg1_meta_BM)
+#           estimate  ci.lb  ci.ub 
+# sigma^2.1   0.0192 0.0108 0.0325 
+# sigma.1     0.1384 0.1038 0.1802 
+
+#           estimate  ci.lb  ci.ub 
+# sigma^2.2   0.0145 0.0121 0.0172 
+# sigma.2     0.1202 0.1099 0.1311 
+
+#           estimate  ci.lb  ci.ub 
+# sigma^2.3   0.0557 0.0334 0.0788 
+# sigma.3     0.2359 0.1827 0.2807 
+
+#           estimate  ci.lb  ci.ub 
+# sigma^2.4   0.0512 0.0179 0.1792 
+# sigma.4     0.2263 0.1336 0.4233 
+
+orchaRd::i2_ml(phylo_eg1_meta_BM)
+
+phylo_heritability <- phylo_eg1_meta_BM$sigma2[4]^2 / (phylo_eg1_meta_BM$sigma2[4]^2 + phylo_eg1_meta_BM$sigma2[3]^2)
+```
 
 ##### brms
 ```{r}
+#| echo: false
+
+phylo_eg1_brms <- readRDS(here("Rdata", "tutorial_v2", "moura2021_BM_brms2.rds"))
+
+```
+
+```{r}
+
+fit_phylo_eg1_brms <- bf(yi | se(sqrt(vi)) ~ 1 +
+                     (1 | study.id) + 
+                     (1 | effect.size.id) + 
+                     (1 | species.id) + 
+                     (1 | gr(species.id.phy, cov = A))
+                     )
+
+prior_brms2 <- get_prior(
+  formula = fit_brms2,
+  data = dat_moura2021,
+  data2 = list(A = A),
+  family = gaussian()
+  )
+
+system.time(
+  phylo_eg1_brms <- brm(
+    formula = fit_phylo_eg1_brms,
+    family = gaussian(),
+    data = dat_moura2021,
+    data2 = list(A = A),
+    prior = prior_brms2,
+    iter = 10000, 
+    warmup = 7000,  
+    chains = num_chains,
+    backend = "cmdstanr",
+    threads = threading(threads_per_chain), 
+    control = list(adapt_delta = 0.95, max_treedepth = 15)
+    )
+  )
+
+summary(phylo_eg1_brms)
+#  Family: gaussian 
+#   Links: mu = identity; sigma = identity 
+# Formula: yi | se(sqrt(vi)) ~ 1 + spatially.pooled + (1 | study.id) + (1 | effect.size.id) + (1 | species.id) + (1 | gr(species.id.phy, cov = A)) 
+#    Data: dat_moura2021 (Number of observations: 1828) 
+#   Draws: 2 chains, each with iter = 10000; warmup = 7000; thin = 1;
+#          total post-warmup draws = 6000
+
+# Multilevel Hyperparameters:
+# ~effect.size.id (Number of levels: 1828) 
+#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# sd(Intercept)     0.12      0.01     0.11     0.13 1.00     1494     2868
+
+# ~species.id (Number of levels: 341) 
+#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# sd(Intercept)     0.23      0.03     0.17     0.28 1.00      535      624
+
+# ~species.id.phy (Number of levels: 341) 
+#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# sd(Intercept)     0.27      0.09     0.15     0.49 1.00      611      467
+
+# ~study.id (Number of levels: 457) 
+#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# sd(Intercept)     0.14      0.02     0.10     0.19 1.00      454      794
+
+# Regression Coefficients:
+#                     Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# Intercept               0.36      0.16     0.04     0.68 1.00     2050     2076
+# spatially.pooledyes     0.04      0.03    -0.01     0.10 1.00     1800     2714
+
+# Further Distributional Parameters:
+#       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# sigma     0.00      0.00     0.00     0.00   NA       NA       NA
 
 ```
 
 ##### glmmTMB
 ```{r}
+phylo_eg1_tmb <- readRDS(here("Rdata", "tutorial_v2", "phylo_eg1_tmb1.rds"))
+```
+
+```{r}
+
+A <- A[sort(rownames(A)), sort(rownames(A))]
+
+dat_moura2021$g <- 1 
+
+VCV <- diag(dat_moura2021$vi, nrow = nrow(dat_moura2021)) 
+rownames(VCV)<- colnames(VCV)<- dat_moura2021$effect.size.id
+
+dat_moura2021$effect.size.id <- as.factor(dat_moura2021$effect.size.id)
+head(dat_moura2021)
+
+system.time(
+    phylo_eg1_tmb <- glmmTMB(yi ~ 1 + equalto(0 + effect.size.id|g, VCV) +
+                         (1|study.id) + 
+                         (1|species.id.phy) +
+                         propto(0 + species.id.phy|g, A),
+                       data = dat_moura2021,
+                       REML = T)
+    )
+head(confint(phylo_eg1_tmb), 10)
+#                                                                           2.5 %    97.5 %   Estimate
+# (Intercept)                                                            0.1132610 0.6230707 0.3681658
+# Std.Dev.(Intercept)|study.id                                           0.1056462 0.1813458 0.1384142
+# Std.Dev.(Intercept)|species.id.phy                                     0.1932854 0.2879763 0.2359271
+# Std.Dev.species.id.phyAcanthurus_leucosternon_ott388125|g.1            0.1293612 0.3959730 0.2263262
+# Std.Dev.species.id.phyAcanthurus_nigricans_ott467313|g.1               0.1293612 0.3959730 0.2263262
+# Std.Dev.species.id.phyAcanthurus_nigrofuscus_ott605289|g.1             0.1293612 0.3959730 0.2263262
+# Std.Dev.species.id.phyAchatina_fulica_ott997087|g.1                    0.1293612 0.3959730 0.2263262
+# Std.Dev.species.id.phyAegithalos_glaucogularis_vinaceus_ott5560982|g.1 0.1293612 0.3959730 0.2263262
+# Std.Dev.species.id.phyAethia_pusilla_ott855484|g.1                     0.1293612 0.3959730 0.2263262
+# Std.Dev.species.id.phyAgalychnis_callidryas_ott9483|g.1                0.1293612 0.3959730 0.2263262
+
+sigma(phylo_eg1_tmb)^2
+# [1] 0.01445014 # residual variance
+
+phylo_eg1_tmb_varcor <- VarCorr(phylo_eg1_tmb)$cond
+exp(phylo_eg1_tmb$fit$par)
+#   betadisp      theta      theta      theta 
+# 0.12020875 0.13841423 0.23592711 0.05122353 <- residual variance (sd), study.id (sd), species.id (sd), species.id.phy (variance?)
 
 ```
 
 #### Ornstein-Uhlenbeck
 
-##### metafor
 ```{r}
+# create phylogenetic distance matrix
+dat_moura2021$const <- 1
+I  <- matrix(1, nrow = length(tree$tip.label), ncol = length(tree$tip.label))
+D <- I-A
+
+D[1:5, 1:5]
+
+system.time(
+    phy_ou_meta <- rma.mv(yi, vi,
+   random = list(~ 1 | study.id, 
+   ~ 1 | effect.size.id, 
+   ~ 1 | species.id, 
+   ~ species.id.phy | const),
+   dist = list(D), 
+   struct = "SPEXP",
+   control = list(rho.init = 1),
+   data = dat_moura2021,
+   verbose = TRUE,
+   sparse = TRUE,
+   method = "REML",
+   test = "t"
+   )
+   )
+
+summary(phy_ou_meta)
+# Multivariate Meta-Analysis Model (k = 1828; method: REML)
+
+#    logLik   Deviance       AIC        BIC       AICc   
+# -160.3783   320.7567   332.7567   365.8192   332.8028   
+
+# Variance Components:
+
+#             estim    sqrt  nlvls  fixed          factor 
+# sigma^2.1  0.0157  0.1254    457     no        study.id 
+# sigma^2.2  0.0144  0.1201   1828     no  effect.size.id 
+# sigma^2.3  0.0000  0.0000    341     no      species.id 
+
+# outer factor: const           (nlvls = 1)
+# inner term:   ~species.id.phy (nlvls = 341)
+
+#             estim    sqrt  fixed 
+# tau^2      0.1029  0.3208     no 
+# rho        0.0182             no 
+
+# Test for Heterogeneity:
+# Q(df = 1827) = 10743.8076, p-val < .0001
+
+# Model Results:
+
+# estimate      se    zval    pval   ci.lb   ci.ub      
+#   0.3514  0.0355  9.9090  <.0001  0.2819  0.4209  *** 
+
+# ---
+# Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+rho <- phy_ou_meta$rho  #[1] 0.01820382
+alpha <- 1/rho # 54.93351
+A_OU <- exp(-alpha*D)
+
+system.time(
+  phy_ou_meta1 <- rma.mv(yi, vi,
+     random = list(~ 1 | study.id, 
+    ~ 1 | effect.size.id, 
+    ~ 1 | species.id, 
+    ~ 1 | species.id.phy),
+    R = list(species.id.phy = A_OU), 
+    data = dat_moura2021,
+    verbose = TRUE,
+    sparse = TRUE,
+    method = "REML",
+    test = "t"
+    )
+)
+
+summary(phy_ou_meta1)
+# Multivariate Meta-Analysis Model (k = 1828; method: REML)
+# 
+#    logLik   Deviance        AIC        BIC       AICc   
+# -160.3783   320.7567   330.7567   358.3088   330.7896   
+# 
+# Variance Components:
+# 
+#             estim    sqrt  nlvls  fixed          factor    R 
+# sigma^2.1  0.0157  0.1254    457     no        study.id   no 
+# sigma^2.2  0.0144  0.1201   1828     no  effect.size.id   no 
+# sigma^2.3  0.0000  0.0001    341     no      species.id   no 
+# sigma^2.4  0.1029  0.3208    341     no  species.id.phy  yes 
+# 
+# Test for Heterogeneity:
+# Q(df = 1827) = 10743.8076, p-val < .0001
+# 
+# Model Results:
+# 
+# estimate      se    tval    df    pval   ci.lb   ci.ub      
+#   0.3514  0.0355  9.9090  1827  <.0001  0.2819  0.4210  *** 
 
 ```
 
-### 2
-
-#### Brownian motion
-
-##### metafor
-```{r}
-
-```
-
-##### brms
-```{r}
-
-```
-
-##### glmmTMB
-```{r}
-
-```
-
-#### Ornstein-Uhlenbeck
-
-##### metafor
-```{r}
-
-```
 
 :::
 
@@ -144,7 +403,7 @@ dat_moura2021$species.id.phy <- dat_moura2021$species.id
 ## Examples
 
 ::: panel-tabset
-### 1. Grau-Andrés et al. (2024)
+###1. Grau-Andrés et al. (2024)
 
 ```{r}
 
@@ -229,12 +488,12 @@ summary(sp_eg1_exp_mf)
 # estimate      se     tval    df    pval    ci.lb    ci.ub      
 #  -0.3347  0.0765  -4.3727  2360  <.0001  -0.4847  -0.1846  *** 
 ```
+
 ##### brms
-```{r}
-
-```
 
 ```{r}
+#| eval: false
+
 dat_Roger$effect_id <- as.character(dat_Roger$effect_id)
 vcv <- diag(dat_Roger$var_Hedges)
 
@@ -266,7 +525,7 @@ sp_eg1_exp_brms <- brm(
   warmup = 3000,
   prior = prior,
   control = list(adapt_delta=0.95, max_treedepth=15)
-)
+  )
 summary(sp_eg1_exp_brms)
 # Family: gaussian 
 #   Links: mu = identity 
@@ -324,7 +583,7 @@ system.time(
 
 summary(sp_eg1_exp_tmb)　
 # Family: gaussian  ( identity )
-# Formula:          d_Hedges ~ 1 + equalto(0 + effect_id | const, VCV) + (1 | site_id) +      exp(pos + 0 | const)
+# Formula:          d_Hedges ~ 1 + equalto(0 + effect_id | const, VCV) + (1 | site_id) + exp(pos + 0 | const)
 # Data: dat_Roger
 # 
 #       AIC       BIC    logLik -2*log(L)  df.resid 
@@ -385,7 +644,6 @@ head(confint(sp_eg1_exp_tmb), 10)
 sigma(sp_eg1_exp_tmb) 
 # 1.365387
 sp_eg1_exp_tmb_varcor <- VarCorr(sp_eg1_exp_tmb)$cond
-exp(sp_eg1_exp_tmb$fit$par[[2]])
 exp(sp_eg1_exp_tmb$fit$par)
 #  betadisp     theta     theta     theta 
 # 1.3653868 0.3521138 1.3197126 0.2527374
@@ -573,6 +831,40 @@ confint(ma_sp2_exp)
 ##### brms
 ```{r}
 
+dat_maire2019$id <- as.character(dat_maire2019$id)
+vcv <- diag(dat_maire2019$vars1)
+
+rownames(vcv) <- colnames(vcv) <- dat_maire2019$id
+
+fit_sp_eg2_exp_brms <- bf(s1 ~ 1 +
+                 (1|site) + # this is 
+                 (1|gr(id, cov = vcv)) + # this is m (sampling error)
+                gp(x_km, y_km, 
+                   cov = "exponential",
+                   scale = FALSE)
+                )
+
+# generate default priors
+prior <- default_prior(fit_sp_eg2_exp_brms, 
+                           data = dat_maire2019, 
+                           data2 = list(vcv = vcv),
+                           family = gaussian())
+prior$prior[5] = "constant(1)" # meta-analysis assumes sampling variance is known so fixing this to 1
+prior
+
+# fitting model
+sp_eg2_exp_brms <- brm(
+  formula = fit_sp_eg2_exp_brms,
+  data = dat_maire2019,
+  data2 = list(vcv=vcv),
+  chains = 2,
+  threads = threading(threads_per_chain),
+  iter = 10000,
+  warmup = 8000,
+  prior = prior,
+  control = list(adapt_delta=0.95, max_treedepth=15)
+)
+summary(sp_eg2_exp_brms)
 ```
 
 ##### glmmTMB
