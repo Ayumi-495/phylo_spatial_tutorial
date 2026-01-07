@@ -49,8 +49,9 @@ In this online tutorial, we demonstrate how to conduct phylogenetic and spatial 
 ```{r}
 # install.packages("pacman") # if not already installed
 pacman::p_load(brms, metafor, metadat, tidyverse, data.table, crayon, here, ape, patchwork,
-               dplyr, tidyr,MCMCglmm, bayesplot, tidybayes, orchaRd,purrr, stringr, readr,
+               dplyr, tidyr,MCMCglmm, bayesplot, tidybayes, posterior, orchaRd,purrr, stringr, readr,
                lubridate, magrittr, janitor, glmmTMB, rotl, sf)
+
 ```
 
 Set up parallel processing for `brms` - please adjust according to your computer's capabilities.
@@ -66,13 +67,44 @@ options(mc.cores = num_chains)
 # Phylogenetic meta-analysis
 
 ## How to make phylogenetic correlation matrix?
-```{r}
 
-```
+Before moving the each model, we show how to make phylogenetic correlation matrix. It is important to account for the shared evolutionary history of species. Most common way to do this is by incorporating a phylogenetic correlation matrix into your model. This matrix reflects how closely related species are,and can be derived in two main ways:
+
+1.  [Using a specific phylogenetic tree](#using-a-specific-phylogenetic-tree)\
+2.  [Using the `rotl` package (Open Tree of Life)](#using-the-rotl-package-open-tree-of-life)
+
+In the following two sections, we introduce how to make the correlation matrix in two ways. The example below demonstrates how to compute a correlation matrix under the *Brownian motion process*. For the *Ornstein–Uhlenbeck process* and *Phylogenetic Gaussian Process*, please refere to their respective sections.
+
+
+:::callout-note
+Sometimes, the species names in your data may not match those in the tree - please ensure that they are consistent. Also, it will be necessity when dropping species from the tree that are not in your dataset. In that case, you can use `TreeTools::DropTip()` / `ape::drop.tip()` (or `TreeTools::KeepTip()` / `ape::keep.tip()`). You can see how to do this in the example below :)
+:::
 
 ### Using a specific phylogenetic tree {#using-a-specific-phylogenetic-tree}
-```{r}
 
+If the phylogenetic relationships among the species you want to analyse are already known and you have access to a corresponding tree (e.g., from a published source — for birds, you can usually obtain one from [BirdTree.org](BirdTree.org), you can easily generate a phylogenetic correlation matrix using simple codes.
+```{r}
+#| label: way 1 - phylometa
+#| eval: false
+
+# load necessary package
+library(ape) 
+
+# 1. read a phylogenetic tree file – supported formats include Newick (.nwk), Nexus (.nex), etc.
+##   if the file contains multiple trees, it is better to start by a single tree.
+##   using ~50 trees is generally considered sufficient for phylogenetic meta-analysis to check the necessity of phylogeny.
+##   (see: https://doi.org/10.1093/sysbio/syy089)
+tree <- read.nexus("tree.txt")
+
+# 2. check whether the tree is ultrametric and fully bifurcating
+is.ultrametric(tree) # should return TRUE
+
+# 3. compute the correlation matrix under BM process
+A <- vcv(tree, corr = TRUE)
+
+# 4. check the dimensions and preview a part of correlation matrix
+dim(A) # returns the number of species (rows / columns)
+A[1:5, 1:5] # show the top-left block of the matrix
 ```
 
 ### Using the `rotl` package (Open Tree of Life) {#using-the-rotl-package-open-tree-of-life}
@@ -85,6 +117,8 @@ options(mc.cores = num_chains)
 ::: panel-tabset
 ###  Moura et al. (2021)
 ```{r}
+#| eval: false
+
 dat_moura2021 <- dat.moura2021$dat
 tree <- dat.moura2021$tree
 
@@ -113,6 +147,7 @@ phylo_eg1_meta_BM <- readRDS(here("Rdata", "tutorial_v2", "moura2021_BM_metafor.
 ```
 
 ```{r}
+#| eval: false
 
 system.time(
   phylo_eg1_meta_BM <- rma.mv(yi, vi,
@@ -130,28 +165,25 @@ system.time(
 
 summary(phylo_eg1_meta_BM)
 # Multivariate Meta-Analysis Model (k = 1828; method: REML)
-
+# 
 #    logLik   Deviance        AIC        BIC       AICc   
 # -167.6726   335.3453   345.3453   372.8974   345.3782   
-
+# 
 # Variance Components:
-
+# 
 #             estim    sqrt  nlvls  fixed          factor    R 
 # sigma^2.1  0.0192  0.1384    457     no        study.id   no 
 # sigma^2.2  0.0145  0.1202   1828     no  effect.size.id   no 
 # sigma^2.3  0.0557  0.2359    341     no      species.id   no 
 # sigma^2.4  0.0512  0.2263    341     no  species.id.phy  yes 
-
+# 
 # Test for Heterogeneity:
 # Q(df = 1827) = 10743.8076, p-val < .0001
-
+# 
 # Model Results:
-
+# 
 # estimate      se    zval    pval   ci.lb   ci.ub     
 #   0.3682  0.1300  2.8311  0.0046  0.1133  0.6230  ** 
-
-# ---
-# Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
 confint(phylo_eg1_meta_BM)
 #           estimate  ci.lb  ci.ub 
@@ -171,8 +203,12 @@ confint(phylo_eg1_meta_BM)
 # sigma.4     0.2263 0.1336 0.4233 
 
 orchaRd::i2_ml(phylo_eg1_meta_BM)
+# I2_Total       I2_study.id I2_effect.size.id     I2_species.id I2_species.id.phy 
+# 97.30527          13.26902          10.00808          38.55098          35.47718 
 
-phylo_heritability <- phylo_eg1_meta_BM$sigma2[4]^2 / (phylo_eg1_meta_BM$sigma2[4]^2 + phylo_eg1_meta_BM$sigma2[3]^2)
+phylo_heritability <- phylo_eg1_meta_BM$sigma2[4] / (phylo_eg1_meta_BM$sigma2[4] + phylo_eg1_meta_BM$sigma2[3])
+phylo_heritability
+# [1] 0.479239
 ```
 
 ##### brms
@@ -184,6 +220,7 @@ phylo_eg1_brms <- readRDS(here("Rdata", "tutorial_v2", "moura2021_BM_brms2.rds")
 ```
 
 ```{r}
+#| eval: false
 
 fit_phylo_eg1_brms <- bf(yi | se(sqrt(vi)) ~ 1 +
                      (1 | study.id) + 
@@ -193,7 +230,7 @@ fit_phylo_eg1_brms <- bf(yi | se(sqrt(vi)) ~ 1 +
                      )
 
 prior_brms2 <- get_prior(
-  formula = fit_brms2,
+  formula = fit_phylo_eg1_brms,
   data = dat_moura2021,
   data2 = list(A = A),
   family = gaussian()
@@ -217,46 +254,77 @@ system.time(
 
 summary(phylo_eg1_brms)
 #  Family: gaussian 
-#   Links: mu = identity; sigma = identity 
-# Formula: yi | se(sqrt(vi)) ~ 1 + spatially.pooled + (1 | study.id) + (1 | effect.size.id) + (1 | species.id) + (1 | gr(species.id.phy, cov = A)) 
+#   Links: mu = identity 
+# Formula: yi | se(sqrt(vi)) ~ 1 + (1 | study.id) + (1 | effect.size.id) + (1 | species.id) + (1 | gr(species.id.phy, cov = A)) 
 #    Data: dat_moura2021 (Number of observations: 1828) 
 #   Draws: 2 chains, each with iter = 10000; warmup = 7000; thin = 1;
 #          total post-warmup draws = 6000
-
+# 
 # Multilevel Hyperparameters:
 # ~effect.size.id (Number of levels: 1828) 
 #               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sd(Intercept)     0.12      0.01     0.11     0.13 1.00     1494     2868
-
+# sd(Intercept)     0.12      0.01     0.11     0.13 1.00     2091     3894
+# 
 # ~species.id (Number of levels: 341) 
 #               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sd(Intercept)     0.23      0.03     0.17     0.28 1.00      535      624
-
+# sd(Intercept)     0.23      0.03     0.17     0.28 1.00      795     1292
+# 
 # ~species.id.phy (Number of levels: 341) 
 #               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sd(Intercept)     0.27      0.09     0.15     0.49 1.00      611      467
-
+# sd(Intercept)     0.27      0.09     0.14     0.50 1.00     1158      954
+# 
 # ~study.id (Number of levels: 457) 
 #               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sd(Intercept)     0.14      0.02     0.10     0.19 1.00      454      794
-
+# sd(Intercept)     0.14      0.02     0.11     0.18 1.00      661     1223
+# 
 # Regression Coefficients:
-#                     Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# Intercept               0.36      0.16     0.04     0.68 1.00     2050     2076
-# spatially.pooledyes     0.04      0.03    -0.01     0.10 1.00     1800     2714
-
+#           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# Intercept     0.37      0.16     0.05     0.70 1.00     3504     2965
+# 
 # Further Distributional Parameters:
 #       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
 # sigma     0.00      0.00     0.00     0.00   NA       NA       NA
 
 ```
+Let's calculate $I^2$ statistics to quantify the proportion of variance attributable to different sources of heterogeneity.
+```{r}
+# eval: false
 
+fit <- phylo_eg1_brms  
+dat <- dat_moura2021
+v_harm <- 1 / mean(1/dat$vi, na.rm = TRUE)
+
+I2_total_harm  <- var_total_hetero / (var_total_hetero + v_harm)
+I2_effect_harm <- var_effect      / (var_total_hetero + v_harm)
+I2_study_harm  <- var_study       / (var_total_hetero + v_harm)
+I2_species_harm<- var_species     / (var_total_hetero + v_harm)
+I2_phylo_harm  <- var_phylo       / (var_total_hetero + v_harm)
+
+round(rbind(
+  total   = summ_I2(I2_total_harm),
+  effect  = summ_I2(I2_effect_harm),
+  study   = summ_I2(I2_study_harm),
+  species = summ_I2(I2_species_harm),
+  phylo   = summ_I2(I2_phylo_harm)
+), 3)
+#         mean q2.5.2.5% q50.50% q97.5.97.5%
+# total   0.978     0.969   0.978       0.990
+# effect  0.090     0.043   0.091       0.134
+# study   0.129     0.048   0.123       0.247
+# species 0.330     0.115   0.333       0.530
+# phylo   0.429     0.178   0.414       0.759
+
+
+```
 ##### glmmTMB
 ```{r}
+#| echo: false
+
 phylo_eg1_tmb <- readRDS(here("Rdata", "tutorial_v2", "phylo_eg1_tmb1.rds"))
 ```
 
 ```{r}
+#| eval: false
 
 A <- A[sort(rownames(A)), sort(rownames(A))]
 
@@ -302,6 +370,8 @@ exp(phylo_eg1_tmb$fit$par)
 #### Ornstein-Uhlenbeck
 
 ```{r}
+#| eval: false
+
 # create phylogenetic distance matrix
 dat_moura2021$const <- 1
 I  <- matrix(1, nrow = length(tree$tip.label), ncol = length(tree$tip.label))
@@ -356,7 +426,6 @@ summary(phy_ou_meta)
 
 # ---
 # Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
 
 rho <- phy_ou_meta$rho  #[1] 0.01820382
 alpha <- 1/rho # 54.93351
@@ -414,6 +483,7 @@ summary(phy_ou_meta1)
 ###1. Grau-Andrés et al. (2024)
 
 ```{r}
+#| eval: false
 
 dat_Roger <- read.csv(here("data", "examples", "Roger_etal_2024", "Roger_etal_2024.csv"))
 head(dat_Roger)
@@ -452,6 +522,7 @@ names(dat_Roger)
 ##### metafor
 ```{r}
 #| eval: false
+
 system.time(sp_eg1_exp_mf <- rma.mv(d_Hedges, var_Hedges, 
                               random = list(
                                 ~ 1|effect_id,
@@ -466,7 +537,6 @@ system.time(sp_eg1_exp_mf <- rma.mv(d_Hedges, var_Hedges,
                               test = "t"
                               )
             )
-
 
 summary(sp_eg1_exp_mf)
 # Multivariate Meta-Analysis Model (k = 2361; method: REML)
@@ -493,6 +563,18 @@ summary(sp_eg1_exp_mf)
 # 
 # estimate      se     tval    df    pval    ci.lb    ci.ub      
 #  -0.3349  0.0644  -5.2006  2360  <.0001  -0.4612  -0.2086  *** 
+
+confint(sp_eg1_exp_mf)
+#         estimate  ci.lb  ci.ub 
+# sigma^2   0.7935 0.7257 0.8678 
+# sigma     0.8908 0.8519 0.9316 
+# 
+#       estimate  ci.lb  ci.ub 
+# tau^2   1.2330 1.0147 1.4976 
+# tau     1.1104 1.0073 1.2238 
+# 
+#     estimate   ci.lb  ci.ub 
+# rho   0.1744 <0.0174 0.8572 
 
 ```
 
@@ -659,57 +741,6 @@ exp(sp_eg1_exp_tmb$fit$par)
 
 ```
 
-##### summarise results
-```{r}
-meta <- data.frame(model = "metafor", 
-                       logLik = logLik(sp_eg1_exp_mf),
-                       est = sp_eg1_exp_mf$b[[1]], 
-                       se = sp_eg1_exp_mf$se[[1]], 
-                       sigma2.site = sp_eg1_exp_mf$sigma2[2], ## among study variance
-                       sigma2.effect = sp_eg1_exp_mf$sigma2[1], ## within study variance
-                       tau2 = sp_eg1_exp_mf$tau2,
-                       rho = sp_eg1_exp_mf$rho
-                   )
-
-
-tmb <- data.frame(model = "glmmTMB",
-                   logLik = logLik(sp_eg1_exp_tmb)[1],
-                   est = unlist(fixef(sp_eg1_exp_tmb))[[1]], #overall mean
-                   se = as.numeric(sqrt(vcov(sp_eg1_exp_tmb)[[1]])), #overall mean SE
-                   sigma2.site = (sp_eg1_exp_tmb_varcor$site_id[1]), ## among site variance estimate
-                   sigma2.effect = sigma(sp_eg1_exp_tmb), ## within study variance estimate -> effect id
-                   tau2 = exp(sp_eg1_exp_tmb$fit$par[3]), ##spatial variance estimate
-                   rho = exp(sp_eg1_exp_tmb$fit$par[4]) ## rho
-                  )
-
-summ <- posterior_summary(
-  sp_eg1_exp_brms,
-  variable = c(
-    "b_Intercept",
-    "sigma",
-    "sd_study_id__Intercept",
-    "sdgp_gpx_kmy_km",
-    "lscale_gpx_kmy_km"
-  )
-)
-
-brms <- data.frame(
-  model = "brms",
-  logLik = NA_real_, 
-  est = summ["b_Intercept","Estimate"],
-  se  = summ["b_Intercept","Est.Error"],
-  sigma2.site = (summ["sd_study_id__Intercept","Estimate"])^2,
-  sigma2.effect = (summ["sigma","Estimate"])^2,
-  tau2 = (summ["sdgp_gpx_kmy_km","Estimate"])^2,
-  rho = summ["lscale_gpx_kmy_km","Estimate"]
-)
-
-output <- rbind(meta, tmb, brms)
-
-knitr::kable(output)
-```
-
-
 #### Gaussian process
 
 ##### metafor
@@ -727,6 +758,8 @@ However, precise latitude and longitude information for individual stations is n
 We therefore used site-level coordinates as proxies for station-level positions. Although this approximation allows us to compare the implementation of spatial meta-analytic models across `metafor`, `brms`, and `glmmTMB`, the resulting estimates are not directly comparable to those reported by Maire et al. (2019), where station-level spatial random effects were explicitly modelled.
 
 ```{r}
+#| eval: false
+
 dat <- dat.maire2019$dat
 dmat <- dat.maire2019$dmat
 dmat[1:35,1:35]
@@ -840,6 +873,7 @@ confint(ma_sp2_exp)
 
 ##### brms
 ```{r}
+#| eval: false
 
 dat_maire2019$id <- as.character(dat_maire2019$id)
 vcv <- diag(dat_maire2019$vars1)
@@ -879,6 +913,7 @@ summary(sp_eg2_exp_brms)
 
 ##### glmmTMB
 ```{r}
+#| eval: false
 
 dat_maire2019$id <- factor(dat_maire2019$id)
 VCV <- diag(dat_maire2019$vars1, nrow = nrow(dat_maire2019)) 
@@ -911,6 +946,7 @@ exp(tmb_sp2_exp$fit$par[[4]]) # for spatial range parameter rho
 
 ##### metafor
 ```{r}
+#| eval: false
 
 ma_sp2_gau <- rma.mv(s1, vars1, 
                           random = list(
@@ -962,6 +998,7 @@ confint(ma_sp2_gau)
 
 ##### glmmTMB
 ```{r}
+#| eval: false
 
 tmb_sp2_gau <- glmmTMB(
   s1 ~ 1 +
@@ -994,7 +1031,7 @@ sessionInfo()
 -   Maire, A., Thierry, E., Viechtbauer, W., & Daufresne, M. (2019). Poleward shift in large-river fish communities detected with a novel meta-analysis framework. Freshwater Biology, 64(6), 1143–1156. <https://doi.org/10.1111/fwb.13291>
 -   Grau‐Andrés, R., Moreira, B., & Pausas, J. G. (2024). Global plant responses to intensified fire regimes. Global Ecology and Biogeography, 33(8), e13858. <https://doi.org/10.1111/geb.13858>
 -    Viechtbauer, W., White, T., Noble, D., Senior, A., & Hamilton, W. K. (2025). metadat: Meta-analysis datasets (Version 1.5-2) [R package]. <https://github.com/wviechtb/metadat>
-
--    Rios Moura, R., Oliveira Gonzaga, M., Silva Pinto, N., Vasconcellos-Neto, J., & Requena, G. S. (2021). Assortative mating in space and time: Patterns and biases. Ecology Letters, 24(5), 1089–1102. https://doi.org/10.1111/ele.13690
+-    Rios Moura, R., Oliveira Gonzaga, M., Silva Pinto, N., Vasconcellos-Neto, J., & Requena, G. S. (2021). Assortative mating in space and time: Patterns and biases. Ecology Letters, 24(5), 1089–1102. <https://doi.org/10.1111/ele.13690>
+-   Jetz, W., G. H. Thomas, J. B. Joy, K. Hartmann, and A. O. Mooers. 2012. The global diversity of birds in space and time. Nature 491:444-448. <https://doi.org/10.1038/nature11631>
 
 
