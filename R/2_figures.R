@@ -1,4 +1,4 @@
-pacman::p_load("coda", "tidyverse", "here", 
+pacman::p_load("coda", "tidyverse", "here", "metafor",
                "MCMCglmm", "brms", "MASS", "patchwork", 
                "phytools", "patchwork", "bayesplot", "tidybayes", "orchaRd")
 
@@ -328,25 +328,24 @@ metafor_eg1_2 |brms_eg1_2
 # metafor_eg1_1 <- metafor_p1 / metafor_p2
 
 ## spatial e.g. 2 ----
-# EXP_eg4_metafor, m_exp4_brms
 dat_Roger <- read.csv(here("data", "examples", "Roger_etal_2024", "Roger_etal_2024.csv"))
-
+sp_eg1_exp_mf <- readRDS(here("Rdata", "tutorial_v2", "sp_eg1_exp_mf.rds"))
 ### metafor ----
-summary(EXP_eg4_metafor)
-s_metafor_p1 <- orchaRd::orchard_plot(EXP_eg4_metafor, 
+summary(sp_eg1_exp_mf)
+s_metafor_p1 <- orchaRd::orchard_plot(sp_eg1_exp_mf, 
                                       group = "effect_id",
                                       xlab = "Effect size",
                                       angle = 45,
                                       twig.size = 0.3,
                                       trunk.size = 0.5
-                                      ) + 
+) + 
   scale_x_discrete(labels = c("Overall effect")) +
   scale_color_manual(values = "#FFD700") +
   scale_fill_manual(values = "#CDAD00") + 
   #  scale_y_continuous(breaks = seq(-4.0, 4.0, 1), limits = c(-4.0, 4.0)) + 
   theme_classic()
 
-ci_var2 <- confint(EXP_eg4_metafor, level = 0.95)
+ci_var2 <- confint(sp_eg1_exp_mf, level = 0.95)
 tbl2 <- tibble::as_tibble(ci_var2, rownames = "term")
 # > tbl2
 # # A tibble: 5 × 4
