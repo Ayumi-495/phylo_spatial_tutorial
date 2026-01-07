@@ -447,7 +447,7 @@ names(dat_Roger)
 system.time(sp_eg1_exp_mf <- rma.mv(d_Hedges, var_Hedges, 
                               random = list(
                                 ~ 1|effect_id,
-                                ~ 1|site_id,
+                                # ~ 1|site_id,
                                 ~ x_km + y_km |const
                               ), 
                               struct = "SPEXP", 
@@ -458,27 +458,25 @@ system.time(sp_eg1_exp_mf <- rma.mv(d_Hedges, var_Hedges,
                               test = "t"
                               )
             )
-#     user   system  elapsed 
-#   969.641   24.550 1018.565 
+
 
 summary(sp_eg1_exp_mf)
 # Multivariate Meta-Analysis Model (k = 2361; method: REML)
 # 
 #     logLik    Deviance         AIC         BIC        AICc   
-# -4031.5291   8063.0583   8073.0583   8101.8903   8073.0837   
+# -4034.4852   8068.9704   8076.9704   8100.0360   8076.9874   
 # 
 # Variance Components:
 # 
 #             estim    sqrt  nlvls  fixed     factor 
-# sigma^2.1  0.7940  0.8911   2361     no  effect_id 
-# sigma^2.2  0.9288  0.9637    383     no    site_id 
+# sigma^2    0.7935  0.8908   2361     no  effect_id 
 # 
 # outer factor: const        (nlvls = 1)
 # inner term:   ~x_km + y_km (nlvls = 383)
 # 
-#               estim    sqrt  fixed 
-# tau^2        0.2989  0.5467     no 
-# rho        188.1869             no 
+#             estim    sqrt  fixed 
+# tau^2      1.2330  1.1104     no 
+# rho        0.1744             no 
 # 
 # Test for Heterogeneity:
 # Q(df = 2360) = 21273.5149, p-val < .0001
@@ -486,7 +484,8 @@ summary(sp_eg1_exp_mf)
 # Model Results:
 # 
 # estimate      se     tval    df    pval    ci.lb    ci.ub      
-#  -0.3347  0.0765  -4.3727  2360  <.0001  -0.4847  -0.1846  *** 
+#  -0.3349  0.0644  -5.2006  2360  <.0001  -0.4612  -0.2086  *** 
+
 ```
 
 ##### brms
@@ -500,7 +499,7 @@ vcv <- diag(dat_Roger$var_Hedges)
 rownames(vcv) <- colnames(vcv) <- dat_Roger$effect_id
 
 fit_sp_eg1_exp_brms <- bf(d_Hedges ~ 1 +
-                 (1|site_id) + # this is 
+                 # (1|site_id) + # this is site-level random effect
                  (1|gr(effect_id, cov = vcv)) + # this is m (sampling error)
                 gp(x_km, y_km, 
                    cov = "exponential",
@@ -514,10 +513,20 @@ prior <- default_prior(fit_sp_eg1_exp_brms,
                            family = gaussian())
 prior$prior[5] = "constant(1)" # meta-analysis assumes sampling variance is known so fixing this to 1
 prior
+ #                            prior     class       coef     group resp dpar nlpar lb ub tag       source
+ #          student_t(3, -0.1, 2.5) Intercept                                                     default
+ #                           (flat)    lscale                                       0             default
+ # inv_gamma(1.494197, 2141.138175)    lscale gpx_kmy_km                            0             default
+ #             student_t(3, 0, 2.5)        sd                                       0             default
+ #                      constant(1)        sd            effect_id                  0             default <- check this
+ #                      constant(1)        sd  Intercept effect_id                  0        (vectorized) <- check this
+ #             student_t(3, 0, 2.5)      sdgp                                       0             default
+ #             student_t(3, 0, 2.5)      sdgp gpx_kmy_km                            0        (vectorized)
+ #             student_t(3, 0, 2.5)     sigma                                       0             default
 
 # fitting model
 sp_eg1_exp_brms <- brm(
-  formula = fit_eg4_v1,
+  formula = fit_sp_eg1_exp_brms,
   data = dat_Roger,
   data2 = list(vcv=vcv),
   chains = 2,
@@ -527,34 +536,30 @@ sp_eg1_exp_brms <- brm(
   control = list(adapt_delta=0.95, max_treedepth=15)
   )
 summary(sp_eg1_exp_brms)
-# Family: gaussian 
+#  Family: gaussian 
 #   Links: mu = identity 
-# Formula: d_Hedges ~ 1 + (1 | study_id) + (1 | gr(effect_id, cov = vcv)) + gp(x_km, y_km, cov = "exponential", scale = FALSE) 
+# Formula: d_Hedges ~ 1 + (1 | gr(effect_id, cov = vcv)) + gp(x_km, y_km, cov = "exponential", scale = FALSE) 
 #    Data: dat_Roger (Number of observations: 2361) 
 #   Draws: 2 chains, each with iter = 6000; warmup = 3000; thin = 1;
 #          total post-warmup draws = 6000
 # 
 # Gaussian Process Hyperparameters:
 #                    Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sdgp(gpx_kmy_km)       0.20      0.12     0.01     0.47 1.00      344     1056
-# lscale(gpx_kmy_km)  5258.38  31234.81   440.25 24312.38 1.00      822     1513
+# sdgp(gpx_kmy_km)       1.14      0.07     1.00     1.29 1.00     1818     3552
+# lscale(gpx_kmy_km)   128.18     26.02    85.59   187.10 1.00     2227     2567
 # 
 # Multilevel Hyperparameters:
 # ~effect_id (Number of levels: 2361) 
 #               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
 # sd(Intercept)     1.00      0.00     1.00     1.00   NA       NA       NA
 # 
-# ~study_id (Number of levels: 393) 
-#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sd(Intercept)     1.10      0.06     0.99     1.21 1.00     1331     2059
-# 
 # Regression Coefficients:
 #           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# Intercept    -0.34      0.10    -0.53    -0.12 1.00     1794     2030
+# Intercept    -0.32      0.09    -0.51    -0.15 1.00     1503     2737
 # 
 # Further Distributional Parameters:
 #       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sigma     0.88      0.02     0.84     0.92 1.00     2663     3946
+# sigma     0.97      0.02     0.92     1.01 1.00     3047     4199
 ```
 
 ##### glmmTMB
@@ -573,7 +578,7 @@ dat_Roger$pos <- numFactor(dat_Roger$x_km, dat_Roger$y_km)
 system.time(
   sp_eg1_exp_tmb <- glmmTMB(d_Hedges ~ 1 
                    + equalto(0+effect_id|const, VCV)
-                   + (1|site_id)
+                   # + (1|site_id)
                    + exp(pos+0|const),
                    data = dat_Roger, 
                    REML=TRUE)
@@ -583,11 +588,11 @@ system.time(
 
 summary(sp_eg1_exp_tmb)　
 # Family: gaussian  ( identity )
-# Formula:          d_Hedges ~ 1 + equalto(0 + effect_id | const, VCV) + (1 | site_id) + exp(pos + 0 | const)
+# Formula:          d_Hedges ~ 1 + equalto(0 + effect_id | const, VCV) + exp(pos +      0 | const)
 # Data: dat_Roger
 # 
 #       AIC       BIC    logLik -2*log(L)  df.resid 
-#    9090.5    9119.3   -4540.2    9080.5      2356 
+#    9088.5    9111.5   -4540.2    9080.5      2357 
 # 
 # Random effects:
 # 
@@ -604,49 +609,46 @@ summary(sp_eg1_exp_tmb)　
 #           effect_id1005                             0.413540 0.64307  0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00         
 #           effect_id1006                             0.325726 0.57072  0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00    
 #           ...                                      ...       ...      ...  ...  ...  ...  ...  ...  ...  ...  ...  ...
-#  site_id  (Intercept)                               0.123984 0.35211                                                  
-#  const.1  pos(16262.6644099893,-5204.51951303405)   1.741641 1.31971                                                  
-#           pos(16280.4755285163,-5116.14629455727)   1.741641 1.31971  0.00                                            
-#           pos(-7965.96086752978,-5019.4733863405)   1.741641 1.31971  0.00 0.00                                       
-#           pos(-7959.34359171906,-4693.06364429579)  1.741641 1.31971  0.00 0.00 0.00                                  
-#           pos(-7960.45678662699,-4691.63535918108)  1.741641 1.31971  0.00 0.00 0.00 0.00                             
-#           pos(-7096.61753807119,-4685.92422115392)  1.741641 1.31971  0.00 0.00 0.00 0.00 0.00                        
-#           pos(-7992.73943895704,-4607.717759142)    1.741641 1.31971  0.00 0.00 0.00 0.00 0.00 0.00                   
-#           pos(-7903.68384632242,-4579.4258128701)   1.741641 1.31971  0.00 0.00 0.00 0.00 0.00 0.00 0.00              
-#           pos(16237.0609271069,-4578.0132445546)    1.741641 1.31971  0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00         
-#           pos(16304.594788628,-4572.36489569299)    1.741641 1.31971  0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00    
+#  const.1  pos(16262.6644099893,-5204.51951303405)   1.866150 1.36607                                                  
+#           pos(16280.4755285163,-5116.14629455727)   1.866150 1.36607  0.00                                            
+#           pos(-7965.96086752978,-5019.4733863405)   1.866150 1.36607  0.00 0.00                                       
+#           pos(-7959.34359171906,-4693.06364429579)  1.866150 1.36607  0.00 0.00 0.00                                  
+#           pos(-7960.45678662699,-4691.63535918108)  1.866150 1.36607  0.00 0.00 0.00 0.00                             
+#           pos(-7096.61753807119,-4685.92422115392)  1.866150 1.36607  0.00 0.00 0.00 0.00 0.00                        
+#           pos(-7992.73943895704,-4607.717759142)    1.866150 1.36607  0.00 0.00 0.00 0.00 0.00 0.00                   
+#           pos(-7903.68384632242,-4579.4258128701)   1.866150 1.36607  0.00 0.00 0.00 0.00 0.00 0.00 0.00              
+#           pos(16237.0609271069,-4578.0132445546)    1.866150 1.36607  0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00         
+#           pos(16304.594788628,-4572.36489569299)    1.866150 1.36607  0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00    
 #           ...                                      ...       ...      ...  ...  ...  ...  ...  ...  ...  ...  ...  ...
-#  Residual                                           1.864281 1.36539                                                  
-# Number of obs: 2361, groups:  const, 1; site_id, 383
+#  Residual                                           1.864305 1.36540                                                  
+# Number of obs: 2361, groups:  const, 1
 # 
 # Dispersion estimate for gaussian family (sigma^2): 1.86 
 # 
 # Conditional model:
 #             Estimate Std. Error z value Pr(>|z|)    
-# (Intercept) -0.40925    0.08138  -5.029 4.93e-07 ***
-# ---
-# Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+# (Intercept) -0.40936    0.08139  -5.029 4.92e-07 ***
+
 head(confint(sp_eg1_exp_tmb), 10) 
-
-#                                                                  2.5 %       97.5 %   Estimate
-# (Intercept)                                              -5.687455e-01   -0.2497545 -0.4092500
-# Std.Dev.(Intercept)|site_id                               1.590721e-05 7794.2085876  0.3521138
-# Std.Dev.pos(16262.6644099893,-5204.51951303405)|const.1   6.410538e-01    2.7168414  1.3197126
-# Std.Dev.pos(16280.4755285163,-5116.14629455727)|const.1   6.410538e-01    2.7168414  1.3197126
-# Std.Dev.pos(-7965.96086752978,-5019.4733863405)|const.1   6.410538e-01    2.7168414  1.3197126
-# Std.Dev.pos(-7959.34359171906,-4693.06364429579)|const.1  6.410538e-01    2.7168414  1.3197126
-# Std.Dev.pos(-7960.45678662699,-4691.63535918108)|const.1  6.410538e-01    2.7168414  1.3197126
-# Std.Dev.pos(-7096.61753807119,-4685.92422115392)|const.1  6.410538e-01    2.7168414  1.3197126
-# Std.Dev.pos(-7992.73943895704,-4607.717759142)|const.1    6.410538e-01    2.7168414  1.3197126
-# Std.Dev.pos(-7903.68384632242,-4579.4258128701)|const.1   6.410538e-01    2.7168414  1.3197126
-
+#                                                               2.5 %     97.5 %   Estimate
+# (Intercept)                                              -0.5688798 -0.2498315 -0.4093556
+# Std.Dev.pos(16262.6644099893,-5204.51951303405)|const.1   1.2417049  1.5028930  1.3660708
+# Std.Dev.pos(16280.4755285163,-5116.14629455727)|const.1   1.2417049  1.5028930  1.3660708
+# Std.Dev.pos(-7965.96086752978,-5019.4733863405)|const.1   1.2417049  1.5028930  1.3660708
+# Std.Dev.pos(-7959.34359171906,-4693.06364429579)|const.1  1.2417049  1.5028930  1.3660708
+# Std.Dev.pos(-7960.45678662699,-4691.63535918108)|const.1  1.2417049  1.5028930  1.3660708
+# Std.Dev.pos(-7096.61753807119,-4685.92422115392)|const.1  1.2417049  1.5028930  1.3660708
+# Std.Dev.pos(-7992.73943895704,-4607.717759142)|const.1    1.2417049  1.5028930  1.3660708
+# Std.Dev.pos(-7903.68384632242,-4579.4258128701)|const.1   1.2417049  1.5028930  1.3660708
+# Std.Dev.pos(16237.0609271069,-4578.0132445546)|const.1    1.2417049  1.5028930  1.3660708
 
 sigma(sp_eg1_exp_tmb) 
-# 1.365387
+# 1.365396
 sp_eg1_exp_tmb_varcor <- VarCorr(sp_eg1_exp_tmb)$cond
 exp(sp_eg1_exp_tmb$fit$par)
-#  betadisp     theta     theta     theta 
-# 1.3653868 0.3521138 1.3197126 0.2527374
+#   betadisp (efect_id)     theta (tau/tau^2)      theta (rho)
+#   1.3653956               1.3660708 (1.866149)   0.2476221 
+
 ```
 
 ##### summarise results
@@ -837,7 +839,7 @@ vcv <- diag(dat_maire2019$vars1)
 rownames(vcv) <- colnames(vcv) <- dat_maire2019$id
 
 fit_sp_eg2_exp_brms <- bf(s1 ~ 1 +
-                 (1|site) + # this is 
+                 # (1|site) + # this is 
                  (1|gr(id, cov = vcv)) + # this is m (sampling error)
                 gp(x_km, y_km, 
                    cov = "exponential",
@@ -859,8 +861,8 @@ sp_eg2_exp_brms <- brm(
   data2 = list(vcv=vcv),
   chains = 2,
   threads = threading(threads_per_chain),
-  iter = 10000,
-  warmup = 8000,
+  iter = 15000,
+  warmup = 12000,
   prior = prior,
   control = list(adapt_delta=0.95, max_treedepth=15)
 )
