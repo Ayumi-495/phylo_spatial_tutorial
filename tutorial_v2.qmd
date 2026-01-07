@@ -42,19 +42,27 @@ execute:
   # cache: true
 ---
 
+In this online tutorial, we demonstrate how to conduct phylogenetic and spatial meta-analyses using R packages such as `metafor`, `brms`, and `glmmTMB`. We provide step-by-step instructions on creating phylogenetic and spatial correlation matrices, fitting models with different correlation structures, and interpreting the results.
+
+
 # Setup
 ```{r}
-install.packages("pacman")
+# install.packages("pacman") # if not already installed
 pacman::p_load(brms, metafor, metadat, tidyverse, data.table, crayon, here, ape, patchwork,
                dplyr, tidyr,MCMCglmm, bayesplot, tidybayes, orchaRd,purrr, stringr, readr,
                lubridate, magrittr, janitor, glmmTMB, rotl, sf)
+```
+
+Set up parallel processing for `brms` - please adjust according to your computer's capabilities.
+
+```{r}
+#| eval: false
 
 max_cores <- 10
 num_chains <- 2
 threads_per_chain <- floor(max_cores / num_chains)
 options(mc.cores = num_chains) 
 ```
-
 # Phylogenetic meta-analysis
 
 ## How to make phylogenetic correlation matrix?
