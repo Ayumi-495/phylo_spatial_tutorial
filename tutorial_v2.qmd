@@ -44,7 +44,6 @@ execute:
 
 In this online tutorial, we demonstrate how to conduct phylogenetic and spatial meta-analyses using R packages such as `metafor`, `brms`, and `glmmTMB`. We provide step-by-step instructions on creating phylogenetic and spatial correlation matrices, fitting models with different correlation structures, and interpreting the results.
 
-
 # Setup
 ```{r}
 
@@ -73,7 +72,6 @@ Before moving the each model, we show how to make phylogenetic correlation matri
 2.  [Using the `rotl` package (Open Tree of Life)](#using-the-rotl-package-open-tree-of-life)
 
 In the following two sections, we introduce how to make the correlation matrix in two ways. The example below demonstrates how to compute a correlation matrix under the *Brownian motion process*. For the *Ornstein–Uhlenbeck process* and *Phylogenetic Gaussian Process*, please refere to their respective sections.
-
 
 :::callout-note
 Sometimes, the species names in your data may not match those in the tree - please ensure that they are consistent. Also, it will be necessity when dropping species from the tree that are not in your dataset. In that case, you can use `TreeTools::DropTip()` / `ape::drop.tip()` (or `TreeTools::KeepTip()` / `ape::keep.tip()`). You can see how to do this in the example below :)
@@ -453,7 +451,6 @@ A[1:5, 1:5]
 
 ## Example
 
-::: panel-tabset
 ###  Moura et al. (2021)
 ```{r}
 #| eval: false
@@ -475,8 +472,8 @@ dat_moura2021$species.id.phy <- dat_moura2021$species.id
 
 ```
 
+::: panel-tabset
 #### Brownian motion
-
 ##### metafor
 ```{r}
 #| echo: false
@@ -809,7 +806,6 @@ summary(phy_ou_meta1)
 
 ```
 
-
 :::
 
 # Spatial meta-analysis
@@ -819,7 +815,7 @@ summary(phy_ou_meta1)
 ## Examples
 
 ::: panel-tabset
-###1. Grau-Andrés et al. (2024)
+### 1. Grau-Andrés et al. (2024)
 
 ```{r}
 #| eval: false
