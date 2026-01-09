@@ -47,6 +47,7 @@ In this online tutorial, we demonstrate how to conduct phylogenetic and spatial 
 
 # Setup
 ```{r}
+
 # install.packages("pacman") # if not already installed
 pacman::p_load(brms, metafor, metadat, tidyverse, data.table, crayon, here, ape, patchwork,
                dplyr, tidyr, MCMCglmm, bayesplot, tidybayes, posterior, orchaRd,purrr, stringr, readr, lubridate, magrittr, janitor, glmmTMB, rotl, sf)
@@ -79,31 +80,85 @@ Sometimes, the species names in your data may not match those in the tree - plea
 :::
 
 ### Using a specific phylogenetic tree {#using-a-specific-phylogenetic-tree}
+In some cases, the phylogenetic relationships among the species of interest are already well established, and a corresponding phylogenetic tree is available from a published source or a public repository. When this is the case, it is usually preferable to use the existing tree rather than constructing a new one automatically. For example, large, time-calibrated phylogenies are available for many taxonomic groups (e.g. [birds](BirdTree.org), mammals, plants), often accompanied by branch lengths and documentation of the underlying assumptions.
+Using such trees ensures consistency with previous studies and avoids unnecessary reconstruction steps.
 
-If the phylogenetic relationships among the species you want to analyse are already known and you have access to a corresponding tree (e.g., from a published source — for birds, you can usually obtain one from [BirdTree.org](BirdTree.org)), you can easily generate a phylogenetic correlation matrix using simple codes.
+Below, we illustrate how to use a phylogenetic tree provided as a file and prepare it for use in downstream analyses, such as phylogenetic meta-analysis.
+
+#### Step 1. Read the tree from a file
+Phylogenetic trees are commonly distributed in formats such as Newick (`.nwk`, `.tre`) or Nexus (`.nex`). The ape package can read most standard formats.
+<!-- probably change here - use real data -->
 ```{r}
 #| label: way 1 - phylometa
 #| eval: false
 
-# load necessary package
-library(ape) 
+library(ape)
 
-# 1. read a phylogenetic tree file – supported formats include Newick (.nwk), Nexus (.nex), etc.
-##   if the file contains multiple trees, it is better to start by a single tree.
-##   using ~50 trees is generally considered sufficient for phylogenetic meta-analysis to check the necessity of phylogeny.
-##   (see: https://doi.org/10.1093/sysbio/syy089)
+# Read a phylogenetic tree from file
+# If the file contains multiple trees, select a single representative tree
 tree <- read.nexus("tree.txt")
 
-# 2. check whether the tree is ultrametric and fully bifurcating
-is.ultrametric(tree) # should return TRUE
-
-# 3. compute the correlation matrix under BM process
-A <- vcv(tree, corr = TRUE)
-
-# 4. check the dimensions and preview a part of correlation matrix
-dim(A) # returns the number of species (rows / columns)
-A[1:5, 1:5] # show the top-left block of the matrix
+tree
 ```
+
+#### Step 2. Basic structural checks
+Before using the tree in analyses, it is good practice to perform some basic checks to ensure that the tree structure is appropriate.
+```{r}
+#| eval: false
+
+# Check whether the tree is ultrametric (time-calibrated)
+is.ultrametric(tree)
+
+# Check whether the tree is fully bifurcating
+is.binary(tree)
+```
+Phylogenetic comparative and meta-analytic models assume a time-calibrated, fully bifurcating tree. If the tree is not ultrametric, you may need to convert it using methods such as `chronos()` from the `ape` package or `make.ultrametric()` from the `phytools` package. If the tree has polytomies, you can resolve them randomly using `multi2di()` from the `ape` package.
+
+#### Step 3. Match tree tip labels to the dataset
+The species names in the tree must match exactly the species identifiers used in the dataset.
+```{r}
+#| eval: false
+
+# species names used in the dataset
+species_data <- unique(dat$species)
+
+# check for mismatches between tree tip labels and dataset species names
+setdiff(species_data, tree$tip.label)
+setdiff(tree$tip.label, species_data)
+
+```
+If mismatches occur, theytypically reflect typographical errors, outdated taxonomy, or diffrences in naming conventions (e.g., underscores vs spaces), These issues must be resolved manually before proceeding. 
+
+#### Step 4. Prune the tree to include only species in the dataset
+Phylogenetic trees often contain more species than required for a given analysis, Extraneous tips should be removed to match the dataset.
+
+```{r}
+#| eval: false
+
+tree_pruned  <- drop.tip(
+  tree,
+  setdiff(tree$tip.label, species_data)
+  )
+
+tree_pruned
+
+# check the binary and ultrametric status again
+is.binary(tree_pruned)
+is.ultrametric(tree_pruned)
+```
+
+#### Step 5. Compute the phylogenetic correlation matrix
+Once the tree is time-calibrated, fully bifurcating, and pruned to match the dataset, you can compute the phylogenetic correlation matrix under a Brownian motion model using the `vcv()` function from the `ape` package.
+
+```{r}
+#| eval: false
+
+A <-  vcv(tree_pruned, corr = TRUE)
+# check the dimensions and preview the top-left block
+dim(A)        
+```
+This matrix represents the expected correlation among species due to shared evolutionary history and can ve used directly in phylogenetic comparative or meta-analytic models.
+
 
 ### Using the `rotl` package (Open Tree of Life) {#using-the-rotl-package-open-tree-of-life}
 Life is not so that easy that you always have a phylogenetic tree for your species of interest. In such cases, you can use the `rotl` package to access the Open Tree of Life database and retrieve a phylogenetic tree based on the *Latin* species names in your dataset.
@@ -116,6 +171,9 @@ Life is not so that easy that you always have a phylogenetic tree for your speci
 :::
 
 ```{r}
+#| eval: false
+
+# install and load necessary packages - if not already installed
 # install.packages("rotl")
 # install.packages("ape")
 
@@ -142,6 +200,8 @@ tol_about()
 Here we use 10 commpnly used lab model taxa across different animal groups as an example. Use Latin names, not common names. 
 
 ```{r}
+#| eval: false
+
 myspecies <- c(
   "Escherichia colli",                # typo on purpose
   "Chlamydomonas reinhardtii",
@@ -160,6 +220,7 @@ myspecies <- c(
 We first try a strict match, and then a fuzzy match for any unmatched names. This is useful to detect typos or synonyms in species names.
 
 ```{r}
+#| eval: false
 
 taxa_strict <- tnrs_match_names(
   names = myspecies, 
@@ -229,9 +290,16 @@ Key columns to check include:
 - `approximate_match`: `TRUE` indicates a non-exact match (for example due to a typo)
 - `is_synonym`: `TRUE` indicates the input name was treated as a synonym
 
+A practical rule of thumb is the following:
+- If `approximate_match == TRUE` and the reason is an obvious typo (e.g. misspelling of a well-known species name), correct the original species list and re-run the name matching. This ensures that the final dataset contains clean and unambiguous names.
+- If a match looks suspicious (for example, the matched taxon belongs to a different genus, or the name could plausibly refer to multiple taxa),
+do not accept the match blindly. Instead, inspect the additional information returned by `tnrs_match_names()` to confirm that the matched taxon is indeed the one you intended to include.
+
 #### Step 3. Fix typos and re-run matching
 
 ```{r}
+#| eval: false
+
 myspecies_fixed <- c(
   "Escherichia coli",
   "Chlamydomonas reinhardtii",
@@ -261,6 +329,7 @@ At this point, you should confirm that:
 Once you are satisfied with the matched OpenTree identifiers, you can request a trimmed subtree from the OpenTree synthetic tree using `tol_induced_subtree()`.
 
 ```{r}
+#| eval: false
 
 tree <- tol_induced_subtree(
   ott_ids = taxa_fixed[["ott_id"]],
@@ -303,6 +372,8 @@ tree$tip.label <- gsub("mrcaott616ott617", "Escherichia coli", tree$tip.label) #
 
 It is time to plot and tidy up the tree (note no branch lengths are included, they can be created later via simulations).
 ```{r}
+#| eval: false
+
 plot(tree, cex=.8, label.offset =.1, no.margin = TRUE) 
 ```
 
@@ -329,6 +400,55 @@ setdiff(myspecies_fixed, as.character(tree$tip.label))
 # character(0)
 setdiff(as.character(tree$tip.label), myspecies_fixed)
 # character(0)
+
+```
+
+#### Step 7. Compute the phylogenetic correlation matrix (handling missing branch lengths)
+
+To compute a phylogenetic variance covariance (VCV) or correlation matrix under a Brownian motion (BM) process, we use `vcv()` from the `ape` package. Importantly, `vcv()` requires branch lengths. However, the Open Tree of Life synthetic tree often provides a well-resolved tpology but does not always include branch lengths.
+
+If the tree has no branch lengths, `vcv()` will fail with:
+```{r}
+#| eval: false
+
+A <- vcv(tree, corr = TRUE)
+Error in vcv.phylo(tree, corr = TRUE) : the tree has no branch lengths
+```
+
+For didactic purposes in this tutorial, we assign equal branch lengths to all edges (that is, all branch lengths are set to 1). This allows us to demonstrate the workflow and obtain a valid correlation matrix. In real analyses, you should consider using a tree with biologically meaningful branch lengths (for example, a time-calibrated phylogeny).
+
+```{r}
+#| eval: false
+
+# check whether the OpenTree synthetic tree includes branch lengths
+is.null(tree$edge.length)
+# [1] TRUE # TRUE indicates that branch lengths are missing
+
+# if branch lengths are missing, add equal branch lengths for didactic purposes
+if (is.null(tree$edge.length)) {
+  tree$edge.length <- rep(1, nrow(tree$edge))
+  }
+
+# compute the phylogenetic correlation matrix under Brownian motion
+A <- vcv(tree, corr = TRUE)
+
+# check the dimensions and preview the top-left block
+dim(A)        # should return the number of species (rows/columns)
+# [1] 10 10
+
+A[1:5, 1:5]
+#                           Arabidopsis_thaliana Chlamydomonas_reinhardtii
+# Arabidopsis_thaliana                 1.0000000                 0.6666667
+# Chlamydomonas_reinhardtii            0.6666667                 1.0000000
+# Mus_musculus                         0.2041241                 0.2041241
+# Rattus_norvegicus                    0.2041241                 0.2041241
+# Cavia_porcellus                      0.2182179                 0.2182179
+#                           Mus_musculus Rattus_norvegicus Cavia_porcellus
+# Arabidopsis_thaliana         0.2041241         0.2041241       0.2182179
+# Chlamydomonas_reinhardtii    0.2041241         0.2041241       0.2182179
+# Mus_musculus                 1.0000000         0.8750000       0.8017837
+# Rattus_norvegicus            0.8750000         1.0000000       0.8017837
+# Cavia_porcellus              0.8017837         0.8017837       1.0000000
 ```
 
 ## Example
@@ -361,7 +481,7 @@ dat_moura2021$species.id.phy <- dat_moura2021$species.id
 ```{r}
 #| echo: false
 
-phylo_eg1_meta_BM <- readRDS(here("Rdata", "tutorial_v2", "moura2021_BM_metafor.rds"))
+# phylo_eg1_meta_BM <- readRDS(here("Rdata", "tutorial_v2", "moura2021_BM_metafor.rds"))
 
 ```
 
@@ -434,7 +554,7 @@ phylo_heritability
 ```{r}
 #| echo: false
 
-phylo_eg1_brms <- readRDS(here("Rdata", "tutorial_v2", "moura2021_BM_brms2.rds"))
+# phylo_eg1_brms <- readRDS(here("Rdata", "tutorial_v2", "moura2021_BM_brms2.rds"))
 
 ```
 
@@ -507,7 +627,7 @@ summary(phylo_eg1_brms)
 ```
 Let's calculate $I^2$ statistics to quantify the proportion of variance attributable to different sources of heterogeneity.
 ```{r}
-# eval: false
+#| eval: false
 
 fit <- phylo_eg1_brms  
 dat <- dat_moura2021
@@ -534,11 +654,12 @@ round(rbind(
 # phylo   0.429     0.178   0.414       0.759
 
 ```
+
 ##### glmmTMB
 ```{r}
 #| echo: false
 
-phylo_eg1_tmb <- readRDS(here("Rdata", "tutorial_v2", "phylo_eg1_tmb1.rds"))
+# phylo_eg1_tmb <- readRDS(here("Rdata", "tutorial_v2", "phylo_eg1_tmb1.rds"))
 ```
 
 ```{r}
