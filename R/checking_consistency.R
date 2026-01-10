@@ -78,7 +78,16 @@ summary(sp_eg1_exp_mf)
 # -0.3349  0.0644  -5.2006  2360  <.0001  -0.4612  -0.2086  *** 
 
 confint(sp_eg1_exp_mf)
+#         estimate  ci.lb  ci.ub 
+# sigma^2   0.7935 0.7257 0.8678 
+# sigma     0.8908 0.8519 0.9316 
 
+#       estimate  ci.lb  ci.ub 
+# tau^2   1.2330 1.0147 1.4976 
+# tau     1.1104 1.0073 1.2238 
+
+#     estimate   ci.lb  ci.ub 
+# rho   0.1744 <0.0174 0.8572 
 saveRDS(sp_eg1_exp_mf, here("Rdata", "tutorial_v2", "sp_eg1_exp_mf.rds"))
 
 ### brms ----
