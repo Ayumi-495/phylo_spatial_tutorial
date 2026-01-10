@@ -347,8 +347,7 @@ s_metafor_p1 <- orchaRd::orchard_plot(sp_eg1_exp_mf,
 
 ci_var2 <- confint(sp_eg1_exp_mf, level = 0.95)
 tbl2 <- tibble::as_tibble(ci_var2, rownames = "term")
-# > tbl2
-# # A tibble: 5 × 4
+# A tibble: 5 × 4
 # term    estimate  ci.lb ci.ub
 # <chr>      <dbl>  <dbl> <dbl>
 #   1 sigma^2    0.793 0.726  0.868
@@ -380,14 +379,14 @@ s_metafor_p1rho <- ggplot(tbl_rho2, aes(x = estimate, y = term)) +
 
 #### brms ----
 
-summary(m_exp4_brms)
+summary(sp_eg1_exp_brms)
 
 get_variables_dynamic <- function(model, pattern) {
   variables <- get_variables(model)
   variables[grep(pattern, variables)]
 }
 
-get_variables(m_exp4_brms)
+get_variables(sp_eg1_exp_brms)
 
 rename_vars_exp4 <- function(variable) {
   # fixed
@@ -522,9 +521,9 @@ visualize_gp_lscale_exp4 <- function(model) {
   })
 }
 
-s_brms_p1  <- visualize_fixed_effects_exp4(m_exp4_brms)
-s_metafor_p1sd <- visualize_random_and_gp_var_exp4(m_exp4_brms)
-s_metafor_p1lscale <- visualize_gp_lscale_exp4(m_exp4_brms)
+s_brms_p1  <- visualize_fixed_effects_exp4(sp_eg1_exp_brms)
+s_metafor_p1sd <- visualize_random_and_gp_var_exp4(sp_eg1_exp_brms)
+s_metafor_p1lscale <- visualize_gp_lscale_exp4(sp_eg1_exp_brms)
 
 
 metafor_sp2.1 <- s_metafor_p1 / (s_metafor_p1var + s_metafor_p1rho)

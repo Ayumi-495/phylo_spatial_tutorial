@@ -88,7 +88,9 @@ confint(sp_eg1_exp_mf)
 
 #     estimate   ci.lb  ci.ub 
 # rho   0.1744 <0.0174 0.8572 
-saveRDS(sp_eg1_exp_mf, here("Rdata", "tutorial_v2", "sp_eg1_exp_mf.rds"))
+sp_eg1_exp_mf <- readRDS(here("Rdata", "tutorial_v2", "sp_eg1_exp_mf.rds"))
+I2_total <- (sp_eg1_exp_mf$sigma2[1] + sp_eg1_exp_mf$tau2 ) / (sp_eg1_exp_mf$sigma2[1] + sp_eg1_exp_mf$tau2 + mean(dat_Roger$var_Hedges)) * 100
+
 
 ### brms ----
 
