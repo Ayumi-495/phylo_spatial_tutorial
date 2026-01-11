@@ -333,7 +333,7 @@ sp_eg1_exp_mf <- readRDS(here("Rdata", "tutorial_v2", "sp_eg1_exp_mf.rds"))
 ### metafor ----
 summary(sp_eg1_exp_mf)
 s_metafor_p1 <- orchaRd::orchard_plot(sp_eg1_exp_mf, 
-                                      group = "effect_id",
+                                      group = "study_id",
                                       xlab = "Effect size",
                                       angle = 45,
                                       twig.size = 0.3,
@@ -389,19 +389,21 @@ get_variables_dynamic <- function(model, pattern) {
 get_variables(sp_eg1_exp_brms)
 
 rename_vars_exp4 <- function(variable) {
+  variable <- as.character(variable)
+
   # fixed
-  variable <- gsub("b_Intercept", "Overall effect", variable)
-  
-  # random SD
-  variable <- gsub("sd_effect_id__Intercept", "SD of effect_id", variable)
-  
+  variable <- gsub("^b_Intercept$", "Overall effect", variable)
+
+  # residual SD (sigma in brms)
+  variable <- gsub("^sigma$", "Residual SD", variable)
+
   # GP SD
-  variable <- gsub("sdgp_gpx_kmy_km", "SD of gp_x", variable)
-  
+  variable <- gsub("^sdgp_gpx_kmy_km$", "SD of gp_x", variable)
+
   # GP length-scale
-  variable <- gsub("lscale_gpx_kmy_km", "lscale", variable)
-  
-  return(variable)
+  variable <- gsub("^lscale_gpx_kmy_km$", "lscale", variable)
+
+  variable
 }
 
 ### fixed effect ----
@@ -450,7 +452,7 @@ sd_to_var <- function(df) {
 #### random effect (Var) ----
 visualize_random_and_gp_var_exp4 <- function(model) {
   
-  re_vars <- get_variables_dynamic(model, "^(sd_|sdgp_)")
+  re_vars <- get_variables_dynamic(model, "^(sigma|sdgp_)")
   
   if (length(re_vars) == 0) {
     message("No random or GP SD parameters found")
@@ -480,6 +482,7 @@ visualize_random_and_gp_var_exp4 <- function(model) {
         y = "Random and GP effects (variance)",
         x = "Posterior values (variance)"
       ) +
+      # scale_x_continuous(limits = c(0.7, 2.0)) + 
       theme_classic()
     
   }, error = function(e) {
