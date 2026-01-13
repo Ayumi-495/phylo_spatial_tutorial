@@ -45,6 +45,7 @@ execute:
 In this online tutorial, we demonstrate how to conduct phylogenetic and spatial meta-analyses using R packages such as `metafor`, `brms`, and `glmmTMB`. We provide step-by-step instructions on creating phylogenetic and spatial correlation matrices, fitting models with different correlation structures, and interpreting the results.
 
 # Setup
+
 ```{r}
 
 # install.packages("pacman") # if not already installed
@@ -62,6 +63,7 @@ num_chains <- 2
 threads_per_chain <- floor(max_cores / num_chains)
 options(mc.cores = num_chains) 
 ```
+
 # Phylogenetic meta-analysis
 
 ## How to make phylogenetic correlation matrix?
@@ -73,21 +75,21 @@ Before moving the each model, we show how to make phylogenetic correlation matri
 
 In the following two sections, we introduce how to make the correlation matrix in two ways. The example below demonstrates how to compute a correlation matrix under the *Brownian motion process*. For the *Ornstein–Uhlenbeck process* and *Phylogenetic Gaussian Process*, please refere to their respective sections.
 
-:::callout-note
+::: callout-note
 Sometimes, the species names in your data may not match those in the tree - please ensure that they are consistent. Also, it will be necessity when dropping species from the tree that are not in your dataset. In that case, you can use `TreeTools::DropTip()` / `ape::drop.tip()` (or `TreeTools::KeepTip()` / `ape::keep.tip()`). You can see how to do this in the example below :)
 :::
 
-::: panel-tabset
+:::: panel-tabset
 ### Using a specific phylogenetic tree {#using-a-specific-phylogenetic-tree}
-In some cases, the phylogenetic relationships among the species of interest are already well established, and a corresponding phylogenetic tree is available from a published source or a public repository. When this is the case, it is usually preferable to use the existing tree rather than constructing a new one automatically. For example, large, time-calibrated phylogenies are available for many taxonomic groups (e.g. [birds](BirdTree.org), mammals, plants), often accompanied by branch lengths and documentation of the underlying assumptions.
-Using such trees ensures consistency with previous studies and avoids unnecessary reconstruction steps.
+
+In some cases, the phylogenetic relationships among the species of interest are already well established, and a corresponding phylogenetic tree is available from a published source or a public repository. When this is the case, it is usually preferable to use the existing tree rather than constructing a new one automatically. For example, large, time-calibrated phylogenies are available for many taxonomic groups (e.g. [birds](BirdTree.org), mammals, plants), often accompanied by branch lengths and documentation of the underlying assumptions. Using such trees ensures consistency with previous studies and avoids unnecessary reconstruction steps.
 
 Below, we illustrate how to use a phylogenetic tree provided as a file and prepare it for use in downstream analyses, such as phylogenetic meta-analysis.
 
 #### Step 1. Read the tree from a file
-Phylogenetic trees are commonly distributed in formats such as Newick (`.nwk`, `.tre`) or Nexus (`.nex`). The ape package can read most standard formats.
-We use a sample dataset on Sylviidae (passerines), which is a CSV file with species data and a Nexus file containing a phylogenetic tree.
-The dataset only includes 10 species for didactic purposes, while the tree contains 294 species. So, we need to prune the tree to match the dataset…
+
+Phylogenetic trees are commonly distributed in formats such as Newick (`.nwk`, `.tre`) or Nexus (`.nex`). The ape package can read most standard formats. We use a sample dataset on Sylviidae (passerines), which is a CSV file with species data and a Nexus file containing a phylogenetic tree. The dataset only includes 10 species for didactic purposes, while the tree contains 294 species. So, we need to prune the tree to match the dataset…
+
 ```{r}
 #| label: way 1 - phylometa
 #| eval: false
@@ -111,7 +113,9 @@ tree <- trees[[1]]  # select the first
 ```
 
 #### Step 2. Basic structural checks
+
 Before using the tree in analyses, it is good practice to perform some basic checks to ensure that the tree structure is appropriate.
+
 ```{r}
 #| eval: false
 
@@ -125,7 +129,9 @@ is.binary(tree)
 ```
 
 #### Step 3. Match tree tip labels to the dataset
+
 The species names in the tree must match exactly the species identifiers used in the dataset.
+
 ```{r}
 #| eval: false
 
@@ -142,9 +148,11 @@ setdiff(species_data, tree$tip.label)
 setdiff(tree$tip.label, species_data)
 
 ```
-If mismatches occur, theytypically reflect typographical errors, outdated taxonomy, or diffrences in naming conventions (e.g., underscores vs spaces), These issues must be resolved manually before proceeding. 
+
+If mismatches occur, theytypically reflect typographical errors, outdated taxonomy, or diffrences in naming conventions (e.g., underscores vs spaces), These issues must be resolved manually before proceeding.
 
 #### Step 4. Prune the tree to include only species in the dataset
+
 Phylogenetic trees often contain more species than required for a given analysis, Extraneous tips should be removed to match the dataset.
 
 ```{r}
@@ -198,6 +206,7 @@ is.ultrametric(tree_pruned)
 ```
 
 #### Step 5. Compute the phylogenetic correlation matrix
+
 Once the tree is time-calibrated, fully bifurcating, and pruned to match the dataset, you can compute the phylogenetic correlation matrix under a Brownian motion model using the `vcv()` function from the `ape` package.
 
 ```{r}
@@ -207,17 +216,18 @@ A <-  vcv(tree_pruned, corr = TRUE)
 # check the dimensions and preview the top-left block
 dim(A)        
 ```
+
 This matrix represents the expected correlation among species due to shared evolutionary history and can ve used directly in phylogenetic comparative or meta-analytic models.
 
-
 ### Using the `rotl` package (Open Tree of Life) {#using-the-rotl-package-open-tree-of-life}
+
 Life is not so that easy that you always have a phylogenetic tree for your species of interest. In such cases, you can use the `rotl` package to access the Open Tree of Life database and retrieve a phylogenetic tree based on the *Latin* species names in your dataset.
 
-:::callout-note
-- Make sure that the species names in your dataset are in Latin (scientific names) and are spelled correctly. The `rotl` package relies on these names to find the corresponding species in the Open Tree of Life (https://opentreeoflife.github.io/use).
-- The OpenTree synthetic tree and name resolution services are actively updated. Running the same code at different times may yield slightly different trees due to updates in the database.
-- For reproducible research, it is good practice to save the retrieved tree to a file (e.g., in Newick or Nexus format) after obtaining it using `rotl`. This way, you can ensure that you are using the same tree in future analyses.
-- Automated name matching is convenient but may not always be perfect. It is advisable to manually check the matched names to ensure accuracy.
+::: callout-note
+-   Make sure that the species names in your dataset are in Latin (scientific names) and are spelled correctly. The `rotl` package relies on these names to find the corresponding species in the Open Tree of Life (https://opentreeoflife.github.io/use).
+-   The OpenTree synthetic tree and name resolution services are actively updated. Running the same code at different times may yield slightly different trees due to updates in the database.
+-   For reproducible research, it is good practice to save the retrieved tree to a file (e.g., in Newick or Nexus format) after obtaining it using `rotl`. This way, you can ensure that you are using the same tree in future analyses.
+-   Automated name matching is convenient but may not always be perfect. It is advisable to manually check the matched names to ensure accuracy.
 :::
 
 ```{r}
@@ -247,7 +257,8 @@ tol_about()
 ```
 
 #### Step 1. Provide a species list
-Here we use 10 commpnly used lab model taxa across different animal groups as an example. Use Latin names, not common names. 
+
+Here we use 10 commpnly used lab model taxa across different animal groups as an example. Use Latin names, not common names.
 
 ```{r}
 #| eval: false
@@ -267,6 +278,7 @@ myspecies <- c(
 ```
 
 #### Step 2. Resolve species names using OpenTree TNRS
+
 We first try a strict match, and then a fuzzy match for any unmatched names. This is useful to detect typos or synonyms in species names.
 
 ```{r}
@@ -332,18 +344,12 @@ taxa
 # 9  0.9166667  356221      FALSE                             2
 # 10 1.0000000 1005914      FALSE                             1
 ```
+
 If the strict match fails or returns NAs, you can enable approximate matching. Approximate matching uses fuzzy string matching to find the closest matches in the OpenTree taxonomy (but you should always check the returned matches).
 
-Key columns to check include:
-- `unique_name`: the matched OpenTree taxon name
-- `ott_id`: the OpenTree taxonomy identifier used for tree retrieval
-- `approximate_match`: `TRUE` indicates a non-exact match (for example due to a typo)
-- `is_synonym`: `TRUE` indicates the input name was treated as a synonym
+Key columns to check include: - `unique_name`: the matched OpenTree taxon name - `ott_id`: the OpenTree taxonomy identifier used for tree retrieval - `approximate_match`: `TRUE` indicates a non-exact match (for example due to a typo) - `is_synonym`: `TRUE` indicates the input name was treated as a synonym
 
-A practical rule of thumb is the following:
-- If `approximate_match == TRUE` and the reason is an obvious typo (e.g. misspelling of a well-known species name), correct the original species list and re-run the name matching. This ensures that the final dataset contains clean and unambiguous names.
-- If a match looks suspicious (for example, the matched taxon belongs to a different genus, or the name could plausibly refer to multiple taxa),
-do not accept the match blindly. Instead, inspect the additional information returned by `tnrs_match_names()` to confirm that the matched taxon is indeed the one you intended to include.
+A practical rule of thumb is the following: - If `approximate_match == TRUE` and the reason is an obvious typo (e.g. misspelling of a well-known species name), correct the original species list and re-run the name matching. This ensures that the final dataset contains clean and unambiguous names. - If a match looks suspicious (for example, the matched taxon belongs to a different genus, or the name could plausibly refer to multiple taxa), do not accept the match blindly. Instead, inspect the additional information returned by `tnrs_match_names()` to confirm that the matched taxon is indeed the one you intended to include.
 
 #### Step 3. Fix typos and re-run matching
 
@@ -393,11 +399,10 @@ taxa_fixed <- tnrs_match_names(
 # 10 1005914      FALSE                             1
 ```
 
-At this point, you should confirm that:
--	All species have a valid ott_id.
--	The returned matches correspond to the intended taxa.
+At this point, you should confirm that: - All species have a valid ott_id. - The returned matches correspond to the intended taxa.
 
 #### Step 4. Retrieve the phylogenetic tree from OpenTree
+
 Once you are satisfied with the matched OpenTree identifiers, you can request a trimmed subtree from the OpenTree synthetic tree using `tol_induced_subtree()`.
 
 ```{r}
@@ -439,6 +444,7 @@ plot(tree, cex=.8, label.offset =.1, no.margin = TRUE)
 ```
 
 #### Step 5. Clean and standardise tip labels
+
 OpenTree tip labels can include underscores, and sometimes a tip represents a non-taxon internal node (such as an MRCA node). This often happens when only one representative from a large clade is included (e.g., a single bacterial species).
 
 In our example, you can see that species names have OpenTree identifiers appended, and E. coli is replaced with “mrcaott616ott617”, a non-taxon node within Bacteria. Since there are no other bacteria in the data set and the tree position is correct, we can simply rename the tip back to “Escherichia coli.”
@@ -468,6 +474,7 @@ tree$tip.label <- gsub("mrcaott616ott617", "Escherichia coli", tree$tip.label) #
 ```
 
 It is time to plot and tidy up the tree (note no branch lengths are included, they can be created later via simulations).
+
 ```{r}
 #| echo: false
 tree$tip.label 
@@ -483,9 +490,9 @@ plot(tree, cex=.8, label.offset =.1, no.margin = TRUE)
 ```
 
 #### Step 6. Final checks (binary tree and matching tip labels)
-Before using the tree in downstream analyses, it is good practice to confirm that:
-1. The tree is fully binary (no polytomies), if that is required for your method.
-2. The tip labels match exactly the species list in your dataset.
+
+Before using the tree in downstream analyses, it is good practice to confirm that: 1. The tree is fully binary (no polytomies), if that is required for your method. 2. The tip labels match exactly the species list in your dataset.
+
 ```{r}
 #| eval: false
 
@@ -513,6 +520,7 @@ setdiff(as.character(tree$tip.label), myspecies_fixed)
 To compute a phylogenetic variance covariance (VCV) or correlation matrix under a Brownian motion (BM) process, we use `vcv()` from the `ape` package. Importantly, `vcv()` requires branch lengths. However, the Open Tree of Life synthetic tree often provides a well-resolved tpology but does not always include branch lengths.
 
 If the tree has no branch lengths, `vcv()` will fail with:
+
 ```{r}
 #| eval: false
 
@@ -558,13 +566,14 @@ A[1:5, 1:5]
 
 ### What if there are polytomies or non-ultrametric trees?
 
-A polytomy occurs when an internal node has more than two descendant branches (a multifurcation).  
+A polytomy occurs when an internal node has more than two descendant branches (a multifurcation).\
 A non-ultrametric tree is a tree in which not all tips are equidistant from the root, meaning that the tree is not time-calibrated.
 
-Many phylogenetic comparative and meta-analytic models assume a fully bifurcating and ultrametric tree, because the expected covariance among species is defined under a continuous-time branching process (for example Brownian motion or Ornstein–Uhlenbeck evolution).  
+Many phylogenetic comparative and meta-analytic models assume a fully bifurcating and ultrametric tree, because the expected covariance among species is defined under a continuous-time branching process (for example Brownian motion or Ornstein–Uhlenbeck evolution).\
 Here we illustrate what these issues mean, and how they can be handled, using a simple toy example.
 
 #### Create a toy tree with a polytomy
+
 ```{r}
 #| eval: false
 library(ape)
@@ -585,13 +594,15 @@ library(phytools)
 tree_poly <- read.tree(text = "((A,B,C),D,E);")
 plot(tree_poly)
 ```
+
 Here, A, B, and C form a polytomy because their common ancestor has three descendants instead of two…
 
-Under a Brownian motion or OU model, the phylogenetic covariance matrix is derived from branch lengths along a fully specified bifurcating tree.  
+Under a Brownian motion or OU model, the phylogenetic covariance matrix is derived from branch lengths along a fully specified bifurcating tree.\
 When a node is a polytomy, the relative order of divergence among its descendants is undefined, which means that their shared evolutionary history cannot be uniquely translated into a covariance structure.
 
 #### Resolving polytomies
-`multi2di()` resolves a polytomy by inserting very short branches, creating an arbitrary but fully bifurcating tree.   This corresponds to assuming that the true branching order is unknown but occurred over a very short evolutionary time.
+
+`multi2di()` resolves a polytomy by inserting very short branches, creating an arbitrary but fully bifurcating tree. This corresponds to assuming that the true branching order is unknown but occurred over a very short evolutionary time.
 
 ```{r}
 #| eval: false
@@ -608,7 +619,9 @@ is.binary(tree_bin)
 tree_bin <- multi2di(tree_poly, random = TRUE)
 plot(tree_bin)
 ```
+
 Because the resolution is random, different runs of `multi2di()` will yield different bifurcating trees. If you want reproducible results, set a random seed before calling `multi2di()`.
+
 ```{r}
 
 set.seed(15)
@@ -623,6 +636,7 @@ par(mfrow = c(1,1))
 ```
 
 #### Create a non-ultrametric toy tree
+
 ```{r}
 #| eval: false
 
@@ -638,11 +652,11 @@ tree_nonultra <- read.tree(text = "((A:2,B:2):3,(C:1,D:4):2,E:5);")
 plot(tree_nonultra)
 ```
 
-As you can see, the tips do not all end at the same distance from the root, so the tree is not ultrametric.
-This means that branch lengths cannot be interpreted directly as shared evolutionary time, which is required for Brownian motion or Ornstein–Uhlenbeck based phylogenetic covariance models.
+As you can see, the tips do not all end at the same distance from the root, so the tree is not ultrametric. This means that branch lengths cannot be interpreted directly as shared evolutionary time, which is required for Brownian motion or Ornstein–Uhlenbeck based phylogenetic covariance models.
 
-`chronos()` estimates branch lengths under a relaxed molecular clock, producing a tree in which all tips represent the same present time.  
+`chronos()` estimates branch lengths under a relaxed molecular clock, producing a tree in which all tips represent the same present time.\
 This is required when phylogenetic covariance is interpreted as shared evolutionary time.
+
 ```{r}
 #| eval: false
 
@@ -657,13 +671,16 @@ is.ultrametric(tree_ultra1)
 tree_ultra1 <- chronos(tree_nonultra)
 plot(tree_ultra1)
 ```
+
 Or, you can use `force.ultrametric()` from the `phytools` package to coerce a tree into an ultrametric form by extending branch lengths.
+
 ```{r}
 #| eval: false
 
 tree_ultra2 <- force.ultrametric(tree_nonultra, method = "extend")
 is.ultrametric(tree_ultra2)
 ```
+
 ```{r}
 #| echo: false
 tree_ultra2 <- force.ultrametric(tree_nonultra, method = "extend")
@@ -672,17 +689,18 @@ plot(tree_ultra2)
 
 In practice, the typical workflow is:
 
-1. Check whether the tree is binary and ultrametric.
-2. If polytomies are present, resolve them using `multi2di()`, ideally multiple times.
-3. If the tree is not ultrametric, apply a dating method such as `chronos()` or use a time-calibrated tree from the literature.
-4. Only then compute the phylogenetic covariance or correlation matrix using `vcv()`.
+1.  Check whether the tree is binary and ultrametric.
+2.  If polytomies are present, resolve them using `multi2di()`, ideally multiple times.
+3.  If the tree is not ultrametric, apply a dating method such as `chronos()` or use a time-calibrated tree from the literature.
+4.  Only then compute the phylogenetic covariance or correlation matrix using `vcv()`.
 
 This ensures that the phylogenetic random effect used in meta-analysis corresponds to a well-defined evolutionary model.
+::::
 
-:::
 ## Example
 
-###  Moura et al. (2021)
+### Moura et al. (2021)
+
 ```{r}
 #| eval: false
 
@@ -705,7 +723,9 @@ dat_moura2021$species.id.phy <- dat_moura2021$species.id
 
 ::: panel-tabset
 #### Brownian motion
+
 ##### metafor
+
 ```{r}
 #| echo: false
 
@@ -779,6 +799,7 @@ phylo_heritability
 ```
 
 ##### brms
+
 ```{r}
 #| echo: false
 
@@ -853,7 +874,9 @@ summary(phylo_eg1_brms)
 # sigma     0.00      0.00     0.00     0.00   NA       NA       NA
 
 ```
+
 Let's calculate $I^2$ statistics to quantify the proportion of variance attributable to different sources of heterogeneity.
+
 ```{r}
 #| eval: false
 
@@ -884,6 +907,7 @@ round(rbind(
 ```
 
 ##### glmmTMB
+
 ```{r}
 #| echo: false
 
@@ -933,6 +957,8 @@ exp(phylo_eg1_tmb$fit$par)
 # 0.12020875 0.13841423 0.23592711 0.05122353 <- residual variance (sd), study.id (sd), species.id (sd), species.id.phy (variance?)
 
 ```
+
+<!-- add explanation for the output -->
 
 #### Ornstein-Uhlenbeck
 
@@ -1037,11 +1063,104 @@ summary(phy_ou_meta1)
 
 ```
 
+<!-- add explanation for the output -->
+
+Unfortunately, we cannot fit the OU model using `brms` or `glmmTMB` yet…
 :::
 
 # Spatial meta-analysis
 
 ## How to make spatial correlation matrix?
+
+In spatial meta-analysis, we model the residual similarity between effect sizes as a function of the geographic distance between their sampling locations. The key input is a representation of the pairwise distances among all effect sizes in the dataset. Depending on the spatial correlation structure assumed (for example, exponential, Gaussian, spherical), these distances are then transformed into a correlation matrix that describes the expected similarity between effect sizes based on their geographic proximity.
+
+### Step 1. Ensure each effect size has geographic coordinates, a unique identifer and projected coordinates in km
+
+Each effect size should have geographic coordinates (latitude and longitude) indicating where the data were collected. Because latitude and longitude are measured in degrees, we first project them to a planar coordinate reference system (CRS) and then convert the resulting coordinates to kilometres. This allows us to compute meaningful Euclidean distances.
+
+```{r}
+#| eval: false
+
+library(tidyverse)
+library(sf)
+
+toy_sites <- tibble(
+  effect_id = 1:5,
+  latitude = c(34.05, 36.16, 40.71, 34.05, 37.77),
+  longitude = c(-118.24, -115.15, -74.00, -118.25, -122.42)
+  )
+
+# convert to an sf object (WGS84 longitude / latitude)
+toy_sites_sf <- st_as_sf(
+  toy_sites, 
+  coords = c("longitude", "latitude"), 
+  crs = 4326)
+
+# project to a planar coordinate system and convert to kilometers
+# EPSG:3857 is convenient for small-scale distance calculations
+# for real analyses, consider using an appropriate local projection
+toy_sites_sf_proj <- st_transform(toy_sites_sf, crs = 3857)
+
+xy_m <- st_coordinates(toy_sites_sf_proj)
+toy_sites$x_km <- xy_m[,1] / 1000
+toy_sites$y_km <- xy_m[,2] / 1000
+toy_sites
+# A tibble: 5 × 5
+#   effect_id latitude longitude    x_km  y_km
+#       <int>    <dbl>     <dbl>   <dbl> <dbl>
+# 1         1     34.0     -118. -13162. 4036.
+# 2         2     36.2     -115. -12818. 4323.
+# 3         3     40.7      -74   -8238. 4970.
+# 4         4     34.0     -118. -13164. 4036.
+# 5         5     37.8     -122. -13628. 4547.
+
+```
+
+The projected coordinates (x_km, y_km) can be negative because they represent positions relative to the origin of the coordinate system. We first assign a geographic CRS (EPSG:4326) to declare that the coordinates are in latitude and longitude.\
+Then we transform the coordinates to a planar CRS (EPSG:3857) suitable for distance calculations, and convert the resulting x and y coordinates from meters to kilometres.
+
+### Step 2. Compute pairwise *Euclidean* distance matrix
+
+Once each effct size has projected coordinates in kilometres, we can compute the Euclidean distance between all pairs of sampling locations. These distances form the basis of spatial correlation structures in spatial meta-analysis.
+
+```{r}
+#| eval: false
+
+# extract projected coordinates
+coords_km <- as.matrix(toy_sites[, c("x_km", "y_km")])
+
+# compute pairwise Euclidean distances (in km)
+D <- as.matrix(dist(coords_km))
+
+# assign row and column names using effect_id
+rownames(D) <- toy_sites$effect_id
+colnames(D) <- toy_sites$effect_id
+
+D
+#           1         2        3           4         5
+# 1    0.000000  448.0744 5012.587    1.113195  691.4604
+# 2  448.074446    0.0000 4626.263  448.929589  839.8075
+# 3 5012.586560 4626.2633    0.000 5013.680258 5406.6368
+# 4    1.113195  448.9296 5013.680    0.000000  690.7118
+# 5  691.460407  839.8075 5406.637  690.711777    0.0000
+# 
+```
+
+Each element $D_{ij}$ is the straight-line distance (in kilometers) between effect sizes i and j.
+
+**Why this matrix matters?**
+
+Most spatial meta-analytic models assume that residual similarity between effect sizes decays smoothly with geographic distance. The distance matrix $\mathbf{D}$ provides the raw spatial information needed to define this decay.
+
+Depending on the packages and kernels (functions) used, the distance matrix $\mathbf{D}$ is incorporated in different ways:
+
+-   metafor uses $\mathbf{D}$ implicitly when you specify spatial correlation structures such as "SPLIN (linear)""SPEXP" (exponential) or "SPGAU" (Gaussian) (more detailed info: <https://wviechtb.github.io/metafor/reference/rma.mv.html>).
+
+-   brms uses the coordinates directly but constructs an equivalent distance-based kernel internally.
+
+-   glmmTMB uses spatial indexing factors that are also derived from these distances.
+
+Mathematically, all of these approaches rely on the same underlying distances.
 
 ## Examples
 
@@ -1086,6 +1205,7 @@ names(dat_Roger)
 #### Exponential kernel
 
 ##### metafor
+
 ```{r}
 #| eval: false
 
@@ -1219,6 +1339,7 @@ summary(sp_eg1_exp_brms)
 ```
 
 ##### glmmTMB
+
 ```{r}
 #| eval: false
 
@@ -1310,18 +1431,20 @@ exp(sp_eg1_exp_tmb$fit$par)
 #### Gaussian process
 
 ##### metafor
+
 ```{r}
 
 ```
+
 ##### brms
+
 ```{r}
 
 ```
 
 ### 2. Maire et al. (2019)
-We use a dataset from the `metadat` package as our second illustrative example. In the original study, spatial correlations among sampling stations were modelled using station-level coordinates along river networks. 
-However, precise latitude and longitude information for individual stations is not available in the published dataset; only the locations of study sites can be geo-referenced. 
-We therefore used site-level coordinates as proxies for station-level positions. Although this approximation allows us to compare the implementation of spatial meta-analytic models across `metafor`, `brms`, and `glmmTMB`, the resulting estimates are not directly comparable to those reported by Maire et al. (2019), where station-level spatial random effects were explicitly modelled.
+
+We use a dataset from the `metadat` package as our second illustrative example. In the original study, spatial correlations among sampling stations were modelled using station-level coordinates along river networks. However, precise latitude and longitude information for individual stations is not available in the published dataset; only the locations of study sites can be geo-referenced. We therefore used site-level coordinates as proxies for station-level positions. Although this approximation allows us to compare the implementation of spatial meta-analytic models across `metafor`, `brms`, and `glmmTMB`, the resulting estimates are not directly comparable to those reported by Maire et al. (2019), where station-level spatial random effects were explicitly modelled.
 
 ```{r}
 #| eval: false
@@ -1371,7 +1494,9 @@ head(dat_maire2019)
 ```
 
 #### Exponential kernel
+
 ##### metafor
+
 ```{r}
 #| eval: false
 
@@ -1438,6 +1563,7 @@ confint(ma_sp2_exp)
 ```
 
 ##### brms
+
 ```{r}
 #| eval: false
 
@@ -1478,6 +1604,7 @@ summary(sp_eg2_exp_brms)
 ```
 
 ##### glmmTMB
+
 ```{r}
 #| eval: false
 
@@ -1511,6 +1638,7 @@ exp(tmb_sp2_exp$fit$par[[4]]) # for spatial range parameter rho
 #### Gaussian process
 
 ##### metafor
+
 ```{r}
 #| eval: false
 
@@ -1557,12 +1685,14 @@ confint(ma_sp2_gau)
 ```
 
 ##### brms
+
 ```{r}
 
 
 ```
 
 ##### glmmTMB
+
 ```{r}
 #| eval: false
 
@@ -1580,7 +1710,6 @@ head(confint(tmb_sp2_gau), 10)
 tmb_sp2_gau_varcor <- VarCorr(tmb_sp2_gau)$cond
 exp(tmb_sp2_gau$fit$par[[4]]) # for spatial range parameter rho
 ```
-
 :::
 
 # Software and package versions
@@ -1592,12 +1721,10 @@ sessionInfo()
 
 ```
 
-
 # References
+
 -   Maire, A., Thierry, E., Viechtbauer, W., & Daufresne, M. (2019). Poleward shift in large-river fish communities detected with a novel meta-analysis framework. Freshwater Biology, 64(6), 1143–1156. <https://doi.org/10.1111/fwb.13291>
 -   Grau‐Andrés, R., Moreira, B., & Pausas, J. G. (2024). Global plant responses to intensified fire regimes. Global Ecology and Biogeography, 33(8), e13858. <https://doi.org/10.1111/geb.13858>
--    Viechtbauer, W., White, T., Noble, D., Senior, A., & Hamilton, W. K. (2025). metadat: Meta-analysis datasets (Version 1.5-2) [R package]. <https://github.com/wviechtb/metadat>
--    Rios Moura, R., Oliveira Gonzaga, M., Silva Pinto, N., Vasconcellos-Neto, J., & Requena, G. S. (2021). Assortative mating in space and time: Patterns and biases. Ecology Letters, 24(5), 1089–1102. <https://doi.org/10.1111/ele.13690>
+-   Viechtbauer, W., White, T., Noble, D., Senior, A., & Hamilton, W. K. (2025). metadat: Meta-analysis datasets (Version 1.5-2) \[R package\]. <https://github.com/wviechtb/metadat>
+-   Rios Moura, R., Oliveira Gonzaga, M., Silva Pinto, N., Vasconcellos-Neto, J., & Requena, G. S. (2021). Assortative mating in space and time: Patterns and biases. Ecology Letters, 24(5), 1089–1102. <https://doi.org/10.1111/ele.13690>
 -   Jetz, W., G. H. Thomas, J. B. Joy, K. Hartmann, and A. O. Mooers. 2012. The global diversity of birds in space and time. Nature 491:444-448. <https://doi.org/10.1038/nature11631>
-
-
