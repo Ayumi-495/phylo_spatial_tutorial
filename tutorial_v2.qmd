@@ -77,6 +77,7 @@ In the following two sections, we introduce how to make the correlation matrix i
 Sometimes, the species names in your data may not match those in the tree - please ensure that they are consistent. Also, it will be necessity when dropping species from the tree that are not in your dataset. In that case, you can use `TreeTools::DropTip()` / `ape::drop.tip()` (or `TreeTools::KeepTip()` / `ape::keep.tip()`). You can see how to do this in the example below :)
 :::
 
+::: panel-tabset
 ### Using a specific phylogenetic tree {#using-a-specific-phylogenetic-tree}
 In some cases, the phylogenetic relationships among the species of interest are already well established, and a corresponding phylogenetic tree is available from a published source or a public repository. When this is the case, it is usually preferable to use the existing tree rather than constructing a new one automatically. For example, large, time-calibrated phylogenies are available for many taxonomic groups (e.g. [birds](BirdTree.org), mammals, plants), often accompanied by branch lengths and documentation of the underlying assumptions.
 Using such trees ensures consistency with previous studies and avoids unnecessary reconstruction steps.
@@ -85,18 +86,28 @@ Below, we illustrate how to use a phylogenetic tree provided as a file and prepa
 
 #### Step 1. Read the tree from a file
 Phylogenetic trees are commonly distributed in formats such as Newick (`.nwk`, `.tre`) or Nexus (`.nex`). The ape package can read most standard formats.
-<!-- probably change here - use real data -->
+We use a sample dataset on Sylviidae (passerines), which is a CSV file with species data and a Nexus file containing a phylogenetic tree.
+The dataset only includes 10 species for didactic purposes, while the tree contains 294 species. So, we need to prune the tree to match the dataset…
 ```{r}
 #| label: way 1 - phylometa
 #| eval: false
 
 library(ape)
 
-# Read a phylogenetic tree from file
-# If the file contains multiple trees, select a single representative tree
-tree <- read.nexus("tree.txt")
+# Read dataset and phylogenetic tree
 
-tree
+dat <- read.csv(here("data", "Sylviidae_dat.csv"))
+dat$Phylo 
+#  [1] "Abroscopus_albogularis"      "Abroscopus_schisticeps"     
+#  [3] "Abroscopus_superciliaris"    "Achaetops_pycnopygius"      
+#  [5] "Acrocephalus_aedon"          "Acrocephalus_aequinoctialis"
+#  [7] "Acrocephalus_agricola"       "Acrocephalus_arundinaceus"  
+#  [9] "Acrocephalus_atyphus"        "Acrocephalus_australis"     
+
+# If the file contains multiple trees, select a single representative tree
+trees <- read.nexus(here("data", "Sylviidae.nex"))
+
+tree <- trees[[1]]  # select the first
 ```
 
 #### Step 2. Basic structural checks
@@ -106,11 +117,12 @@ Before using the tree in analyses, it is good practice to perform some basic che
 
 # Check whether the tree is ultrametric (time-calibrated)
 is.ultrametric(tree)
+# [1] TRUE
 
 # Check whether the tree is fully bifurcating
 is.binary(tree)
+# [1] TRUE
 ```
-Phylogenetic comparative and meta-analytic models assume a time-calibrated, fully bifurcating tree. If the tree is not ultrametric, you may need to convert it using methods such as `chronos()` from the `ape` package or `make.ultrametric()` from the `phytools` package. If the tree has polytomies, you can resolve them randomly using `multi2di()` from the `ape` package.
 
 #### Step 3. Match tree tip labels to the dataset
 The species names in the tree must match exactly the species identifiers used in the dataset.
@@ -118,7 +130,12 @@ The species names in the tree must match exactly the species identifiers used in
 #| eval: false
 
 # species names used in the dataset
-species_data <- unique(dat$species)
+species_data <- unique(dat$Phylo)
+
+length(tree$tip.label)
+# [1] 294
+length(species_data)
+# [1] 10
 
 # check for mismatches between tree tip labels and dataset species names
 setdiff(species_data, tree$tip.label)
@@ -139,10 +156,45 @@ tree_pruned  <- drop.tip(
   )
 
 tree_pruned
+plot(tree_pruned) # check the pruned tree
+
+```
+
+```{r}
+#| echo: false
+
+dat <- read.csv(here("data", "Sylviidae_dat.csv"))
+#  [1] "Abroscopus_albogularis"      "Abroscopus_schisticeps"     
+#  [3] "Abroscopus_superciliaris"    "Achaetops_pycnopygius"      
+#  [5] "Acrocephalus_aedon"          "Acrocephalus_aequinoctialis"
+#  [7] "Acrocephalus_agricola"       "Acrocephalus_arundinaceus"  
+#  [9] "Acrocephalus_atyphus"        "Acrocephalus_australis"     
+
+# If the file contains multiple trees, select a single representative tree
+trees <- read.nexus(here("data", "Sylviidae.nex"))
+
+tree <- trees[[1]]  
+# species names used in the dataset
+species_data <- unique(dat$Phylo)
+
+
+tree_pruned  <- drop.tip(
+  tree,
+  setdiff(tree$tip.label, species_data)
+  )
+
+plot(tree_pruned) 
+```
+
+```{r}
+#| eval: false
 
 # check the binary and ultrametric status again
 is.binary(tree_pruned)
+# [1] TRUE
+
 is.ultrametric(tree_pruned)
+# [1] TRUE
 ```
 
 #### Step 5. Compute the phylogenetic correlation matrix
@@ -316,7 +368,29 @@ taxa_fixed <- tnrs_match_names(
   do_approximate_matching = FALSE
 )
 
-taxa_fixed
+# taxa_fixed
+#                search_string               unique_name approximate_match score
+# 1           escherichia coli          Escherichia coli             FALSE     1
+# 2  chlamydomonas reinhardtii Chlamydomonas reinhardtii             FALSE     1
+# 3    drosophila melanogaster   Drosophila melanogaster             FALSE     1
+# 4       arabidopsis thaliana      Arabidopsis thaliana             FALSE     1
+# 5          rattus norvegicus         Rattus norvegicus             FALSE     1
+# 6               mus musculus              Mus musculus             FALSE     1
+# 7            cavia porcellus           Cavia porcellus             FALSE     1
+# 8             xenopus laevis            Xenopus laevis             FALSE     1
+# 9   saccharomyces cerevisiae  Saccharomyces cerevisiae             FALSE     1
+# 10               danio rerio               Danio rerio             FALSE     1
+#     ott_id is_synonym          flags number_matches
+# 1   474506      FALSE sibling_higher              1
+# 2    33153      FALSE                             1
+# 3   505714      FALSE                             1
+# 4   309263      FALSE                             1
+# 5   271555      FALSE                             1
+# 6   542509      FALSE                             1
+# 7   744000      FALSE                             1
+# 8   465096      FALSE                             1
+# 9   356221      FALSE                             1
+# 10 1005914      FALSE                             1
 ```
 
 At this point, you should confirm that:
@@ -334,7 +408,32 @@ tree <- tol_induced_subtree(
   label_format = "name"
 ) 
 # we can get a Warning meassage here about collapsing single nodes - this is fine.
+```
 
+```{r}
+#| echo: false
+
+myspecies_fixed <- c(
+  "Escherichia coli",
+  "Chlamydomonas reinhardtii",
+  "Drosophila melanogaster",
+  "Arabidopsis thaliana",
+  "Rattus norvegicus",
+  "Mus musculus",
+  "Cavia porcellus",
+  "Xenopus laevis",
+  "Saccharomyces cerevisiae",
+  "Danio rerio"
+)
+
+taxa_fixed <- tnrs_match_names(
+  names = myspecies_fixed,
+  do_approximate_matching = FALSE
+)
+
+tree <- tol_induced_subtree(
+  ott_ids = taxa_fixed[["ott_id"]],
+  label_format = "name") 
 # the tree is returned as an ape::phylo object, which can be manipulated and plotted using functions from the ape package.
 plot(tree, cex=.8, label.offset =.1, no.margin = TRUE)
 ```
@@ -370,8 +469,16 @@ tree$tip.label <- gsub("mrcaott616ott617", "Escherichia coli", tree$tip.label) #
 
 It is time to plot and tidy up the tree (note no branch lengths are included, they can be created later via simulations).
 ```{r}
-#| eval: false
+#| echo: false
+tree$tip.label 
+tree$tip.label <- gsub("_", " ", tree$tip.label)
 
+# Relabel MRCA-like tips for didactic plotting purposes
+ecoli <- tol_node_info(ott_id = 474506, include_lineage = TRUE)
+tax_lineage(ecoli) # domain within Bacteria
+
+tnrs_match_names(names = ("Escherichia")) 
+tree$tip.label <- gsub("mrcaott616ott617", "Escherichia coli", tree$tip.label) 
 plot(tree, cex=.8, label.offset =.1, no.margin = TRUE) 
 ```
 
@@ -410,7 +517,7 @@ If the tree has no branch lengths, `vcv()` will fail with:
 #| eval: false
 
 A <- vcv(tree, corr = TRUE)
-Error in vcv.phylo(tree, corr = TRUE) : the tree has no branch lengths
+# Error in vcv.phylo(tree, corr = TRUE) : the tree has no branch lengths
 ```
 
 For didactic purposes in this tutorial, we assign equal branch lengths to all edges (that is, all branch lengths are set to 1). This allows us to demonstrate the workflow and obtain a valid correlation matrix. In real analyses, you should consider using a tree with biologically meaningful branch lengths (for example, a time-calibrated phylogeny).
@@ -449,6 +556,130 @@ A[1:5, 1:5]
 # Cavia_porcellus              0.8017837         0.8017837       1.0000000
 ```
 
+### What if there are polytomies or non-ultrametric trees?
+
+A polytomy occurs when an internal node has more than two descendant branches (a multifurcation).  
+A non-ultrametric tree is a tree in which not all tips are equidistant from the root, meaning that the tree is not time-calibrated.
+
+Many phylogenetic comparative and meta-analytic models assume a fully bifurcating and ultrametric tree, because the expected covariance among species is defined under a continuous-time branching process (for example Brownian motion or Ornstein–Uhlenbeck evolution).  
+Here we illustrate what these issues mean, and how they can be handled, using a simple toy example.
+
+#### Create a toy tree with a polytomy
+```{r}
+#| eval: false
+library(ape)
+library(phytools)
+
+# A simple tree with one polytomy (A, B, C diverge simultaneously)
+tree_poly <- read.tree(text = "((A,B,C),D,E);")
+plot(tree_poly)
+is.binary(tree_poly)
+# [1] FALSE
+```
+
+```{r}
+#| echo: false
+library(ape)
+library(phytools)
+
+tree_poly <- read.tree(text = "((A,B,C),D,E);")
+plot(tree_poly)
+```
+Here, A, B, and C form a polytomy because their common ancestor has three descendants instead of two…
+
+Under a Brownian motion or OU model, the phylogenetic covariance matrix is derived from branch lengths along a fully specified bifurcating tree.  
+When a node is a polytomy, the relative order of divergence among its descendants is undefined, which means that their shared evolutionary history cannot be uniquely translated into a covariance structure.
+
+#### Resolving polytomies
+`multi2di()` resolves a polytomy by inserting very short branches, creating an arbitrary but fully bifurcating tree.   This corresponds to assuming that the true branching order is unknown but occurred over a very short evolutionary time.
+
+```{r}
+#| eval: false
+
+set.seed(1)
+
+tree_bin <- multi2di(tree_poly, random = TRUE)
+is.binary(tree_bin)
+# [1] TRUE
+```
+
+```{r}
+#| echo: false
+tree_bin <- multi2di(tree_poly, random = TRUE)
+plot(tree_bin)
+```
+Because the resolution is random, different runs of `multi2di()` will yield different bifurcating trees. If you want reproducible results, set a random seed before calling `multi2di()`.
+```{r}
+
+set.seed(15)
+tree_bin1 <- multi2di(tree_poly, random = TRUE)
+set.seed(50)
+tree_bin2 <- multi2di(tree_poly, random = TRUE)
+
+par(mfrow = c(1,2))
+plot(tree_bin1); title("Tree 1")
+plot(tree_bin2); title("Tree 2")
+par(mfrow = c(1,1))
+```
+
+#### Create a non-ultrametric toy tree
+```{r}
+#| eval: false
+
+tree_nonultra <- read.tree(text = "((A:2,B:2):3,(C:1,D:4):2,E:5);")
+is.ultrametric(tree_nonultra)
+# [1] FALSE
+```
+
+```{r}
+#| echo: false
+
+tree_nonultra <- read.tree(text = "((A:2,B:2):3,(C:1,D:4):2,E:5);")
+plot(tree_nonultra)
+```
+
+As you can see, the tips do not all end at the same distance from the root, so the tree is not ultrametric.
+This means that branch lengths cannot be interpreted directly as shared evolutionary time, which is required for Brownian motion or Ornstein–Uhlenbeck based phylogenetic covariance models.
+
+`chronos()` estimates branch lengths under a relaxed molecular clock, producing a tree in which all tips represent the same present time.  
+This is required when phylogenetic covariance is interpreted as shared evolutionary time.
+```{r}
+#| eval: false
+
+tree_ultra1 <- chronos(tree_nonultra)
+is.ultrametric(tree_ultra1)
+# [1] TRUE
+```
+
+```{r}
+#| echo: false
+
+tree_ultra1 <- chronos(tree_nonultra)
+plot(tree_ultra1)
+```
+Or, you can use `force.ultrametric()` from the `phytools` package to coerce a tree into an ultrametric form by extending branch lengths.
+```{r}
+#| eval: false
+
+tree_ultra2 <- force.ultrametric(tree_nonultra, method = "extend")
+is.ultrametric(tree_ultra2)
+```
+```{r}
+#| echo: false
+tree_ultra2 <- force.ultrametric(tree_nonultra, method = "extend")
+plot(tree_ultra2)
+```
+
+In practice, the typical workflow is:
+
+1. Check whether the tree is binary and ultrametric.
+2. If polytomies are present, resolve them using `multi2di()`, ideally multiple times.
+3. If the tree is not ultrametric, apply a dating method such as `chronos()` or use a time-calibrated tree from the literature.
+4. Only then compute the phylogenetic covariance or correlation matrix using `vcv()`.
+
+This ensures that the phylogenetic random effect used in meta-analysis corresponds to a well-defined evolutionary model.
+
+:::
 ## Example
 
 ###  Moura et al. (2021)
