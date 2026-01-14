@@ -587,6 +587,7 @@ is.binary(tree_poly)
 
 ```{r}
 #| echo: false
+
 library(ape)
 library(phytools)
 
@@ -594,7 +595,7 @@ tree_poly <- read.tree(text = "((A,B,C),D,E);")
 plot(tree_poly)
 ```
 
-Here, A, B, and C form a polytomy because their common ancestor has three descendants instead of two…
+Here, species A, B, and C form a polytomy because their common ancestor has three descendants instead of two…
 
 Under a Brownian motion or OU model, the phylogenetic covariance matrix is derived from branch lengths along a fully specified bifurcating tree.\
 When a node is a polytomy, the relative order of divergence among its descendants is undefined, which means that their shared evolutionary history cannot be uniquely translated into a covariance structure.
@@ -699,6 +700,7 @@ This ensures that the phylogenetic random effect used in meta-analysis correspon
 ## Example
 
 ### Moura et al. (2021)
+
 We use the dataset from Moura et al. (2021), which included 1828 effect sizes from 457 studies and 341 animal species. Each effect size is a Fisher's Z transformed correlation between for one species in one population and sampling period. The response variable how strongly mates resemble each other in body size across a very broad taxonomic and ecological range. The dataset and phylogenetic tree are available in the `metadat` package as `dat.moura2021`.
 
 ```{r}
@@ -798,16 +800,13 @@ phylo_heritability
 # [1] 0.479239
 ```
 
-The overall estimate $\beta_0$ is 0.368 (95% CI [0.113, 0.623]) on the Fisher's Z scale. Back transforming to the Pearson's r, this corresponds to a correlation of roughly 0.35 - which indicates a positive correlation between mates in body size across species. 
-On average, larger males tend to pair with larger females across species.
+The overall estimate $\beta_0$ is 0.368 (95% CI \[0.113, 0.623\]) on the Fisher's Z scale. Back transforming to the Pearson's r, this corresponds to a correlation of roughly 0.35 - which indicates a positive correlation between mates in body size across species. On average, larger males tend to pair with larger females across species.
 
 The $I^2$ ($\approx$ 97.31%) indicate that there is high heterogeneity among studies, effect sizes, species, and phylogenetic relatedness. About 35.48% of the total variance can be attributed to phylogenetic relatedness among species, indicating a moderate phylogenetic signal in mate size correlation. Biologically, this means that different species tend to have different average levels of mate size correlation, and closely related species tend to have more similar levels of mate size correlation than distantly related species.
 
-By partitioning species level variance into phylogenetic and non-phylogenetic components, we can estimate the phylogenetic heritability (or Pagel's $\lambda$) of mate size correlation. 
-This implies that about 48 percent of the differences among species in assortative mating strength are explained by phylogenetic relatedness.
+By partitioning species level variance into phylogenetic and non-phylogenetic components, we can estimate the phylogenetic heritability (or Pagel's $\lambda$) of mate size correlation. This implies that about 48 percent of the differences among species in assortative mating strength are explained by phylogenetic relatedness.
 
 In other words, closely related species tend to have similar levels of size assortative mating, but nearly half of the variation is species specific and not explained by shared ancestry.
-
 
 **orchard plot and variance components**
 
@@ -874,10 +873,22 @@ metafor_eg1_1 <- metafor_p1 / metafor_p2
 metafor_eg1_1
 ```
 
-![moura_metafor](figs/tutorial/metafor_moura.jpg){width=80%}
-
+![moura_metafor](figs/tutorial/metafor_moura.jpg){width="80%"}
 
 ##### brms
+We show two ways of specifying sampling error in brms: 1. Using se(sqrt(vi)) to supply known standard errors. 2. Representing sampling error explicitly via a group level term with a known variance covariance structure. In this formulation, the term `(1 | gr(effect.size.id, cov = vcv))` defines a random effect whose covariance matrix is fixed to the diagonal matrix of sampling variances for lnRR. This is mathematically equivalent to providing a sampling variance matrix to `metafor::rma.mv()`, but implemented within brms.
+
+Because sampling variances are treated as known in meta analysis, the standard deviation of this group level term is fixed to **1**. Consequently, the magnitude of sampling error is fully determined by the supplied variance covariance matrix and is not estimated from the data.
+
+The second approach is less common, but it can be much faster than usual (see more detailed information: [link](https://itchyshin.github.io/location-scale_meta-analysis/#brms)).
+
+If you are not familiar with `brms`, we highly recommend checking out the instruction of [brms](https://paulbuerkner.com/brms/index.html) first.
+
+**1. Using se(sqrt(vi))**
+
+In this specification, sampling error is modelled by supplying known standard errors via `se()` in the model formula. The expression `yi|se(sqrt(vi))` indicates that the response variable `yi` has known standard errors equal to the square root of the sampling variances `vi`. Under this formulation, brms treats the observed effect sizes as noisy measurements of latent true effects. 
+The remaining terms in the model specify sources of between study and between species variation in these latent true effects. Specifically, `(1 | study.id)` and `(1 | effect.size.id)` model study level and effect size level heterogeneity, `(1 | species.id)` and `(1 | gr(species.id.phy, cov = A))` model non phylogenetic and phylogenetic species level variation, respectively.
+
 ```{r}
 #| eval: false
 
@@ -946,8 +957,56 @@ summary(phylo_eg1_brms)
 
 ```
 
+**2. Using gr(…, vcv = vcv)** 
+
+In this alternative specification, sampling error is represented explicitly as a group level effect with a known variance covariance structure. The term `(1 | gr(effect.size.id, cov = vcv))` defines a random effect for each effect size whose covariance matrix is fixed to vcv, a diagonal matrix containing the sampling variances `v_i` on the diagonal.
+This implies the following hierarchical formulation:
+
+$\text{Sampling error} \sim \mathcal{N}(0, V),$
+
+where \mathbf{V} is the supplied variance covariance matrix vcv. In this setup, sampling error is modelled as a latent random effect rather than being placed directly in the likelihood via `se()`.
+
+Because sampling variances are treated as known in meta analysis, the standard deviation of this group level term is fixed to **1** using `constant(1)`. As a result, the magnitude of the sampling error is entirely determined by the supplied matrix V and is not estimated from the data.
+
+This formulation is mathematically equivalent to providing a sampling variance matrix to `metafor::rma.mv()`, but implemented here within the brms modeling framework. It also yields the same likelihood for the observed effect sizes as the `se(sqrt(vi))` approach, differing only in how sampling error is represented in the model.
+
+```{r}
+#| eval: false
+vcv <- diag(dat_moura2021$vi)
+rownames(vcv) <- colnames(vcv) <- dat_moura2021$effect.size.id
+fit_phylo_eg1.1_brms <-  bf(yi ~ 1 + 
+                     (1 | study.id) + 
+                     (1 | species.id) + 
+                     (1 | gr(species.id.phy, cov = A)) +
+                     (1 | gr(effect.size.id, cov = vcv))
+                     )
+
+prior_ma <- default_prior(fit_phylo_eg1_brms, 
+                data = dat_moura2021, 
+                data2 = list(A = A, vcv = vcv), 
+                family = gaussian())
+
+prior_ma$prior[5] = "constant(1)"
+
+system.time(
+  phylo_eg1_brms <- brm(
+    formula = fit_phylo_eg1_brms,
+    family = gaussian(),
+    data = dat_moura2021,
+    data2 = list(A = A, vcv = vcv),
+    prior = prior_ma,
+    iter = 10000, 
+    warmup = 7000,  
+    chains = 2,
+    control = list(adapt_delta = 0.95, max_treedepth = 15)
+    )
+  )
+
+summary(phylo_eg1_brms)
+```
 
 In `brms`, we can extract posterior samples for both fixed and random effects, and visualise them using `ggplot2`.
+
 ```{r}
 #| eval: false
 
@@ -1012,7 +1071,8 @@ brms_p2 <- ggplot(random_effects_samples_brms, aes(x = .value, y = .variable)) +
   ) +
   theme_classic() 
 ```
-![moura_brms](figs/tutorial/brms_moura.jpg){width=80%}
+
+![moura_brms](figs/tutorial/brms_moura.jpg){width="80%"}
 
 Looks fine?? - let's calculate $I^2$ statistics to quantify the proportion of variance attributable to different sources of heterogeneity.
 
@@ -1046,7 +1106,6 @@ round(rbind(
 ```
 
 ##### glmmTMB
-
 
 ```{r}
 #| eval: false
@@ -1093,10 +1152,13 @@ exp(phylo_eg1_tmb$fit$par)
 ```
 
 <!-- add explanation for the output -->
+
 #### Brownian motion (meta-regression)
+
 Let's move on the phylogenetic meta-regression including moderators.
 
-##### metafor 
+##### metafor
+
 ```{r}
 #| eval: false
 
@@ -1190,7 +1252,7 @@ prior_ma <- default_prior(fit_phylo_eg1.1_brms,
 prior_ma$prior[5] = "constant(1)"
 
 system.time(
-  phylo_eg1_brms <- brm(
+  phylo_eg1.1_brms <- brm(
     formula = fit_phylo_eg1.1_brms,
     family = gaussian(),
     data = dat_moura2021,
@@ -1203,7 +1265,7 @@ system.time(
     )
   )
 
-summary(phylo_eg1_brms)
+summary(phylo_eg1.1_brms)
 ```
 
 #### Ornstein-Uhlenbeck
