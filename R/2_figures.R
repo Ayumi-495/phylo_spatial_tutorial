@@ -110,7 +110,7 @@ metafor_eg1_1 <- metafor_p1 / metafor_p2
 metafor_eg1_1
 
 #### brms ----
-moura_BM_brms1 <- readRDS(here("Rdata", "moura2021_BM_brms.rds"))
+moura_BM_brms1 <- readRDS(here("Rdata", "tutorial_v2", "moura2021_BM_brms.rds"))
 get_variables(moura_BM_brms1)
 
 ## fixed effects
