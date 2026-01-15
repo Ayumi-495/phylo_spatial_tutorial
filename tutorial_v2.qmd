@@ -69,8 +69,8 @@ options(mc.cores = num_chains)
 
 Before moving the each model, we show how to make phylogenetic correlation matrix. It is important to account for the shared evolutionary history of species. Most common way to do this is by incorporating a phylogenetic correlation matrix into your model. This matrix reflects how closely related species are,and can be derived in two main ways:
 
-1.  [Using a specific phylogenetic tree](#using-a-specific-phylogenetic-tree)\
-2.  [Using the `rotl` package (Open Tree of Life)](#using-the-rotl-package-open-tree-of-life)
+1.  Using a specific phylogenetic tree
+2.  Using the `rotl` package (Open Tree of Life)
 
 In the following two sections, we introduce how to make the correlation matrix in two ways. The example below demonstrates how to compute a correlation matrix under the *Brownian motion process*. For the *Ornstein–Uhlenbeck process* and *Phylogenetic Gaussian Process*, please refere to their respective sections.
 
@@ -722,7 +722,10 @@ dat_moura2021$species.id.phy <- dat_moura2021$species.id
 
 ```
 
+
 #### Brownian motion (meta-analysis)
+The Brownian motion (BM) model assumes that traits evolve according to a random walk process along the branches of the phylogenetic tree. BM is default model for continuous trait evolution in comparative methods.
+In the model, the expected variance-covariance structure among species is directly proportional to their shared evolutionary history, as represented by the phylogenetic tree.
 
 ::: panel-tabset
 ##### metafor
@@ -999,16 +1002,16 @@ system.time(
     data = dat_moura2021,
     data2 = list(A = A, vcv = vcv),
     prior = prior_ma,
-    iter = 10000, 
-    warmup = 7000,  
+    iter = 18000, 
+    warmup = 10000,  
     chains = num_chains,
     backend = "cmdstanr",
     threads = threading(threads_per_chain), 
-    control = list(adapt_delta = 0.95, max_treedepth = 15)
+    control = list(adapt_delta = 0.98, max_treedepth = 18)
     )
   )
 
-summary(phylo_eg1_brms)
+summary(phylo_eg1.1_brms)
 ```
 
 Nice - the outputs are very similar to the previous model using `se()`, as expected and also consistent with the `metafor` results.
@@ -1428,7 +1431,22 @@ exp(phylo_eg1.1_tmb$fit$par)
 :::
 
 #### Ornstein-Uhlenbeck
+We fit a phylogenetic meta-analysis model using an Ornstein-Uhlenbeck (OU) model of trait evolution, which exploits the mathematical equivalence between the OU process and an exponential covariance function. In this model, the correlation between species decreases exponentially with increasing phylogenetic distance, controlled by the parameter $\alpha$ (the strength of selection towards an optimal trait value). A higher alpha indicates a stronger pull towards the optimum, leading to faster decay of correlation with distance.
 
+Under an OU model, the phylogenetic covariance between species i and j is given by:
+
+$$Cov_{ij} = \sigma^2 \exp(-\alpha d_{ij}),$$
+
+where $d_{ij}$ is the phylogenetic distance between species i and j, and $\sigma^2$ is the trait variance. This has exactly the same form as an exponential correlation function commonly used in spatial model:
+
+$$Cov_{ij} = \sigma^2 \exp(-\rho d_{ij}),$$
+
+so the $\alpha$ and $\rho$ play the identical statistical role.
+
+Let $\mathbf{A}$ be the Brownian motion phylogenetic correlation matrix derived from the tree. Its entries represent phylogenetic similarity based on shared branch length.
+We define a distance matrix $\mathbf{D}$ as:$$D = I - A,$$ where $\mathbf{I}$ is the identity matrix. The entries of $\mathbf{D}$ represent phylogenetic distance between species, scaled between 0 and 1. Closely related species have small distances, while distantly related species have larger distances. This matrix is used as the spatial distance input for fitting the spatial exponential correlation model.
+
+We first fit a spatial exponential meta-analysis model using $\mathbf{D}$ as distance matrix:
 ```{r}
 #| eval: false
 
@@ -1486,6 +1504,15 @@ summary(phy_ou_meta)
 
 # ---
 # Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+```
+This estimates the exponential decay parameter $\rho$. We can then convert this to the OU alpha parameter using the relationship $\alpha = 1/\rho$. Statistically, this step estimates how rapidly phylogenetic similarity decays with evolutionary distance.
+
+Using the estimated $\rho$, we can construct the OU phylogenetic correlation matrix as:$$A_{OU} = \exp(-\alpha D)$$. This matrix is the theoretical phylogenetic correlation structure implied by the OU process.
+
+We then refit the meta-analysis, supplying the OU covariance matrix as a fixed phylogenetic random effect:
+
+```{r}
+#| eval: false
 
 rho <- phy_ou_meta$rho  #[1] 0.01820382
 alpha <- 1/rho # 54.93351
@@ -1530,7 +1557,12 @@ summary(phy_ou_meta1)
 
 ```
 
-Unfortunately, we cannot fit the OU model using `brms` or `glmmTMB` yet…
+This two-stage procedure works as follows: First, it estimates the OU correlation decay parameter from the data. Second, it uses this parameter to incorporate biologically interpretable phylogenetic covariance into the final meta-analysis. This approach enables OU phylogenetic models to be fitted within the standard multilevel meta-analytic framework implemented in `metafor`.
+
+The OU phylogenetic model fitted the data substantially better than the BM model (AIC = 330.76 vs 345.35), indicating strong support for rapid decay of phylogenetic correlation. Although the pooled effect size was similar under both models, the uncertainty around this estimate was much smaller under OU, as reflected by its narrower confidence interval and smaller standard error. Under the OU model, species-level variation was captured almost entirely by the OU-structured phylogenetic term, whereas the BM model split this variation between phylogenetic and non phylogenetic species effects. Together, these results suggest that species differences are largely idiosyncratic, with little evidence for strong phylogenetic clustering beyond very shallow evolutionary scales. 
+
+Note: We cannot fit the OU model using `brms` or `glmmTMB`.
+
 
 # Spatial meta-analysis
 
@@ -1614,17 +1646,11 @@ Each element $D_{ij}$ is the straight-line distance (in kilometers) between effe
 
 **Why this matrix matters?**
 
-Most spatial meta-analytic models assume that residual similarity between effect sizes decays smoothly with geographic distance. The distance matrix $\mathbf{D}$ provides the raw spatial information needed to define this decay.
+Spatial meta analytic models assume that residual similarity between effect sizes decays with geographic distance. The distance matrix $\mathbf{D}$ encodes this information.
 
-Depending on the packages and kernels (functions) used, the distance matrix $\mathbf{D}$ is incorporated in different ways:
-
--   metafor uses $\mathbf{D}$ implicitly when you specify spatial correlation structures such as "SPLIN (linear)""SPEXP" (exponential) or "SPGAU" (Gaussian) (more detailed info: <https://wviechtb.github.io/metafor/reference/rma.mv.html>).
-
--   brms uses the coordinates directly but constructs an equivalent distance-based kernel internally.
-
--   glmmTMB uses spatial indexing factors that are also derived from these distances.
-
-Mathematically, all of these approaches rely on the same underlying distances.
+-   In `metafor`, $\mathbf{D}$ is supplied directly and transformed into a residual correlation matrix using kernels such as linear, exponential, and Gaussian (more info: [here](https://wviechtb.github.io/metafor/reference/rma.mv.html)).
+-   In `brms`, geographic coordinates are provided and an equivalent distance based kernel is constructed internally.
+-   In `glmmTMB`, spatial dependence is represented through a continuous spatial random field whose covariance structure is implicitly governed by geographic distance rather than by an explicit distance matrix.
 
 ## Examples
 
