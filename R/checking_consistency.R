@@ -90,8 +90,8 @@ confint(sp_eg1_exp_mf)
 # rho   0.1744 <0.0174 0.8572 
 sp_eg1_exp_mf <- readRDS(here("Rdata", "tutorial_v2", "sp_eg1_exp_mf.rds"))
 I2_total <- (sp_eg1_exp_mf$sigma2[1] + sp_eg1_exp_mf$tau2 ) / (sp_eg1_exp_mf$sigma2[1] + sp_eg1_exp_mf$tau2 + mean(dat_Roger$var_Hedges)) * 100
-
-
+I2_effect_id <- sp_eg1_exp_mf$sigma2[1] / (sp_eg1_exp_mf$sigma2[1] + sp_eg1_exp_mf$tau2 + mean(dat_Roger$var_Hedges)) * 100
+I2_spatial <- sp_eg1_exp_mf$tau2 / (sp_eg1_exp_mf$sigma2[1] + sp_eg1_exp_mf$tau2 + mean(dat_Roger$var_Hedges)) * 100
 ### brms ----
 
 vcv <- diag(dat_Roger$var_Hedges)

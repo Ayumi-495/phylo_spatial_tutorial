@@ -6,7 +6,7 @@ format:
   html:
     toc: true
     toc-location: left
-    toc-depth: 3
+    toc-depth: 6
     toc-float: true
     toc-title: "**CONTENTS**"
     output-file: "index.html"
@@ -697,15 +697,14 @@ In practice, the typical workflow is:
 This ensures that the phylogenetic random effect used in meta-analysis corresponds to a well-defined evolutionary model.
 ::::
 
-## Example
-
-### Moura et al. (2021)
+## Example - Moura et al. (2021)
 
 We use the dataset from Moura et al. (2021), which included 1828 effect sizes from 457 studies and 341 animal species. Each effect size is a Fisher's Z transformed correlation between for one species in one population and sampling period. The response variable how strongly mates resemble each other in body size across a very broad taxonomic and ecological range. The dataset and phylogenetic tree are available in the `metadat` package as `dat.moura2021`.
 
 ```{r}
 #| eval: false
 
+# read data and tree from metadat package
 dat_moura2021 <- dat.moura2021$dat
 tree <- dat.moura2021$tree
 
@@ -723,9 +722,9 @@ dat_moura2021$species.id.phy <- dat_moura2021$species.id
 
 ```
 
-::: panel-tabset
 #### Brownian motion (meta-analysis)
 
+::: panel-tabset
 ##### metafor
 
 ```{r}
@@ -818,6 +817,7 @@ Although orchard plots provide an effective summary of model-based estimates, th
 
 ```{r}
 #| eval: false
+
 metafor_p1 <- orchaRd::orchard_plot(moura_BM_metafor1, 
                            group = "study.id",
                            xlab = "Effect size",
@@ -876,7 +876,12 @@ metafor_eg1_1
 ![moura_metafor](figs/tutorial/metafor_moura.jpg){width="80%"}
 
 ##### brms
-We show two ways of specifying sampling error in brms: 1. Using se(sqrt(vi)) to supply known standard errors. 2. Representing sampling error explicitly via a group level term with a known variance covariance structure. In this formulation, the term `(1 | gr(effect.size.id, cov = vcv))` defines a random effect whose covariance matrix is fixed to the diagonal matrix of sampling variances for lnRR. This is mathematically equivalent to providing a sampling variance matrix to `metafor::rma.mv()`, but implemented within brms.
+
+We show two ways of specifying sampling error in brms:
+
+1.  Using se(sqrt(vi)) to supply known standard errors.
+
+2.  Representing sampling error explicitly via a group level term with a known variance covariance structure. In this formulation, the term `(1 | gr(effect.size.id, cov = vcv))` defines a random effect whose covariance matrix is fixed to the diagonal matrix of sampling variances for lnRR. This is mathematically equivalent to providing a sampling variance matrix to `metafor::rma.mv()`, but implemented within brms.
 
 Because sampling variances are treated as known in meta analysis, the standard deviation of this group level term is fixed to **1**. Consequently, the magnitude of sampling error is fully determined by the supplied variance covariance matrix and is not estimated from the data.
 
@@ -886,8 +891,7 @@ If you are not familiar with `brms`, we highly recommend checking out the instru
 
 **1. Using se(sqrt(vi))**
 
-In this specification, sampling error is modelled by supplying known standard errors via `se()` in the model formula. The expression `yi|se(sqrt(vi))` indicates that the response variable `yi` has known standard errors equal to the square root of the sampling variances `vi`. Under this formulation, brms treats the observed effect sizes as noisy measurements of latent true effects. 
-The remaining terms in the model specify sources of between study and between species variation in these latent true effects. Specifically, `(1 | study.id)` and `(1 | effect.size.id)` model study level and effect size level heterogeneity, `(1 | species.id)` and `(1 | gr(species.id.phy, cov = A))` model non phylogenetic and phylogenetic species level variation, respectively.
+In this specification, sampling error is modelled by supplying known standard errors via `se()` in the model formula. The expression `yi|se(sqrt(vi))` indicates that the response variable `yi` has known standard errors equal to the square root of the sampling variances `vi`. Under this formulation, brms treats the observed effect sizes as noisy measurements of latent true effects. The remaining terms in the model specify sources of between study and between species variation in these latent true effects. Specifically, `(1 | study.id)` and `(1 | effect.size.id)` model study level and effect size level heterogeneity, `(1 | species.id)` and `(1 | gr(species.id.phy, cov = A))` model non phylogenetic and phylogenetic species level variation, respectively.
 
 ```{r}
 #| eval: false
@@ -957,10 +961,9 @@ summary(phylo_eg1_brms)
 
 ```
 
-**2. Using gr(…, vcv = vcv)** 
+**2. Using gr(…, vcv = vcv)**
 
-In this alternative specification, sampling error is represented explicitly as a group level effect with a known variance covariance structure. The term `(1 | gr(effect.size.id, cov = vcv))` defines a random effect for each effect size whose covariance matrix is fixed to vcv, a diagonal matrix containing the sampling variances `v_i` on the diagonal.
-This implies the following hierarchical formulation:
+In this alternative specification, sampling error is represented explicitly as a group level effect with a known variance covariance structure. The term `(1 | gr(effect.size.id, cov = vcv))` defines a random effect for each effect size whose covariance matrix is fixed to vcv, a diagonal matrix containing the sampling variances `v_i` on the diagonal. This implies the following hierarchical formulation:
 
 $\text{Sampling error} \sim \mathcal{N}(0, V),$
 
@@ -972,6 +975,7 @@ This formulation is mathematically equivalent to providing a sampling variance m
 
 ```{r}
 #| eval: false
+
 vcv <- diag(dat_moura2021$vi)
 rownames(vcv) <- colnames(vcv) <- dat_moura2021$effect.size.id
 fit_phylo_eg1.1_brms <-  bf(yi ~ 1 + 
@@ -981,7 +985,7 @@ fit_phylo_eg1.1_brms <-  bf(yi ~ 1 +
                      (1 | gr(effect.size.id, cov = vcv))
                      )
 
-prior_ma <- default_prior(fit_phylo_eg1_brms, 
+prior_ma <- default_prior(fit_phylo_eg1.1_brms, 
                 data = dat_moura2021, 
                 data2 = list(A = A, vcv = vcv), 
                 family = gaussian())
@@ -989,15 +993,17 @@ prior_ma <- default_prior(fit_phylo_eg1_brms,
 prior_ma$prior[5] = "constant(1)"
 
 system.time(
-  phylo_eg1_brms <- brm(
-    formula = fit_phylo_eg1_brms,
+  phylo_eg1.1_brms <- brm(
+    formula = fit_phylo_eg1.1_brms,
     family = gaussian(),
     data = dat_moura2021,
     data2 = list(A = A, vcv = vcv),
     prior = prior_ma,
     iter = 10000, 
     warmup = 7000,  
-    chains = 2,
+    chains = num_chains,
+    backend = "cmdstanr",
+    threads = threading(threads_per_chain), 
     control = list(adapt_delta = 0.95, max_treedepth = 15)
     )
   )
@@ -1005,7 +1011,9 @@ system.time(
 summary(phylo_eg1_brms)
 ```
 
-In `brms`, we can extract posterior samples for both fixed and random effects, and visualise them using `ggplot2`.
+Nice - the outputs are very similar to the previous model using `se()`, as expected and also consistent with the `metafor` results.
+
+**Visualising brms results** In `brms`, we can extract posterior samples for both fixed and random effects, and visualise them using `ggplot2`.
 
 ```{r}
 #| eval: false
@@ -1084,17 +1092,17 @@ dat <- dat_moura2021
 v_harm <- 1 / mean(1/dat$vi, na.rm = TRUE)
 
 I2_total_harm  <- var_total_hetero / (var_total_hetero + v_harm)
-I2_effect_harm <- var_effect      / (var_total_hetero + v_harm)
-I2_study_harm  <- var_study       / (var_total_hetero + v_harm)
-I2_species_harm<- var_species     / (var_total_hetero + v_harm)
-I2_phylo_harm  <- var_phylo       / (var_total_hetero + v_harm)
+I2_effect_harm <- var_effect / (var_total_hetero + v_harm)
+I2_study_harm  <- var_study / (var_total_hetero + v_harm)
+I2_species_harm<- var_species / (var_total_hetero + v_harm)
+I2_phylo_harm  <- var_phylo / (var_total_hetero + v_harm)
 
 round(rbind(
-  total   = summ_I2(I2_total_harm),
-  effect  = summ_I2(I2_effect_harm),
-  study   = summ_I2(I2_study_harm),
+  total  = summ_I2(I2_total_harm),
+  effect = summ_I2(I2_effect_harm),
+  study = summ_I2(I2_study_harm),
   species = summ_I2(I2_species_harm),
-  phylo   = summ_I2(I2_phylo_harm)
+  phylo = summ_I2(I2_phylo_harm)
 ), 3)
 #         mean q2.5.2.5% q50.50% q97.5.97.5%
 # total   0.978     0.969   0.978       0.990
@@ -1107,32 +1115,67 @@ round(rbind(
 
 ##### glmmTMB
 
+`glmmTMB` is a general package for fitting generalised linear mixed models. Unlike `metafor` and `brms`, it does not natively assume that each effect size is observed with known sampling variance. Therefore, to implement a meta-analysis in `glmmTMB`, we must explicitly encode the sampling error structure of the effect sizes. The key idea is to treat sampling error as a random effect with a known variance-covariance structure. This is achieved using the `equalto()` term in the model formula.
+
+To run the model, we need 5 steps:
+
+1.  Make the sampling-variance VCV matrix
+
+2.  Treat each effect size as a random-effect level
+
+3.  Introduce a dummy grouping factor
+
+4.  Specify the sampling-error structure
+
+5.  Add phylogenetic and non-phylogenetic species effects
+
 ```{r}
 #| eval: false
 
+# reorders the rows and columns of the phylogenetic covariance matrix so that species appear in a consistent alphabetical order, ensuring that the matrix aligns correctly with the species factor used in the model.
 A <- A[sort(rownames(A)), sort(rownames(A))]
 
-dat_moura2021$g <- 1 
-
+# step 1
+# this creates a variance-covariance matrix - diagonal elements are the known sampling variances of the effect sizes. The off-diagonal elements are zero, reflecting the usual assumption tnat effect sizes are independent. This matrix plays the same rule as V = vi in metafor
 VCV <- diag(dat_moura2021$vi, nrow = nrow(dat_moura2021)) 
 rownames(VCV)<- colnames(VCV)<- dat_moura2021$effect.size.id
 
+# step 2
+# random effects in glmmTMB are defined over factor levels. By converting the effect-size identifier into a factor, each effect size (i) is assigned its own random effect (e_i), which will repredsent its sampling error - this is what allows the model to attach the correlation variance (v_i) to each observation
 dat_moura2021$effect.size.id <- as.factor(dat_moura2021$effect.size.id)
-head(dat_moura2021)
+
+# step 3
+# the equalto() and propto() terms require a grouping variable, even when there is only one group. the dummy variable 'g' assigns all observations to single group, while the covariance structure is defined entirely by supplied matrices…
+dat_moura2021$g <- 1 
 
 system.time(
-    phylo_eg1_tmb <- glmmTMB(yi ~ 1 + equalto(0 + effect.size.id|g, VCV) +
+    phylo_eg1_tmb <- glmmTMB(yi ~ 1 +
+# step 4
+# the term equalto(0 + effect.size.id|g, VCV) specifies that the random effect associated with each effect size has a covariance structure defined by the matrix VCV. This effectively encodes the known sampling variances into the model
+                         equalto(0 + effect.size.id|g, VCV) + 
                          (1|study.id) + 
-                         (1|species.id.phy) +
-                         propto(0 + species.id.phy|g, A),
+# step 5
+# the terms (1|species.id) and propto(0 + species.id.phy|g, A) model non-phylogenetic and phylogenetic species-level variation, respectively. The propto() term uses the phylogenetic covariance matrix A to capture shared evolutionary history among species
+                         (1|species.id) +
+                         propto(0 + species.id.phy|g, A), 
                        data = dat_moura2021,
                        REML = T)
     )
+
+```
+
+That is it! You can also find more detailed instruction here: <https://coraliewilliams.github.io/equalto_sim_study/webpage.html>.
+
+Now, we want to know the model output. Although the fitted model is statistically equivalent to the models fitted `metafor` and `brms`, `glmmTMB` reports variance components in a different way, which can initially confusing…
+
+```{r}
+#| eval: false
+
 head(confint(phylo_eg1_tmb), 10)
 #                                                                           2.5 %    97.5 %   Estimate
 # (Intercept)                                                            0.1132610 0.6230707 0.3681658
 # Std.Dev.(Intercept)|study.id                                           0.1056462 0.1813458 0.1384142
-# Std.Dev.(Intercept)|species.id.phy                                     0.1932854 0.2879763 0.2359271
+# Std.Dev.(Intercept)|species.id                                         0.1932854 0.2879763 0.2359271
 # Std.Dev.species.id.phyAcanthurus_leucosternon_ott388125|g.1            0.1293612 0.3959730 0.2263262
 # Std.Dev.species.id.phyAcanthurus_nigricans_ott467313|g.1               0.1293612 0.3959730 0.2263262
 # Std.Dev.species.id.phyAcanthurus_nigrofuscus_ott605289|g.1             0.1293612 0.3959730 0.2263262
@@ -1140,7 +1183,6 @@ head(confint(phylo_eg1_tmb), 10)
 # Std.Dev.species.id.phyAegithalos_glaucogularis_vinaceus_ott5560982|g.1 0.1293612 0.3959730 0.2263262
 # Std.Dev.species.id.phyAethia_pusilla_ott855484|g.1                     0.1293612 0.3959730 0.2263262
 # Std.Dev.species.id.phyAgalychnis_callidryas_ott9483|g.1                0.1293612 0.3959730 0.2263262
-
 sigma(phylo_eg1_tmb)^2
 # [1] 0.01445014 # residual variance
 
@@ -1151,12 +1193,45 @@ exp(phylo_eg1_tmb$fit$par)
 
 ```
 
-<!-- add explanation for the output -->
+You can see the outputs both `summary()` and `confint()`. The `confint()` output reports standard deviations (SD) of random effects, not [variances]{.underline} - for example,
+```{r}
+#| eval: false
+
+(Intercept) -> overall mean
+Std.Dev.(Intercept) |study.id -> correspond to the square roots of study-level variance
+Std.Dev.(Intercept) |species.id -> correspond to the square roots of non-phylogenetic species-level variance
+```
+
+You see the output also includes many rows such as…  
+```{r}
+#| eval: false
+
+Std.Dev.species.id.phyAcanthurus_leucosternon_ott388125|g.1
+Std.Dev.species.id.phyAcanthurus_nigricans_ott467313|g.1
+
+```
+
+do not represent separate variance parameters for each species. They are phylogenetic random effect!
+They are the conditional standard deviations of individual species’ phylogenetic random effects, which are all draws from the same multivariate normal distribution defined by the phylogenetic covariance matrix \mathbf{A} and a single scaling parameter. So, we should not be interpreted as species-specific variance components.
+
+To obtain the actual variance parameters, it is more reliable to inspect the internal parameter vector:
+```{r}
+#| eval: false
+
+exp(phylo_eg1_tmb$fit$par)
+# betadisp   -> residual SD
+# theta[1]   -> SD of study-level random effects
+# theta[2]   -> SD of non-phylogenetic species effects
+# theta[3]   -> Variance of phylogenetic effects
+```
+But be careful - the meaning of theta can be changed. It depends on what random effect you included in your model. The residual variance is reported by `sigma(model)^2`.
+:::
 
 #### Brownian motion (meta-regression)
 
-Let's move on the phylogenetic meta-regression including moderators.
+Let's move on the phylogenetic meta-regression including moderators. We included the categorical moderator (temporally.pooled - yes or no) in the model.
 
+::: panel-tabset
 ##### metafor
 
 ```{r}
@@ -1218,10 +1293,10 @@ summary(phylo_eg1.1_meta_BM)
 res1 <- orchaRd::mod_results(moura2021_BM_meta_reg, mod = "temporally.pooled",  group = "study.id", subset = TRUE)
 
 orchard_plot(res1, 
-                           mod = "temporally.pooled",
-                           group = "study.id",
-                           xlab = "Effect size (ZCOR)",
-                           angle = 45) + 
+             mod = "temporally.pooled",
+             group = "study.id",
+             xlab = "Effect size (ZCOR)",
+             angle = 45) + 
   # scale_x_discrete(labels = c("Overall effect")) +
   # scale_color_manual(values = "#CDBE70") +
   # scale_fill_manual(values = "#EEDC82") + 
@@ -1237,36 +1312,120 @@ orchard_plot(res1,
 
 vcv <- diag(dat_moura2021$vi)
 rownames(vcv) <- colnames(vcv) <- dat_moura2021$effect.size.id
-fit_phylo_eg1.1_brms <-  bf(yi ~ 1 + temporally.pooled + 
+fit_phylo_eg1_brms_mr <-  bf(yi ~ 1 + temporally.pooled + 
                      (1 | study.id) + 
                      (1 | species.id) + 
                      (1 | gr(species.id.phy, cov = A)) +
                      (1 | gr(effect.size.id, cov = vcv))
                      )
 
-prior_ma <- default_prior(fit_phylo_eg1.1_brms, 
+prior_mr <- default_prior(fit_phylo_eg1_brms_mr, 
                 data = dat_moura2021, 
                 data2 = list(A = A, vcv = vcv), 
                 family = gaussian())
 
-prior_ma$prior[5] = "constant(1)"
+prior_mr$prior[5] = "constant(1)"
 
 system.time(
-  phylo_eg1.1_brms <- brm(
-    formula = fit_phylo_eg1.1_brms,
+  phylo_eg1_brms_mr <- brm(
+    formula = fit_phylo_eg1_brms_mr,
     family = gaussian(),
     data = dat_moura2021,
     data2 = list(A = A, vcv = vcv),
     prior = prior_ma,
-    iter = 10000, 
-    warmup = 7000,  
-    chains = 2,
+    iter = 12000, 
+    warmup = 8000,  
+    chains = num_chains,
+    backend = "cmdstanr",
+    threads = threading(threads_per_chain), 
     control = list(adapt_delta = 0.95, max_treedepth = 15)
     )
   )
 
-summary(phylo_eg1.1_brms)
+summary(phylo_eg1_brms_mr)
+# Family: gaussian 
+#   Links: mu = identity 
+# Formula: yi ~ 1 + temporally.pooled + (1 | study.id) + (1 | species.id) + (1 | gr(species.id.phy, cov = A)) + (1 | gr(effect.size.id, cov = vcv)) 
+#    Data: dat_moura2021 (Number of observations: 1828) 
+#   Draws: 2 chains, each with iter = 12000; warmup = 8000; thin = 1;
+#          total post-warmup draws = 8000
+# 
+# Multilevel Hyperparameters:
+# ~effect.size.id (Number of levels: 1828) 
+#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# sd(Intercept)     1.00      0.00     1.00     1.00   NA       NA       NA
+# 
+# ~species.id (Number of levels: 341) 
+#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# sd(Intercept)     0.22      0.03     0.16     0.27 1.00      733      941
+# 
+# ~species.id.phy (Number of levels: 341) 
+#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# sd(Intercept)     0.28      0.10     0.15     0.52 1.00      925      798
+# 
+# ~study.id (Number of levels: 457) 
+#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# sd(Intercept)     0.14      0.02     0.11     0.19 1.01      569      887
+# 
+# Regression Coefficients:
+#                      Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# Intercept                0.35      0.16     0.01     0.68 1.00     4844     3939
+# temporally.pooledyes     0.04      0.02    -0.00     0.08 1.00     4646     5357
+# 
+# Further Distributional Parameters:
+#       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# sigma     0.12      0.01     0.11     0.13 1.00      914     2060
+
 ```
+
+##### glmmTMB
+
+```{r}
+#| eval: false
+
+A <- A[sort(rownames(A)), sort(rownames(A))]
+
+dat_moura2021$g <- 1 
+
+VCV <- diag(dat_moura2021$vi, nrow = nrow(dat_moura2021)) 
+rownames(VCV)<- colnames(VCV)<- dat_moura2021$effect.size.id
+
+dat_moura2021$effect.size.id <- as.factor(dat_moura2021$effect.size.id)
+head(dat_moura2021)
+
+system.time(
+    phylo_eg1.1_tmb <- glmmTMB(
+      yi ~ 1 + temporally.pooled + 
+        equalto(0 + effect.size.id|g, VCV) +
+        (1|study.id) + 
+        (1|species.id.phy) +
+        propto(0 + species.id.phy|g, A),
+      data = dat_moura2021,
+      REML = T)
+    )
+head(confint(phylo_eg1.1_tmb), 10)
+#                                                                             2.5 %     97.5 %   Estimate
+# (Intercept)                                                             0.099133194 0.61322985 0.35618152
+# temporally.pooledyes                                                   -0.004080496 0.08314767 0.03953359
+# Std.Dev.(Intercept)|study.id                                            0.106434012 0.18231634 0.13930061
+# Std.Dev.(Intercept)|species.id.phy                                      0.189351801 0.28492224 0.23227256
+# Std.Dev.species.id.phyAcanthurus_leucosternon_ott388125|g.1             0.130542545 0.39822099 0.22800171
+# Std.Dev.species.id.phyAcanthurus_nigricans_ott467313|g.1                0.130542545 0.39822099 0.22800171
+# Std.Dev.species.id.phyAcanthurus_nigrofuscus_ott605289|g.1              0.130542545 0.39822099 0.22800171
+# Std.Dev.species.id.phyAchatina_fulica_ott997087|g.1                     0.130542545 0.39822099 0.22800171
+# Std.Dev.species.id.phyAegithalos_glaucogularis_vinaceus_ott5560982|g.1  0.130542545 0.39822099 0.22800171
+# Std.Dev.species.id.phyAethia_pusilla_ott855484|g.1                      0.130542545 0.39822099 0.22800171
+
+
+sigma(phylo_eg1.1_tmb)^2
+# [1] 0.01448824 # residual variance
+phylo_eg1.1_tmb_varcor <- VarCorr(phylo_eg1.1_tmb)$cond
+exp(phylo_eg1.1_tmb$fit$par)
+#   betadisp      theta      theta      theta 
+# 0.12036710 0.13930061 0.23227256 0.05198478  <- residual variance (sd), study.id (sd), species.id (sd), species.id.phy (variance)
+
+```
+:::
 
 #### Ornstein-Uhlenbeck
 
@@ -1371,10 +1530,7 @@ summary(phy_ou_meta1)
 
 ```
 
-<!-- add explanation for the output -->
-
 Unfortunately, we cannot fit the OU model using `brms` or `glmmTMB` yet…
-:::
 
 # Spatial meta-analysis
 
