@@ -1012,9 +1012,42 @@ system.time(
   )
 
 summary(phylo_eg1.1_brms)
+# Family: gaussian 
+#   Links: mu = identity 
+# Formula: yi ~ 1 + (1 | study.id) + (1 | species.id) + (1 | gr(species.id.phy, cov = A)) + (1 | gr(effect.size.id, cov = vcv)) 
+#    Data: dat_moura2021 (Number of observations: 1828) 
+#   Draws: 2 chains, each with iter = 18000; warmup = 10000; thin = 1;
+#          total post-warmup draws = 16000
+# 
+# Multilevel Hyperparameters:
+# ~effect.size.id (Number of levels: 1828) 
+#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# sd(Intercept)     1.27      0.04     1.19     1.34 1.00      610     2215
+# 
+# ~species.id (Number of levels: 341) 
+#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# sd(Intercept)     1.00      0.00     1.00     1.00   NA       NA       NA
+# 
+# ~species.id.phy (Number of levels: 341) 
+#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# sd(Intercept)     0.12      0.09     0.00     0.32 1.00      810     1778
+# 
+# ~study.id (Number of levels: 457) 
+#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# sd(Intercept)     0.10      0.01     0.08     0.13 1.00     1982     4730
+# 
+# Regression Coefficients:
+#           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# Intercept     0.36      0.10     0.16     0.57 1.00     1653     3765
+# 
+# Further Distributional Parameters:
+#       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# sigma     0.09      0.01     0.07     0.10 1.00      319      907
+
+saveRDS(phylo_eg1.1_brms, here("Rdata", "tutorial_v2", "moura2021_BM_brms_vcv.rds"))
 ```
 
-Nice - the outputs are very similar to the previous model using `se()`, as expected and also consistent with the `metafor` results.
+Nice - the outputs are very similar to the previous model using `se()`, as expected and also consistent with the `metafor` results. The small differences in the estimates arise because this model is fitted in a Bayesian framework.
 
 **Visualising brms results** In `brms`, we can extract posterior samples for both fixed and random effects, and visualise them using `ggplot2`.
 
