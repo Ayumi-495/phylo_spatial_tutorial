@@ -1507,7 +1507,8 @@ summary(phy_ou_meta)
 ```
 This estimates the exponential decay parameter $\rho$. We can then convert this to the OU alpha parameter using the relationship $\alpha = 1/\rho$. Statistically, this step estimates how rapidly phylogenetic similarity decays with evolutionary distance.
 
-Using the estimated $\rho$, we can construct the OU phylogenetic correlation matrix as:$$A_{OU} = \exp(-\alpha D)$$. This matrix is the theoretical phylogenetic correlation structure implied by the OU process.
+Using the estimated $\rho$, we can construct the OU phylogenetic correlation matrix as:$$A_{OU} = \exp(-\alpha D).$$ 
+This matrix is the theoretical phylogenetic correlation structure implied by the OU process.
 
 We then refit the meta-analysis, supplying the OU covariance matrix as a fixed phylogenetic random effect:
 
@@ -1639,7 +1640,7 @@ D
 # 3 5012.586560 4626.2633    0.000 5013.680258 5406.6368
 # 4    1.113195  448.9296 5013.680    0.000000  690.7118
 # 5  691.460407  839.8075 5406.637  690.711777    0.0000
-# 
+
 ```
 
 Each element $D_{ij}$ is the straight-line distance (in kilometers) between effect sizes i and j.
@@ -1656,6 +1657,9 @@ Spatial meta analytic models assume that residual similarity between effect size
 
 ::: panel-tabset
 ### 1. Grau-Andrés et al. (2024)
+The dataset comes from Grau-Andrés et al. (2024) and contains 2361 effect sizes of Hedges' d. Each effect size is associated with a geographic location given by latitude and longitude. These locations represent sampling sites at which the original biological measurement were collected.
+
+The original data provide latitude and longitude in degrees. We first project these coordinates to a planar CRS and convert them to kilometres. We then compute the pairwise Euclidean distance matrix among all effect sizes based on their projected coordinates. 
 
 ```{r}
 #| eval: false
@@ -1692,9 +1696,13 @@ dat_Roger <- dat_Roger %>%
 names(dat_Roger)
 ```
 
+
 #### Exponential kernel
 
+The exponential kernel assumes that similarity between two effect sizes decreases smoothly as the geographic distance between their location increases. Therefore, nearby sites are strongly correlated, while distant sites are effectively independent. 
+
 ##### metafor
+In `metafor`, the spatial process is introduced by specifying `struct = "SPEXP"` together with the spatial random effect `~ x_km + y_km | const` or `TBD`.
 
 ```{r}
 #| eval: false
@@ -1702,7 +1710,6 @@ names(dat_Roger)
 system.time(sp_eg1_exp_mf <- rma.mv(d_Hedges, var_Hedges, 
                               random = list(
                                 ~ 1|effect_id,
-                                # ~ 1|site_id,
                                 ~ x_km + y_km |const
                               ), 
                               struct = "SPEXP", 
@@ -1755,6 +1762,7 @@ confint(sp_eg1_exp_mf)
 ```
 
 ##### brms
+In `brms`, the same structure is encoded as a Gaussian process via `gp(x_km, y_km, cov = "exponential", scale = FALSE)`.
 
 ```{r}
 #| eval: false
@@ -1829,7 +1837,7 @@ summary(sp_eg1_exp_brms)
 ```
 
 ##### glmmTMB
-
+In `glmmTMB`, the exponential spatial field is specified by `exp(pos + 0 | const)`, where `pos` is an index constructed from the spatial coordinates.
 ```{r}
 #| eval: false
 
@@ -1917,6 +1925,26 @@ exp(sp_eg1_exp_tmb$fit$par)
 #   1.3653956               1.3660708 (1.866149)   0.2476221 
 
 ```
+
+Each model estimates two key aspects of the spatial structure.
+
+The first is the spatial variance ($\rho^2$), which quantifies how much of the between effect size variability is organised by geography. If this variance is close to zero, spatial structure is negligible. If it is large, nearby effect sizes tend to be much more similar than distant ones.
+
+The second is the range of spatial correlation, which describes how quickly this similarity decays with distance. Short ranges imply that only very nearby locations are correlated, while long ranges indicate broad scale spatial trends.
+
+It is important to note that `metafor` and `brms` use different parameterisations for this range. In `metafor`, correlation is expressed as $exp(− \rho * distance)$, whereas in `brms` it is $exp(− distance / lscale)$. When distances are measured in kilometres, these are approximately related by $\rho \approx 1 / lscale$. The numerical values therefore should not be compared directly across packages.
+
+Because range parameters are often weakly identified, their uncertainty is typically large. Interpretation should focus more on whether spatial structure exists and on its approximate scale rather than on the exact numeric estimate.
+
+In all three implementations, sampling error is treated as known through the reported variances of Hedges’ d.
+In `brms` and `glmmTMB`, this is enforced explicitly by supplying the variance covariance matrix of the effect sizes, which ensures that within effect size uncertainty is not re estimated. In `metafor`, the same role is played by the `vi` argument.
+
+
+All three models, `metafor`, `brms`, and `glmmTMB`, give a consistent output.
+There is strong spatial autocorrelation in effect sizes. Nearby locations tend to show much more similar Hedges’ d values than would be expected from sampling error alone. This means that a substantial fraction of the apparent heterogeneity in the dataset is structured geographically rather than being random noise.
+The estimated spatial range is large, on the order of hundreds of kilometres, indicating that the spatial pattern is driven by broad scale geographic gradients rather than by very local site effects. Although the exact range is uncertain, all models agree that spatial dependence extends over long distances.
+After accounting for this spatial structure, the overall mean effect ($\beta_0$) remains negative, around −0.3 to −0.4 across all three packges. This shows that the global negative effect is not an artefact of spatial clustering.
+
 
 #### Gaussian process
 
