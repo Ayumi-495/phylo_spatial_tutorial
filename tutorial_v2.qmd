@@ -1,5 +1,5 @@
 ---
-title: "Phylo spatial meta-analysis"
+title: "TUTORIAL: Phylo spatial meta-analysis"
 date: "`r Sys.Date()`"
 # author: " "
 format: 
@@ -7,7 +7,7 @@ format:
     toc: true
     toc-location: left
     toc-depth: 6
-    toc-float: true
+    toc-float: false
     toc-title: "**CONTENTS**"
     output-file: "index.html"
     embed-resources: true
@@ -20,13 +20,13 @@ format:
     mainfont: "Roboto"
     monofont: "Roboto"
     # fontcolor: ""
-    page-layout: article
+    page-layout: full
     code-overflow: wrap
     df_print: paged
     theme: united
     code-line-numbers: false
-    grid:
-      margin-width: 190px
+    # grid:
+    #   margin-width: 190px
 crossref: 
   fig-title: Figure     # (default is "Figure")
   tbl-title: Table     # (default is "Table")
@@ -41,6 +41,10 @@ execute:
   tidy: true
   # cache: true
 ---
+
+# Intended audience and scope of this tutorial
+This tutorial is intended for researchers who already have a basic understanding of meta-analysis and some familiarity with statistical modelling in `R`. 
+It is aimed at readers who are interested in phylogenetic and spatial meta-analytic modelling, given the increasing availability of large-scale datasets that include species-level traits and geographic information.
 
 In this online tutorial, we demonstrate how to conduct phylogenetic and spatial meta-analyses using R packages such as `metafor`, `brms`, and `glmmTMB`. We provide step-by-step instructions on creating phylogenetic and spatial correlation matrices, fitting models with different correlation structures, and interpreting the results.
 
