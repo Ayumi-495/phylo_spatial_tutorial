@@ -68,6 +68,7 @@ max_cores <- 10
 num_chains <- 2
 threads_per_chain <- floor(max_cores / num_chains)
 options(mc.cores = num_chains) 
+
 ```
 
 # Phylogenetic meta-analysis
@@ -1675,243 +1676,244 @@ The OU phylogenetic model fitted the data substantially better than the BM model
 
 Note: We cannot fit the OU model using `brms` or `glmmTMB`.
 
-### 2. Huberty and Denno (2004)
-We use the dataset compiled by Huberty and Denno (2004) as a second example. The original study synthesised experimental findings for the plant stress hypothesis by asking how herbivorous insects respond when host plants are subjected to experimentally induced water-deficit stress.
+### 2. TBU
+<!-- Huberty and Denno (2004) -->
+<!-- We use the dataset compiled by Huberty and Denno (2004) as a second example. The original study synthesised experimental findings for the plant stress hypothesis by asking how herbivorous insects respond when host plants are subjected to experimentally induced water-deficit stress. -->
 
-In the cleaned dataset used here, effect sizes (Hedge’s *d*) and their sampling variances are already provided (`d` and `var`). Each row corresponds to an effect size comparing a water-stressed treatment group to a control group for a given plant–insect interaction and response variable (density, fecundity, survivorship, relative growth rate, or oviposition preference). Because multiple effect sizes can come from the same primary study and from the same plant–insect interaction, the data contain non-independence that we account for in the models below.
-```{r}
+<!-- In the cleaned dataset used here, effect sizes (Hedge’s *d*) and their sampling variances are already provided (`d` and `var`). Each row corresponds to an effect size comparing a water-stressed treatment group to a control group for a given plant–insect interaction and response variable (density, fecundity, survivorship, relative growth rate, or oviposition preference). Because multiple effect sizes can come from the same primary study and from the same plant–insect interaction, the data contain non-independence that we account for in the models below. -->
+<!-- ```{r} -->
 
-Huberty_Denno_2004 <- read_csv(here("data", "Huberty_Denno_2004", "Huberty_Denno_2004_cleaned.csv"))
-HubDen_tree <- read.tree(here("data", "Huberty_Denno_2004", "Huberty_Denno_2004_tree.txt"))
+<!-- Huberty_Denno_2004 <- read_csv(here("data", "Huberty_Denno_2004", "Huberty_Denno_2004_cleaned.csv")) -->
+<!-- HubDen_tree <- read.tree(here("data", "Huberty_Denno_2004", "Huberty_Denno_2004_tree.txt")) -->
 
-```
+<!-- ``` -->
 
-To align species names between the dataset (`Huberty_Denno_2004$Herbivore`) and the phylogeny (`HubDen_tree$tip.label`), we first check for mismatches and then apply a regular expression to standardise the species names in the dataset. This step is crucial for ensuring that the phylogenetic covariance matrix is correctly constructed and that the random effects in the model are properly aligned with the species in the tree.
+<!-- To align species names between the dataset (`Huberty_Denno_2004$Herbivore`) and the phylogeny (`HubDen_tree$tip.label`), we first check for mismatches and then apply a regular expression to standardise the species names in the dataset. This step is crucial for ensuring that the phylogenetic covariance matrix is correctly constructed and that the random effects in the model are properly aligned with the species in the tree. -->
 
-```{r}
-#| eval: false
+<!-- ```{r} -->
+<!-- #| eval: false -->
 
-tip_labels <- HubDen_tree$tip.label
+<!-- tip_labels <- HubDen_tree$tip.label -->
 
-setdiff(tip_labels, Huberty_Denno_2004$Herbivore) 
-# Some tips represent ambiguous taxa such as "_sp." variants.
-# Example output:
-# "Semiothesia_sp." "Cameraria_sp." ...
+<!-- setdiff(tip_labels, Huberty_Denno_2004$Herbivore)  -->
+<!-- # Some tips represent ambiguous taxa such as "_sp." variants. -->
+<!-- # Example output: -->
+<!-- # "Semiothesia_sp." "Cameraria_sp." ... -->
 
-# In the dataset, some ambiguous taxa are written as "_sp" (without a dot),
-# whereas the tree uses "_sp." (with a dot). Standardise the dataset format to match the tree.
-Huberty_Denno_2004$Herbivore <- gsub("(?<=_sp)$", ".", Huberty_Denno_2004$Herbivore, perl = TRUE)
+<!-- # In the dataset, some ambiguous taxa are written as "_sp" (without a dot), -->
+<!-- # whereas the tree uses "_sp." (with a dot). Standardise the dataset format to match the tree. -->
+<!-- Huberty_Denno_2004$Herbivore <- gsub("(?<=_sp)$", ".", Huberty_Denno_2004$Herbivore, perl = TRUE) -->
 
-# Identify species that are present in BOTH the dataset and the tree
-tips_to_keep <- intersect(Huberty_Denno_2004$Herbivore, tip_labels)
+<!-- # Identify species that are present in BOTH the dataset and the tree -->
+<!-- tips_to_keep <- intersect(Huberty_Denno_2004$Herbivore, tip_labels) -->
 
-# prune the tree to keep only matching taxa
-HubDen_tree_pruned <- drop.tip(HubDen_tree, setdiff(tip_labels, tips_to_keep))
+<!-- # prune the tree to keep only matching taxa -->
+<!-- HubDen_tree_pruned <- drop.tip(HubDen_tree, setdiff(tip_labels, tips_to_keep)) -->
 
-setdiff(HubDen_tree_pruned$tip.label, Huberty_Denno_2004$Herbivore)
+<!-- setdiff(HubDen_tree_pruned$tip.label, Huberty_Denno_2004$Herbivore) -->
 
-# subset the dataset to the pruned tree taxa
-Huberty_Denno_2004_pruned <- Huberty_Denno_2004[Huberty_Denno_2004$Herbivore %in% HubDen_tree_pruned$tip.label, ]
+<!-- # subset the dataset to the pruned tree taxa -->
+<!-- Huberty_Denno_2004_pruned <- Huberty_Denno_2004[Huberty_Denno_2004$Herbivore %in% HubDen_tree_pruned$tip.label, ] -->
 
-# create the phylogenetic correlation matrix (VCV), ordered by pruned tree tip labels
-HubDen_vcv <- vcv.phylo(HubDen_tree_pruned, corr = TRUE)
+<!-- # create the phylogenetic correlation matrix (VCV), ordered by pruned tree tip labels -->
+<!-- HubDen_vcv <- vcv.phylo(HubDen_tree_pruned, corr = TRUE) -->
 
-# the number of unique species should match the number of tips
-length(unique(Huberty_Denno_2004_pruned$Herbivore)) 
-# [1] 54
-length(HubDen_tree_pruned$tip.label)
-# [1] 54
+<!-- # the number of unique species should match the number of tips -->
+<!-- length(unique(Huberty_Denno_2004_pruned$Herbivore))  -->
+<!-- # [1] 54 -->
+<!-- length(HubDen_tree_pruned$tip.label) -->
+<!-- # [1] 54 -->
 
-# Keep only rows whose Herbivore species are present in the phylogenetic VCV matrix
-# (rownames(HubDen_vcv) correspond to the pruned tree tip labels)
-HubDen_2004 <- Huberty_Denno_2004 %>%
-  filter(Herbivore %in% rownames(HubDen_vcv)) %>%
-  mutate(Herbivore = factor(Herbivore)) 
+<!-- # Keep only rows whose Herbivore species are present in the phylogenetic VCV matrix -->
+<!-- # (rownames(HubDen_vcv) correspond to the pruned tree tip labels) -->
+<!-- HubDen_2004 <- Huberty_Denno_2004 %>% -->
+<!--   filter(Herbivore %in% rownames(HubDen_vcv)) %>% -->
+<!--   mutate(Herbivore = factor(Herbivore))  -->
 
-# Create an explicit grouping variable for the phylogenetic random effect.
-# Here, Phylo is simply the species identity, matching the VCV matrix row/column names
-HubDen_2004$Phylo <- HubDen_2004$Herbivore
+<!-- # Create an explicit grouping variable for the phylogenetic random effect. -->
+<!-- # Here, Phylo is simply the species identity, matching the VCV matrix row/column names -->
+<!-- HubDen_2004$Phylo <- HubDen_2004$Herbivore -->
 
-# Create a unique ID for each effect size (row), useful for modeling residual dependence if needed
-HubDen_2004$effect_id <- seq_len(nrow(HubDen_2004))
-names(HubDen_2004)
-#  [1] "Sub-guild"       "HerbivoreOrder"  "HerbivoreFamily" "Herbivore"       "Host Family"     "Host Plant"     
-#  [7] "MA Variable"     "VC Variable"     "Reference"       "d"               "var"             "Phylo"          
-# [13] "effect_id"   
-```
+<!-- # Create a unique ID for each effect size (row), useful for modeling residual dependence if needed -->
+<!-- HubDen_2004$effect_id <- seq_len(nrow(HubDen_2004)) -->
+<!-- names(HubDen_2004) -->
+<!-- #  [1] "Sub-guild"       "HerbivoreOrder"  "HerbivoreFamily" "Herbivore"       "Host Family"     "Host Plant"      -->
+<!-- #  [7] "MA Variable"     "VC Variable"     "Reference"       "d"               "var"             "Phylo"           -->
+<!-- # [13] "effect_id"    -->
+<!-- ``` -->
 
-#### Brownian motion (meta-analysis)
+<!-- #### Brownian motion (meta-analysis) -->
 
-::: panel-tabset
+<!-- ::: panel-tabset -->
 
-##### metafor
-```{r}
-#| eval: false
+<!-- ##### metafor -->
+<!-- ```{r} -->
+<!-- #| eval: false -->
 
-HD_BM <- rma.mv(d, var,
-                random = list(~ 1 | Reference, 
-                             ~ 1 | effect_id, 
-                             ~ 1 | Phylo),
-                R = list(Phylo = HubDen_vcv), 
-                data = HubDen_2004,
-                verbose = TRUE,
-                sparse = TRUE,
-                method = "REML"
-                )
+<!-- HD_BM <- rma.mv(d, var, -->
+<!--                 random = list(~ 1 | Reference,  -->
+<!--                              ~ 1 | effect_id,  -->
+<!--                              ~ 1 | Phylo), -->
+<!--                 R = list(Phylo = HubDen_vcv),  -->
+<!--                 data = HubDen_2004, -->
+<!--                 verbose = TRUE, -->
+<!--                 sparse = TRUE, -->
+<!--                 method = "REML" -->
+<!--                 ) -->
 
-summary(HD_BM)
-# Multivariate Meta-Analysis Model (k = 85; method: REML)
-# 
-#    logLik   Deviance        AIC        BIC       AICc   
-# -160.3879   320.7759   328.7759   338.4991   329.2822   
-# 
-# Variance Components:
-# 
-#             estim    sqrt  nlvls  fixed     factor    R 
-# sigma^2.1  0.9203  0.9593     45     no  Reference   no 
-# sigma^2.2  0.2587  0.5086     85     no  effect_id   no 
-# sigma^2.3  3.4489  1.8571     54     no      Phylo  yes 
-# 
-# Test for Heterogeneity:
-# Q(df = 84) = 706.6128, p-val < .0001
-# 
-# Model Results:
-# 
-# estimate      se     zval    pval    ci.lb   ci.ub    
-#  -0.5668  0.8187  -0.6923  0.4888  -2.1715  1.0379  
-```
+<!-- summary(HD_BM) -->
+<!-- # Multivariate Meta-Analysis Model (k = 85; method: REML) -->
+<!-- #  -->
+<!-- #    logLik   Deviance        AIC        BIC       AICc    -->
+<!-- # -160.3879   320.7759   328.7759   338.4991   329.2822    -->
+<!-- #  -->
+<!-- # Variance Components: -->
+<!-- #  -->
+<!-- #             estim    sqrt  nlvls  fixed     factor    R  -->
+<!-- # sigma^2.1  0.9203  0.9593     45     no  Reference   no  -->
+<!-- # sigma^2.2  0.2587  0.5086     85     no  effect_id   no  -->
+<!-- # sigma^2.3  3.4489  1.8571     54     no      Phylo  yes  -->
+<!-- #  -->
+<!-- # Test for Heterogeneity: -->
+<!-- # Q(df = 84) = 706.6128, p-val < .0001 -->
+<!-- #  -->
+<!-- # Model Results: -->
+<!-- #  -->
+<!-- # estimate      se     zval    pval    ci.lb   ci.ub     -->
+<!-- #  -0.5668  0.8187  -0.6923  0.4888  -2.1715  1.0379   -->
+<!-- ``` -->
 
-In the previous example, our models included both a phylogenetic species random effect and an additional non-phylogenetic species random effect. The phylogenetic term induces covariance among species according to the phylogeny, whereas the non-phylogenetic term captures species-specific deviations that are independent across species. In the subsequent model, we do not include the non-phylogenetic species term because these two components are often difficult to identify. Both terms operate at the species level and therefore compete to explain the same among-species heterogeneity. When replication per species is limited, the data provide insufficient information to reliably partition total species-level variance into phylogenetically structured and species-specific components. In such settings, dropping the non-phylogenetic species effect typically yields a more stable and interpretable model.
-More generally, species level variance components can also compete with study level variance components, further weakening identifiability when the data are sparse.
+<!-- In the previous example, our models included both a phylogenetic species random effect and an additional non-phylogenetic species random effect. The phylogenetic term induces covariance among species according to the phylogeny, whereas the non-phylogenetic term captures species-specific deviations that are independent across species. In the subsequent model, we do not include the non-phylogenetic species term because these two components are often difficult to identify. Both terms operate at the species level and therefore compete to explain the same among-species heterogeneity. When replication per species is limited, the data provide insufficient information to reliably partition total species-level variance into phylogenetically structured and species-specific components. In such settings, dropping the non-phylogenetic species effect typically yields a more stable and interpretable model. -->
+<!-- More generally, species level variance components can also compete with study level variance components, further weakening identifiability when the data are sparse. -->
 
-##### brms
+<!-- ##### brms -->
 
-```{r}
-#| eval: false
+<!-- ```{r} -->
+<!-- #| eval: false -->
 
-HubDen_vcv <- vcv.phylo(HubDen_tree_pruned, corr = TRUE)
-vcv <- diag(HubDen_2004$var)
-rownames(vcv) <- colnames(vcv) <- HubDen_2004$effect_id
+<!-- HubDen_vcv <- vcv.phylo(HubDen_tree_pruned, corr = TRUE) -->
+<!-- vcv <- diag(HubDen_2004$var) -->
+<!-- rownames(vcv) <- colnames(vcv) <- HubDen_2004$effect_id -->
 
-fit_phylo_eg2_brms_ma <-  bf(d ~ 1 + 
-                     (1 | Reference) + 
-                     (1 | gr(Phylo, cov = HubDen_vcv)) 
-                     )
+<!-- fit_phylo_eg2_brms_ma <-  bf(d ~ 1 +  -->
+<!--                      (1 | Reference) +  -->
+<!--                      (1 | gr(Phylo, cov = HubDen_vcv))  -->
+<!--                      ) -->
 
-prior_ma <- default_prior(fit_phylo_eg2_brms_ma, 
-                data = HubDen_2004, 
-                data2 = list(HubDen_vcv = HubDen_vcv, vcv = vcv), 
-                family = gaussian())
+<!-- prior_ma <- default_prior(fit_phylo_eg2_brms_ma,  -->
+<!--                 data = HubDen_2004,  -->
+<!--                 data2 = list(HubDen_vcv = HubDen_vcv, vcv = vcv),  -->
+<!--                 family = gaussian()) -->
 
-prior_ma$prior[3] = "constant(1)"
+<!-- prior_ma$prior[3] = "constant(1)" -->
 
-system.time(
-  phylo_eg2_brms_ma <- brm(
-    formula = fit_phylo_eg2_brms_ma,
-    family = gaussian(),
-    data = HubDen_2004,
-    data2 = list(HubDen_vcv = HubDen_vcv, vcv = vcv),
-    prior = prior_ma,
-    iter = 28000, 
-    warmup = 15000,  
-    chains = 4,
-    backend = "cmdstanr",
-    threads = threading(threads_per_chain), 
-    control = list(adapt_delta = 0.99, max_treedepth = 18)
-    )
-  )
+<!-- system.time( -->
+<!--   phylo_eg2_brms_ma <- brm( -->
+<!--     formula = fit_phylo_eg2_brms_ma, -->
+<!--     family = gaussian(), -->
+<!--     data = HubDen_2004, -->
+<!--     data2 = list(HubDen_vcv = HubDen_vcv, vcv = vcv), -->
+<!--     prior = prior_ma, -->
+<!--     iter = 28000,  -->
+<!--     warmup = 15000,   -->
+<!--     chains = 4, -->
+<!--     backend = "cmdstanr", -->
+<!--     threads = threading(threads_per_chain),  -->
+<!--     control = list(adapt_delta = 0.99, max_treedepth = 18) -->
+<!--     ) -->
+<!--   ) -->
 
-summary(phylo_eg2_brms_ma)
-#  Family: gaussian 
-#   Links: mu = identity 
-# Formula: d ~ 1 + (1 | Reference) + (1 | gr(Phylo, cov = HubDen_vcv)) + (1 | gr(effect_id, cov = vcv)) 
-#    Data: HubDen_2004 (Number of observations: 85) 
-#   Draws: 4 chains, each with iter = 28000; warmup = 15000; thin = 1;
-#          total post-warmup draws = 52000
+<!-- summary(phylo_eg2_brms_ma) -->
+<!-- #  Family: gaussian  -->
+<!-- #   Links: mu = identity  -->
+<!-- # Formula: d ~ 1 + (1 | Reference) + (1 | gr(Phylo, cov = HubDen_vcv)) + (1 | gr(effect_id, cov = vcv))  -->
+<!-- #    Data: HubDen_2004 (Number of observations: 85)  -->
+<!-- #   Draws: 4 chains, each with iter = 28000; warmup = 15000; thin = 1; -->
+<!-- #          total post-warmup draws = 52000 -->
 
-# Multilevel Hyperparameters:
-# ~effect_id (Number of levels: 85) 
-#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sd(Intercept)     1.00      0.00     1.00     1.00   NA       NA       NA
+<!-- # Multilevel Hyperparameters: -->
+<!-- # ~effect_id (Number of levels: 85)  -->
+<!-- #               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS -->
+<!-- # sd(Intercept)     1.00      0.00     1.00     1.00   NA       NA       NA -->
 
-# ~Phylo (Number of levels: 54) 
-#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sd(Intercept)     1.77      0.39     1.02     2.55 1.00     2440     6055
+<!-- # ~Phylo (Number of levels: 54)  -->
+<!-- #               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS -->
+<!-- # sd(Intercept)     1.77      0.39     1.02     2.55 1.00     2440     6055 -->
 
-# ~Reference (Number of levels: 45) 
-#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sd(Intercept)     0.89      0.29     0.19     1.42 1.00     1938     3560
+<!-- # ~Reference (Number of levels: 45)  -->
+<!-- #               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS -->
+<!-- # sd(Intercept)     0.89      0.29     0.19     1.42 1.00     1938     3560 -->
 
-# Regression Coefficients:
-#           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# Intercept    -0.54      0.75    -2.04     0.93 1.00    21071    24976
+<!-- # Regression Coefficients: -->
+<!-- #           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS -->
+<!-- # Intercept    -0.54      0.75    -2.04     0.93 1.00    21071    24976 -->
 
-# Further Distributional Parameters:
-#       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sigma     0.65      0.27     0.19     1.24 1.01      696      827
+<!-- # Further Distributional Parameters: -->
+<!-- #       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS -->
+<!-- # sigma     0.65      0.27     0.19     1.24 1.01      696      827 -->
 
-# Draws were sampled using sample(hmc). For each parameter, Bulk_ESS
-# and Tail_ESS are effective sample size measures, and Rhat is the potential
-# scale reduction factor on split chains (at convergence, Rhat = 1).
-# Warning message:
-# There were 235 divergent transitions after warmup. Increasing adapt_delta above 0.99 may help. See http://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup 
+<!-- # Draws were sampled using sample(hmc). For each parameter, Bulk_ESS -->
+<!-- # and Tail_ESS are effective sample size measures, and Rhat is the potential -->
+<!-- # scale reduction factor on split chains (at convergence, Rhat = 1). -->
+<!-- # Warning message: -->
+<!-- # There were 235 divergent transitions after warmup. Increasing adapt_delta above 0.99 may help. See http://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup  -->
 
 
-fit_phylo_eg2_brms_ma <-  bf(d ~ 1 + 
-                     (1 | Reference) + 
-                     (1 | gr(Phylo, cov = HubDen_vcv)) 
-                     )
+<!-- fit_phylo_eg2_brms_ma <-  bf(d ~ 1 +  -->
+<!--                      (1 | Reference) +  -->
+<!--                      (1 | gr(Phylo, cov = HubDen_vcv))  -->
+<!--                      ) -->
 
-prior_ma <- default_prior(fit_phylo_eg2_brms_ma, 
-                data = HubDen_2004, 
-                data2 = list(HubDen_vcv = HubDen_vcv, vcv = vcv), 
-                family = gaussian())
+<!-- prior_ma <- default_prior(fit_phylo_eg2_brms_ma,  -->
+<!--                 data = HubDen_2004,  -->
+<!--                 data2 = list(HubDen_vcv = HubDen_vcv, vcv = vcv),  -->
+<!--                 family = gaussian()) -->
 
-prior_ma$prior[3] = "constant(1)"
+<!-- prior_ma$prior[3] = "constant(1)" -->
 
-system.time(
-  phylo_eg2_brms_ma <- brm(
-    formula = fit_phylo_eg2_brms_ma,
-    family = gaussian(),
-    data = HubDen_2004,
-    data2 = list(HubDen_vcv = HubDen_vcv, vcv = vcv),
-    prior = prior_ma,
-    iter = 28000, 
-    warmup = 15000,  
-    chains = 4,
-    backend = "cmdstanr",
-    threads = threading(threads_per_chain), 
-    control = list(adapt_delta = 0.99, max_treedepth = 18)
-    )
-  )
-```
+<!-- system.time( -->
+<!--   phylo_eg2_brms_ma <- brm( -->
+<!--     formula = fit_phylo_eg2_brms_ma, -->
+<!--     family = gaussian(), -->
+<!--     data = HubDen_2004, -->
+<!--     data2 = list(HubDen_vcv = HubDen_vcv, vcv = vcv), -->
+<!--     prior = prior_ma, -->
+<!--     iter = 28000,  -->
+<!--     warmup = 15000,   -->
+<!--     chains = 4, -->
+<!--     backend = "cmdstanr", -->
+<!--     threads = threading(threads_per_chain),  -->
+<!--     control = list(adapt_delta = 0.99, max_treedepth = 18) -->
+<!--     ) -->
+<!--   ) -->
+<!-- ``` -->
 
-##### glmmTMB
-```{r}
-#| eval: false
+<!-- ##### glmmTMB -->
+<!-- ```{r} -->
+<!-- #| eval: false -->
 
-HubDen_vcv <- vcv.phylo(HubDen_tree_pruned, corr = TRUE)
-HubDen_vcv <- HubDen_vcv[sort(rownames(HubDen_vcv)), sort(rownames(HubDen_vcv))]
-vcv <- diag(HubDen_2004$var, nrow = nrow(HubDen_2004))
+<!-- HubDen_vcv <- vcv.phylo(HubDen_tree_pruned, corr = TRUE) -->
+<!-- HubDen_vcv <- HubDen_vcv[sort(rownames(HubDen_vcv)), sort(rownames(HubDen_vcv))] -->
+<!-- vcv <- diag(HubDen_2004$var, nrow = nrow(HubDen_2004)) -->
 
-rownames(vcv)<- colnames(vcv)<- HubDen_2004$effect_id
+<!-- rownames(vcv)<- colnames(vcv)<- HubDen_2004$effect_id -->
 
-HubDen_2004$effect_id <- as.factor(HubDen_2004$effect_id)
+<!-- HubDen_2004$effect_id <- as.factor(HubDen_2004$effect_id) -->
 
-HubDen_2004$g <- 1 
+<!-- HubDen_2004$g <- 1  -->
 
-system.time(
-    phylo_eg2_tmb <- glmmTMB(d ~ 1 +
-                         equalto(0 + effect_id|g, vcv) + 
-                         (1|Reference) + 
-                         propto(0 + Phylo|g, HubDen_vcv), 
-                       data = HubDen_2004,
-                       REML = T)
-    )
+<!-- system.time( -->
+<!--     phylo_eg2_tmb <- glmmTMB(d ~ 1 + -->
+<!--                          equalto(0 + effect_id|g, vcv) +  -->
+<!--                          (1|Reference) +  -->
+<!--                          propto(0 + Phylo|g, HubDen_vcv),  -->
+<!--                        data = HubDen_2004, -->
+<!--                        REML = T) -->
+<!--     ) -->
 
-summary(phylo_eg2_tmb)
-```
-:::
+<!-- summary(phylo_eg2_tmb) -->
+<!-- ``` -->
+<!-- ::: -->
 
 # Spatial meta-analysis
 
@@ -2055,6 +2057,47 @@ In `metafor`, the spatial process is introduced by specifying `struct = "SPEXP"`
 ```{r}
 #| eval: false
 
+# Use distance matrix
+ma_sp1_exp0_mf <- rma.mv(d_Hedges, var_Hedges, 
+                 random = list(
+                   ~ 1|effect_id, 
+                   ~ effect_id|const
+                 ), 
+                 struct = "SPEXP", 
+                 data = dat_Roger,
+                 dist = list(Site = dist_matrix_euclid2),
+                 test = "t",
+                 method = "REML",
+                 sparse = TRUE,
+                 verbose = TRUE)
+summary(ma_sp1_exp0_mf)
+# Multivariate Meta-Analysis Model (k = 2361; method: REML)
+# 
+#     logLik    Deviance         AIC         BIC        AICc   
+# -4034.4852   8068.9704   8076.9704   8100.0360   8076.9874   
+# 
+# Variance Components:
+# 
+#             estim    sqrt  nlvls  fixed     factor 
+# sigma^2    0.7935  0.8908   2361     no  effect_id 
+# 
+# outer factor: const      (nlvls = 1)
+# inner term:   ~effect_id (nlvls = 2361)
+# 
+#             estim    sqrt  fixed 
+# tau^2      1.2330  1.1104     no 
+# rho        0.1744             no 
+# 
+# Test for Heterogeneity:
+# Q(df = 2360) = 21273.5149, p-val < .0001
+# 
+# Model Results:
+# 
+# estimate      se     tval    df    pval    ci.lb    ci.ub      
+#  -0.3349  0.0644  -5.2006  2360  <.0001  -0.4612  -0.2086  *** 
+
+
+# Use the coordinates directly (Euclidean distance)
 system.time(sp_eg1_exp_mf <- rma.mv(d_Hedges, var_Hedges, 
                               random = list(
                                 ~ 1|effect_id,
@@ -2108,6 +2151,7 @@ confint(sp_eg1_exp_mf)
 # rho   0.1744 <0.0174 0.8572 
 
 ```
+Both `metafor` models returned the same output.
 
 ##### brms
 In `brms`, the same structure is encoded as a Gaussian process via `gp(x_km, y_km, cov = "exponential", scale = FALSE)`.
@@ -2280,7 +2324,7 @@ The first is the spatial variance ($\rho^2$), which quantifies how much of the b
 
 The second is the range of spatial correlation, which describes how quickly this similarity decays with distance. Short ranges imply that only very nearby locations are correlated, while long ranges indicate broad scale spatial trends.
 
-It is important to note that `metafor` and `brms` use different parameterisations for this range. In `metafor`, correlation is expressed as $exp(− \rho * distance)$, whereas in `brms` it is $exp(− distance / lscale)$. When distances are measured in kilometres, these are approximately related by $\rho \approx 1 / lscale$. The numerical values therefore should not be compared directly across packages.
+It is important to note that `metafor` and `brms` use different parametrisations for this range. In `metafor`, correlation is expressed as $exp(− \rho * distance)$, whereas in `brms` it is $exp(− distance / lscale)$. When distances are measured in kilometres, these are approximately related by $\rho \approx 1 / lscale$. The numerical values therefore should not be compared directly across packages.
 
 Because range parameters are often weakly identified, their uncertainty is typically large. Interpretation should focus more on whether spatial structure exists and on its approximate scale rather than on the exact numeric estimate.
 
@@ -2353,6 +2397,47 @@ The models estimate the overall mean Mann Kendall trend statistic for non-local 
 ```{r}
 #| eval: false
 
+# Use distance matrix
+ma_sp2_exp0 <- rma.mv(s1, vars1, 
+                 random = list(
+                   ~ 1|id, 
+                   ~ id|const
+                 ), 
+                 struct = "SPEXP", 
+                 data = dat_maire2019,
+                 dist = list(Site = dist_matrix_euclid),
+                 test = "t",
+                 method = "REML",
+                 sparse = TRUE,
+                 verbose = TRUE)
+
+summary(ma_sp2_exp0)
+# Multivariate Meta-Analysis Model (k = 35; method: REML)
+# 
+#    logLik   Deviance        AIC        BIC       AICc   
+# -199.2067   398.4135   406.4135   412.5189   407.7928   
+# 
+# Variance Components:
+# 
+#                estim     sqrt  nlvls  fixed  factor 
+# sigma^2    1055.3246  32.4858     35     no      id 
+# 
+# outer factor: const (nlvls = 1)
+# inner term:   ~id   (nlvls = 35)
+# 
+#                 estim      sqrt  fixed 
+# tau^2      10046.6981  100.2332     no 
+# rho           67.9506               no 
+# 
+# Test for Heterogeneity:
+# Q(df = 34) = 191.4837, p-val < .0001
+# 
+# Model Results:
+# 
+# estimate       se    zval    pval     ci.lb     ci.ub      
+# 192.7523  39.0265  4.9390  <.0001  116.2617  269.2429  *** 
+
+# Use the coordinates directly (Euclidean distance)
 ma_sp2_exp <- rma.mv(s1, vars1, 
              random = list(
                        ~ 1|id,
@@ -2451,7 +2536,7 @@ sp_eg2_exp_brms <- brm(
   formula = fit_sp_eg2_exp_brms,
   data = dat_maire2019,
   data2 = list(vcv=vcv),
-  chains = 2,
+  chains = 4,
   threads = threading(threads_per_chain),
   iter = 25000,
   warmup = 12000,
