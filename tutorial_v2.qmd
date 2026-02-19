@@ -940,7 +940,7 @@ metafor_eg1_1
 
 We show two ways of specifying sampling error in brms:
 
-1.  Using se(sqrt(vi)) to supply known standard errors.
+1.  Using `se(sqrt(vi))` to supply known standard errors.
 
 2.  Representing sampling error explicitly via a group level term with a known variance covariance structure. In this formulation, the term `(1 | gr(effect.size.id, cov = vcv))` defines a random effect whose covariance matrix is fixed to the diagonal matrix of sampling variances for lnRR. This is mathematically equivalent to providing a sampling variance matrix to `metafor::rma.mv()`, but implemented within brms.
 
@@ -950,7 +950,7 @@ The second approach is less common, but it can be much faster than usual (see mo
 
 If you are not familiar with `brms`, we highly recommend checking out the instruction of [brms](https://paulbuerkner.com/brms/index.html) first.
 
-**1. Using se(sqrt(vi))**
+**1. Using `se(sqrt(vi))`**
 
 In this specification, sampling error is modelled by supplying known standard errors via `se()` in the model formula. The expression `yi|se(sqrt(vi))` indicates that the response variable `yi` has known standard errors equal to the square root of the sampling variances `vi`. Under this formulation, brms treats the observed effect sizes as noisy measurements of latent true effects. The remaining terms in the model specify sources of between study and between species variation in these latent true effects. Specifically, `(1 | study.id)` and `(1 | effect.size.id)` model study level and effect size level heterogeneity, `(1 | species.id)` and `(1 | gr(species.id.phy, cov = A))` model non phylogenetic and phylogenetic species level variation, respectively.
 
@@ -1022,7 +1022,7 @@ summary(phylo_eg1_brms)
 
 ```
 
-**2. Using gr(…, vcv = vcv)**
+**2. Using `gr(…, vcv = vcv)`**
 
 In this alternative specification, sampling error is represented explicitly as a group level effect with a known variance covariance structure. The term `(1 | gr(effect.size.id, cov = vcv))` defines a random effect for each effect size whose covariance matrix is fixed to vcv, a diagonal matrix containing the sampling variances `v_i` on the diagonal. This implies the following hierarchical formulation:
 
@@ -1213,19 +1213,59 @@ round(rbind(
 
 ##### glmmTMB
 
-`glmmTMB` is a general package for fitting generalised linear mixed models. Unlike `metafor` and `brms`, it does not natively assume that each effect size is observed with known sampling variance. Therefore, to implement a meta-analysis in `glmmTMB`, we must explicitly encode the sampling error structure of the effect sizes. The key idea is to treat sampling error as a random effect with a known variance-covariance structure. This is achieved using the `equalto()` term in the model formula.
+`glmmTMB` is a popular package for fitting generalised linear mixed models.
+Unlike dedicated meta-analytic packages such as `metafor`, it does not allow to easily account for known sampling variances of effect sizes - so when we implement a meta-analysis in `glmmTMB`, we need explicitly specify the sampling error structure of the effect sizes.
 
-To run the model, we need 5 steps:
+In practice, this require three steps:
 
-1.  Make the sampling-variance VCV matrix
+*1. Treating each effect size as a unique random-effect level*
 
-2.  Treat each effect size as a random-effect level
+```{r}
+#| eval: false
 
-3.  Introduce a dummy grouping factor
+# random effects in glmmTMB are defined over factor levels. By converting the effect-size identifier into a factor, each effect size (i) is assigned its own random effect (e_i), which will repredsent its sampling error - this is what allows the model to attach the correlation variance (v_i) to each observation
 
-4.  Specify the sampling-error structure
+dat_moura2021$effect.size.id <- as.factor(dat_moura2021$effect.size.id)
+```
 
-5.  Add phylogenetic and non-phylogenetic species effects
+In `glmmTMB`, grouping variables for random effects must be factors.
+By converting `effect_size_ID` to a factor, we ensure that each effect size is treated as a distinct level in the random-effects structure.
+This step is required for the model to correctly associate each observation with its corresponding sampling variance.
+
+*2. Specifying the random effect independent grouping structure*
+
+```{r}
+#| eval: false
+
+# the equalto() and propto() terms require a grouping variable, even when there is only one group. the dummy variable 'g' assigns all observations to single group, while the covariance structure is defined entirely by supplied matrices…
+dat_moura2021$g <- 1 
+
+```
+
+*3. Constructing a variance-covariance matrix (VCV) that contains the known sampling variances of each effect size*
+
+```{r}
+#| eval: false
+
+# this creates a variance-covariance matrix - diagonal elements are the known sampling variances of the effect sizes. The off-diagonal elements are zero, reflecting the usual assumption tnat effect sizes are independent. This matrix plays the same rule as V = vi in metafor
+
+VCV <- diag(dat_moura2021$vi, nrow = nrow(dat_moura2021)) 
+rownames(VCV)<- colnames(VCV)<- dat_moura2021$effect.size.id
+```
+
+We create a variance–covariance matrix whose diagonal elements are the known sampling variances of the effect sizes.
+Off-diagonal elements are set to zero, reflecting the assumption that effect sizes are independent.
+This mirrors the standard assumption made in most meta-analyses.
+
+The `equalto()` term in `glmmTMB` requires a grouping factor.
+The dummy variable `g` serves this purpose, which we set to a single level (one group), i.e. all observations are assigned to the same group. If the grouping factor had more than one level, each group would have a separate independent random-effect vector with the same variance-covariance parameters. For meta-analysis, this grouping factor should always have one level.
+
+For more details, you can also refer to this vignette: <https://cran.r-project.org/web/packages/glmmTMB/vignettes/covstruct.html>
+
+And the following supplementary material for fitting meta-analysis with `glmmTMB`:
+<https://coraliewilliams.github.io/equalto_sim_study/webpage.html>.
+
+
 
 ```{r}
 #| eval: false
@@ -1233,26 +1273,13 @@ To run the model, we need 5 steps:
 # reorders the rows and columns of the phylogenetic covariance matrix so that species appear in a consistent alphabetical order, ensuring that the matrix aligns correctly with the species factor used in the model.
 A <- A[sort(rownames(A)), sort(rownames(A))]
 
-# step 1
-# this creates a variance-covariance matrix - diagonal elements are the known sampling variances of the effect sizes. The off-diagonal elements are zero, reflecting the usual assumption tnat effect sizes are independent. This matrix plays the same rule as V = vi in metafor
-VCV <- diag(dat_moura2021$vi, nrow = nrow(dat_moura2021)) 
-rownames(VCV)<- colnames(VCV)<- dat_moura2021$effect.size.id
-
-# step 2
-# random effects in glmmTMB are defined over factor levels. By converting the effect-size identifier into a factor, each effect size (i) is assigned its own random effect (e_i), which will repredsent its sampling error - this is what allows the model to attach the correlation variance (v_i) to each observation
-dat_moura2021$effect.size.id <- as.factor(dat_moura2021$effect.size.id)
-
-# step 3
-# the equalto() and propto() terms require a grouping variable, even when there is only one group. the dummy variable 'g' assigns all observations to single group, while the covariance structure is defined entirely by supplied matrices…
-dat_moura2021$g <- 1 
-
 system.time(
     phylo_eg1_tmb <- glmmTMB(yi ~ 1 +
-# step 4
+
 # the term equalto(0 + effect.size.id|g, VCV) specifies that the random effect associated with each effect size has a covariance structure defined by the matrix VCV. This effectively encodes the known sampling variances into the model
                          equalto(0 + effect.size.id|g, VCV) + 
                          (1|study.id) + 
-# step 5
+
 # the terms (1|species.id) and propto(0 + species.id.phy|g, A) model non-phylogenetic and phylogenetic species-level variation, respectively. The propto() term uses the phylogenetic covariance matrix A to capture shared evolutionary history among species
                          (1|species.id) +
                          propto(0 + species.id.phy|g, A), 
@@ -1963,7 +1990,7 @@ toy_sites
 
 ```
 
-The projected coordinates (x_km, y_km) can be negative because they represent positions relative to the origin of the coordinate system. We first assign a geographic CRS (EPSG:4326) to declare that the coordinates are in latitude and longitude.\
+The projected coordinates (`x_km`, `y_km`) can be negative because they represent positions relative to the origin of the coordinate system. We first assign a geographic CRS (EPSG:4326) to declare that the coordinates are in latitude and longitude.\
 Then we transform the coordinates to a planar CRS (EPSG:3857) suitable for distance calculations, and convert the resulting x and y coordinates from meters to kilometres.
 
 ### Step 2. Compute pairwise *Euclidean* distance matrix
@@ -2052,7 +2079,7 @@ names(dat_Roger)
 The exponential kernel assumes that similarity between two effect sizes decreases smoothly as the geographic distance between their location increases. Therefore, nearby sites are strongly correlated, while distant sites are effectively independent. 
 
 ##### metafor
-In `metafor`, the spatial process is introduced by specifying `struct = "SPEXP"` together with the spatial random effect `~ x_km + y_km | const` or `TBD`.
+In `metafor`, the spatial process is introduced by specifying `struct = "SPEXP"` together with  either (1) via a supplied distance matrix using `random = ~ effect_id|const` and `dist = list(…)`, or (2) via coordinates using `random = ~ x_km + y_km|const`, in which case distances are computed internally.
 
 ```{r}
 #| eval: false
@@ -2151,10 +2178,10 @@ confint(sp_eg1_exp_mf)
 # rho   0.1744 <0.0174 0.8572 
 
 ```
-Both `metafor` models returned the same output.
+Both `metafor` models (use distance matrix or coordinates directly or Euclidean distance) returned the same output.
 
 ##### brms
-In `brms`, the same structure is encoded as a Gaussian process via `gp(x_km, y_km, cov = "exponential", scale = FALSE)`.
+In `brms`, the covariance function of the Gaussian process is controlled by the `cov` argument. To use an exponential kernel, set `cov = "exponential"`. Note that scale determines whether the input predictors are rescaled (by default, to make the maximum Euclidean distance equal to 1). If the coordinates are already expressed in meaningful units such as kilometres, and you want the GP length-scale parameter to be interpretable in those units, it is advisable to use s`cale = FALSE`.
 
 ```{r}
 #| eval: false
@@ -2199,7 +2226,7 @@ sp_eg1_exp_brms <- brm(
   iter = 6000,
   warmup = 3000,
   prior = prior,
-  control = list(adapt_delta=0.95, max_treedepth=15)
+  control = list(adapt_delta = 0.95, max_treedepth = 15)
   )
 summary(sp_eg1_exp_brms)
 #  Family: gaussian 
@@ -2338,8 +2365,8 @@ The estimated spatial range is large, on the order of hundreds of kilometres, in
 After accounting for this spatial structure, the overall mean effect ($\beta_0$) remains negative, around −0.3 to −0.4 across all three packges. This shows that the global negative effect is not an artefact of spatial clustering.
 
 
-### 2. Maire et al. (2019)
-
+### 2. Maire et al. (2019) <TBU>
+<!-- TBU  -->
 We use a dataset from the `metadat` package as our second illustrative example. In the original study, spatial correlations among sampling stations were modelled using station-level coordinates along river networks. However, precise latitude and longitude information for individual stations is not available in the published dataset; only the locations of study sites can be geo-referenced. We therefore used site-level coordinates as proxies for station-level positions. Although this approximation allows us to compare the implementation of spatial meta-analytic models across `metafor`, `brms`, and `glmmTMB`, the resulting estimates are not directly comparable to those reported by Maire et al. (2019), where station-level spatial random effects were explicitly modelled.
 
 ```{r}
@@ -2371,7 +2398,7 @@ dat_maire2019 <- dat |>
 
 dat_maire2019$const <- 1 # add constant for spatial models
 
-# project to a planar coordinate system and convert to kilometers
+# project to a planar coordinate system and convert to kilometres
 dat_sf <- st_as_sf(dat_maire2019, coords = c("lon", "lat"), crs = 4326)
 dat_sf_proj <- st_transform(dat_sf, crs = 3857)
 
