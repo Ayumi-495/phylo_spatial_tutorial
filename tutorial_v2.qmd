@@ -2340,7 +2340,7 @@ sigma(sp_eg1_exp_tmb)
 # 1.365396
 sp_eg1_exp_tmb_varcor <- VarCorr(sp_eg1_exp_tmb)$cond
 exp(sp_eg1_exp_tmb$fit$par)
-#   betadisp (efect_id)     theta (tau/tau^2)      theta (rho)
+#   betadisp (effect_id)     theta (tau/tau^2)      theta (rho)
 #   1.3653956               1.3660708 (1.866149)   0.2476221 
 
 ```
@@ -2364,246 +2364,245 @@ There is strong spatial autocorrelation in effect sizes. Nearby locations tend t
 The estimated spatial range is large, on the order of hundreds of kilometres, indicating that the spatial pattern is driven by broad scale geographic gradients rather than by very local site effects. Although the exact range is uncertain, all models agree that spatial dependence extends over long distances.
 After accounting for this spatial structure, the overall mean effect ($\beta_0$) remains negative, around −0.3 to −0.4 across all three packges. This shows that the global negative effect is not an artefact of spatial clustering.
 
+### TBU
+<!-- ### 2. Maire et al. (2019) <TBU> -->
+<!-- We use a dataset from the `metadat` package as our second illustrative example. In the original study, spatial correlations among sampling stations were modelled using station-level coordinates along river networks. However, precise latitude and longitude information for individual stations is not available in the published dataset; only the locations of study sites can be geo-referenced. We therefore used site-level coordinates as proxies for station-level positions. Although this approximation allows us to compare the implementation of spatial meta-analytic models across `metafor`, `brms`, and `glmmTMB`, the resulting estimates are not directly comparable to those reported by Maire et al. (2019), where station-level spatial random effects were explicitly modelled. -->
 
-### 2. Maire et al. (2019) <TBU>
-<!-- TBU  -->
-We use a dataset from the `metadat` package as our second illustrative example. In the original study, spatial correlations among sampling stations were modelled using station-level coordinates along river networks. However, precise latitude and longitude information for individual stations is not available in the published dataset; only the locations of study sites can be geo-referenced. We therefore used site-level coordinates as proxies for station-level positions. Although this approximation allows us to compare the implementation of spatial meta-analytic models across `metafor`, `brms`, and `glmmTMB`, the resulting estimates are not directly comparable to those reported by Maire et al. (2019), where station-level spatial random effects were explicitly modelled.
+<!-- ```{r} -->
+<!-- #| eval: false -->
 
-```{r}
-#| eval: false
+<!-- dat <- dat.maire2019$dat -->
+<!-- dmat <- dat.maire2019$dmat -->
+<!-- dmat[1:35,1:35] -->
 
-dat <- dat.maire2019$dat
-dmat <- dat.maire2019$dmat
-dmat[1:35,1:35]
-
-sites <- tribble(
-  ~site_id, ~site_name,   ~lat,    ~lon,
-  "site1",  "Belleville",  47.5,    2.65,
-  "site2",  "Bugey",       45.8,    5.27,
-  "site3",  "Chinon",      47.2,    0.18,
-  "site4",  "Chooz",       50.1,    4.80,
-  "site5",  "Civaux",      46.4,    0.65,
-  "site6",  "Cruas",       44.6,    4.76,
-  "site7",  "Dampierre",   47.7,    2.51,
-  "site8",  "Nogent",      48.5,    3.52,
-  "site9",  "St Alban",    45.3,    4.75,
-  "site10", "St Laurent",  47.7,    2.53,
-  "site11", "Tricastin",   44.3,    4.73
-)
-
-
-dat_maire2019 <- dat |>
-  left_join(sites, by = c("site" = "site_id")) |> 
-  mutate(id = row_number())
-
-dat_maire2019$const <- 1 # add constant for spatial models
-
-# project to a planar coordinate system and convert to kilometres
-dat_sf <- st_as_sf(dat_maire2019, coords = c("lon", "lat"), crs = 4326)
-dat_sf_proj <- st_transform(dat_sf, crs = 3857)
-
-coords_m <- st_coordinates(dat_sf_proj)
-dat_maire2019$x_km <- coords_m[,1] / 1000
-dat_maire2019$y_km <- coords_m[,2] / 1000
-
-coords_km <- cbind(dat_maire2019$x_km, dat_maire2019$y_km)
-dist_matrix_euclid <- as.matrix(dist(coords_km))
-
-# row and column names
-rownames(dist_matrix_euclid) <- dat_maire2019$id
-colnames(dist_matrix_euclid) <- dat_maire2019$id
-
-head(dat_maire2019)
-```
-
-#### Exponential kernel
-The models estimate the overall mean Mann Kendall trend statistic for non-local species (s1), while accounting for (1) clustering of stations within sites and (2) residual spatial correlation that decays with distance under an exponential kernel (`SPEXP`). The intercept is positive and statistically different from zero, indicating an overall increasing temporal trend in the relative abundance of non-local species. However, in our implementation spatial distances are approximated using site-level coordinates rather than station positions along the river network, so the estimated spatial range parameter should be interpreted as illustrative of the modelling approach rather than directly comparable to Maire et al. (2019).
-
-##### metafor
-
-```{r}
-#| eval: false
-
-# Use distance matrix
-ma_sp2_exp0 <- rma.mv(s1, vars1, 
-                 random = list(
-                   ~ 1|id, 
-                   ~ id|const
-                 ), 
-                 struct = "SPEXP", 
-                 data = dat_maire2019,
-                 dist = list(Site = dist_matrix_euclid),
-                 test = "t",
-                 method = "REML",
-                 sparse = TRUE,
-                 verbose = TRUE)
-
-summary(ma_sp2_exp0)
-# Multivariate Meta-Analysis Model (k = 35; method: REML)
-# 
-#    logLik   Deviance        AIC        BIC       AICc   
-# -199.2067   398.4135   406.4135   412.5189   407.7928   
-# 
-# Variance Components:
-# 
-#                estim     sqrt  nlvls  fixed  factor 
-# sigma^2    1055.3246  32.4858     35     no      id 
-# 
-# outer factor: const (nlvls = 1)
-# inner term:   ~id   (nlvls = 35)
-# 
-#                 estim      sqrt  fixed 
-# tau^2      10046.6981  100.2332     no 
-# rho           67.9506               no 
-# 
-# Test for Heterogeneity:
-# Q(df = 34) = 191.4837, p-val < .0001
-# 
-# Model Results:
-# 
-# estimate       se    zval    pval     ci.lb     ci.ub      
-# 192.7523  39.0265  4.9390  <.0001  116.2617  269.2429  *** 
-
-# Use the coordinates directly (Euclidean distance)
-ma_sp2_exp <- rma.mv(s1, vars1, 
-             random = list(
-                       ~ 1|id,
-                       ~ 1|site,
-                       ~ x_km + y_km | const), 
-             struct = "SPEXP", 
-             data = dat_maire2019,
-             test = "t",
-             method = "REML",
-             sparse = TRUE,
-             verbose = TRUE
-             )
-
-summary(ma_sp2_exp)
-# Multivariate Meta-Analysis Model (k = 35; method: REML)
-# 
-# logLik   Deviance        AIC        BIC       AICc   
-# -199.0469   398.0939   408.0939   415.7257   410.2367   
-# 
-# Variance Components:
-#   
-#   estim     sqrt  nlvls  fixed  factor 
-# sigma^2.1   819.5017  28.6269     35     no      id 
-# sigma^2.2  1653.5229  40.6635     11     no    site 
-# 
-# outer factor: const        (nlvls = 1)
-# inner term:   ~x_km + y_km (nlvls = 11)
-# 
-# estim     sqrt  fixed 
-# tau^2      8548.0233  92.4555     no 
-# rho          97.3090              no 
-# 
-# Test for Heterogeneity:
-#   Q(df = 34) = 191.4837, p-val < .0001
-# 
-# Model Results:
-#   
-#   estimate       se    zval    pval     ci.lb     ci.ub      
-# 190.8255  40.9187  4.6635  <.0001  110.6263  271.0246  ***
-
-confint(ma_sp2_exp)
-# estimate  ci.lb     ci.ub 
-# sigma^2.1 819.5017 0.0000 4240.3900 
-# sigma.1    28.6269 0.0000   65.1183 
-# 
-# estimate  ci.lb      ci.ub 
-# sigma^2.2 1653.5229 0.0000 21698.5229 
-# sigma.2     40.6635 0.0000   147.3042 
-# 
-# estimate  ci.lb        ci.ub 
-# tau^2 8548.0233 0.0000 >854802.3263 
-# tau     92.4555 0.0000    >924.5552 
-# 
-# estimate   ci.lb     ci.ub 
-# rho  97.3090 <9.7309 >973.0899 
-
-```
-
-The outcome S1 is the Mann-Kendall trend statistic for the relative abundance of non-local species, with positive values indicating a monotonically increasing trend over time. We fitted an exponential spatial correlation structure (`SPEXP`) using Euclidean distances derived from site-level coordinates (used here as proxies for station positions), and included additional random intercepts for sampling station (id) and site to account for clustering beyond the spatial structure.
-
-The estimated overall mean trend was positive (intercept = 190.83, 95% CI [110.63, 271.02]), indicating that, on average across the 35 sampling stations, the relative abundance of non-local species increased over time. The variance components suggest substantial heterogeneity at multiple levels, with an id-level variance of $\sigma^2_{id}$ = 819.50 (SD = 28.63) and a site-level variance of $\sigma^2_{site}$ = 1653.52 (SD = 40.66). The fitted spatial component was also large ($\tau^2$ = 8548.02, SD = 92.46), implying considerable residual structure that can be represented as a spatially correlated process. The spatial range parameter was estimated as $\rho$ = 97.31 (in the same distance units used to construct the distances), but its confidence interval was extremely wide, indicating that the distance-decay scale is only weakly constrained by the data under this proxy-distance approximation.
-
-```{r}
-
-```
-
-##### brms
-
-```{r}
-#| eval: false
-
-dat_maire2019$id <- as.character(dat_maire2019$id)
-vcv <- diag(dat_maire2019$vars1)
-
-rownames(vcv) <- colnames(vcv) <- dat_maire2019$id
-
-fit_sp_eg2_exp_brms <- bf(s1 ~ 1 +
-                 # (1|site) + # this is 
-                 (1|gr(id, cov = vcv)) + # this is m (sampling error)
-                gp(x_km, y_km, 
-                   cov = "exponential",
-                   scale = FALSE)
-                )
-
-# generate default priors
-prior <- default_prior(fit_sp_eg2_exp_brms, 
-                           data = dat_maire2019, 
-                           data2 = list(vcv = vcv),
-                           family = gaussian())
-
-prior$prior[5] = "constant(1)" # meta-analysis assumes sampling variance is known so fixing this to 1
-prior
-
-# fitting model
-sp_eg2_exp_brms <- brm(
-  formula = fit_sp_eg2_exp_brms,
-  data = dat_maire2019,
-  data2 = list(vcv=vcv),
-  chains = 4,
-  threads = threading(threads_per_chain),
-  iter = 25000,
-  warmup = 12000,
-  prior = prior,
-  control = list(adapt_delta=0.99, max_treedepth=18)
-)
-summary(sp_eg2_exp_brms)
-```
-
-##### glmmTMB
-
-```{r}
-#| eval: false
-
-dat_maire2019$id <- factor(dat_maire2019$id)
-VCV <- diag(dat_maire2019$vars1, nrow = nrow(dat_maire2019)) 
-rownames(VCV)<- colnames(VCV)<- dat_maire2019$id
-VCV[1:5, 1:5]
-
-dat_maire2019$pos <- numFactor(dat_maire2019$x_km, dat_maire2019$y_km)
-
-tmb_sp2_exp <- glmmTMB(
-  s1 ~ 1 +
-    equalto(0 + id | const, VCV) + 
-    (1 | site) +
-    exp(pos + 0 | const),     
-  data = dat_maire2019,
-  REML = TRUE
-  )
+<!-- sites <- tribble( -->
+<!--   ~site_id, ~site_name,   ~lat,    ~lon, -->
+<!--   "site1",  "Belleville",  47.5,    2.65, -->
+<!--   "site2",  "Bugey",       45.8,    5.27, -->
+<!--   "site3",  "Chinon",      47.2,    0.18, -->
+<!--   "site4",  "Chooz",       50.1,    4.80, -->
+<!--   "site5",  "Civaux",      46.4,    0.65, -->
+<!--   "site6",  "Cruas",       44.6,    4.76, -->
+<!--   "site7",  "Dampierre",   47.7,    2.51, -->
+<!--   "site8",  "Nogent",      48.5,    3.52, -->
+<!--   "site9",  "St Alban",    45.3,    4.75, -->
+<!--   "site10", "St Laurent",  47.7,    2.53, -->
+<!--   "site11", "Tricastin",   44.3,    4.73 -->
+<!-- ) -->
 
 
-head(confint(tmb_sp2_exp), 10)
+<!-- dat_maire2019 <- dat |> -->
+<!--   left_join(sites, by = c("site" = "site_id")) |>  -->
+<!--   mutate(id = row_number()) -->
 
-sigma(tmb_sp2_exp) # for id
+<!-- dat_maire2019$const <- 1 # add constant for spatial models -->
 
-tmb_sp2_exp_varcor <- VarCorr(tmb_sp2_exp)$cond
-exp(tmb_sp2_exp$fit$par[[4]]) # for spatial range parameter rho
+<!-- # project to a planar coordinate system and convert to kilometres -->
+<!-- dat_sf <- st_as_sf(dat_maire2019, coords = c("lon", "lat"), crs = 4326) -->
+<!-- dat_sf_proj <- st_transform(dat_sf, crs = 3857) -->
+
+<!-- coords_m <- st_coordinates(dat_sf_proj) -->
+<!-- dat_maire2019$x_km <- coords_m[,1] / 1000 -->
+<!-- dat_maire2019$y_km <- coords_m[,2] / 1000 -->
+
+<!-- coords_km <- cbind(dat_maire2019$x_km, dat_maire2019$y_km) -->
+<!-- dist_matrix_euclid <- as.matrix(dist(coords_km)) -->
+
+<!-- # row and column names -->
+<!-- rownames(dist_matrix_euclid) <- dat_maire2019$id -->
+<!-- colnames(dist_matrix_euclid) <- dat_maire2019$id -->
+
+<!-- head(dat_maire2019) -->
+<!-- ``` -->
+
+<!-- #### Exponential kernel -->
+<!-- The models estimate the overall mean Mann Kendall trend statistic for non-local species (s1), while accounting for (1) clustering of stations within sites and (2) residual spatial correlation that decays with distance under an exponential kernel (`SPEXP`). The intercept is positive and statistically different from zero, indicating an overall increasing temporal trend in the relative abundance of non-local species. However, in our implementation spatial distances are approximated using site-level coordinates rather than station positions along the river network, so the estimated spatial range parameter should be interpreted as illustrative of the modelling approach rather than directly comparable to Maire et al. (2019). -->
+
+<!-- ##### metafor -->
+
+<!-- ```{r} -->
+<!-- #| eval: false -->
+
+<!-- # Use distance matrix -->
+<!-- ma_sp2_exp0 <- rma.mv(s1, vars1,  -->
+<!--                  random = list( -->
+<!--                    ~ 1|id,  -->
+<!--                    ~ id|const -->
+<!--                  ),  -->
+<!--                  struct = "SPEXP",  -->
+<!--                  data = dat_maire2019, -->
+<!--                  dist = list(Site = dist_matrix_euclid), -->
+<!--                  test = "t", -->
+<!--                  method = "REML", -->
+<!--                  sparse = TRUE, -->
+<!--                  verbose = TRUE) -->
+
+<!-- summary(ma_sp2_exp0) -->
+<!-- # Multivariate Meta-Analysis Model (k = 35; method: REML) -->
+<!-- #  -->
+<!-- #    logLik   Deviance        AIC        BIC       AICc    -->
+<!-- # -199.2067   398.4135   406.4135   412.5189   407.7928    -->
+<!-- #  -->
+<!-- # Variance Components: -->
+<!-- #  -->
+<!-- #                estim     sqrt  nlvls  fixed  factor  -->
+<!-- # sigma^2    1055.3246  32.4858     35     no      id  -->
+<!-- #  -->
+<!-- # outer factor: const (nlvls = 1) -->
+<!-- # inner term:   ~id   (nlvls = 35) -->
+<!-- #  -->
+<!-- #                 estim      sqrt  fixed  -->
+<!-- # tau^2      10046.6981  100.2332     no  -->
+<!-- # rho           67.9506               no  -->
+<!-- #  -->
+<!-- # Test for Heterogeneity: -->
+<!-- # Q(df = 34) = 191.4837, p-val < .0001 -->
+<!-- #  -->
+<!-- # Model Results: -->
+<!-- #  -->
+<!-- # estimate       se    zval    pval     ci.lb     ci.ub       -->
+<!-- # 192.7523  39.0265  4.9390  <.0001  116.2617  269.2429  ***  -->
+
+<!-- # Use the coordinates directly (Euclidean distance) -->
+<!-- ma_sp2_exp <- rma.mv(s1, vars1,  -->
+<!--              random = list( -->
+<!--                        ~ 1|id, -->
+<!--                        ~ 1|site, -->
+<!--                        ~ x_km + y_km | const),  -->
+<!--              struct = "SPEXP",  -->
+<!--              data = dat_maire2019, -->
+<!--              test = "t", -->
+<!--              method = "REML", -->
+<!--              sparse = TRUE, -->
+<!--              verbose = TRUE -->
+<!--              ) -->
+
+<!-- summary(ma_sp2_exp) -->
+<!-- # Multivariate Meta-Analysis Model (k = 35; method: REML) -->
+<!-- #  -->
+<!-- # logLik   Deviance        AIC        BIC       AICc    -->
+<!-- # -199.0469   398.0939   408.0939   415.7257   410.2367    -->
+<!-- #  -->
+<!-- # Variance Components: -->
+<!-- #    -->
+<!-- #   estim     sqrt  nlvls  fixed  factor  -->
+<!-- # sigma^2.1   819.5017  28.6269     35     no      id  -->
+<!-- # sigma^2.2  1653.5229  40.6635     11     no    site  -->
+<!-- #  -->
+<!-- # outer factor: const        (nlvls = 1) -->
+<!-- # inner term:   ~x_km + y_km (nlvls = 11) -->
+<!-- #  -->
+<!-- # estim     sqrt  fixed  -->
+<!-- # tau^2      8548.0233  92.4555     no  -->
+<!-- # rho          97.3090              no  -->
+<!-- #  -->
+<!-- # Test for Heterogeneity: -->
+<!-- #   Q(df = 34) = 191.4837, p-val < .0001 -->
+<!-- #  -->
+<!-- # Model Results: -->
+<!-- #    -->
+<!-- #   estimate       se    zval    pval     ci.lb     ci.ub       -->
+<!-- # 190.8255  40.9187  4.6635  <.0001  110.6263  271.0246  *** -->
+
+<!-- confint(ma_sp2_exp) -->
+<!-- # estimate  ci.lb     ci.ub  -->
+<!-- # sigma^2.1 819.5017 0.0000 4240.3900  -->
+<!-- # sigma.1    28.6269 0.0000   65.1183  -->
+<!-- #  -->
+<!-- # estimate  ci.lb      ci.ub  -->
+<!-- # sigma^2.2 1653.5229 0.0000 21698.5229  -->
+<!-- # sigma.2     40.6635 0.0000   147.3042  -->
+<!-- #  -->
+<!-- # estimate  ci.lb        ci.ub  -->
+<!-- # tau^2 8548.0233 0.0000 >854802.3263  -->
+<!-- # tau     92.4555 0.0000    >924.5552  -->
+<!-- #  -->
+<!-- # estimate   ci.lb     ci.ub  -->
+<!-- # rho  97.3090 <9.7309 >973.0899  -->
+
+<!-- ``` -->
+
+<!-- The outcome S1 is the Mann-Kendall trend statistic for the relative abundance of non-local species, with positive values indicating a monotonically increasing trend over time. We fitted an exponential spatial correlation structure (`SPEXP`) using Euclidean distances derived from site-level coordinates (used here as proxies for station positions), and included additional random intercepts for sampling station (id) and site to account for clustering beyond the spatial structure. -->
+
+<!-- The estimated overall mean trend was positive (intercept = 190.83, 95% CI [110.63, 271.02]), indicating that, on average across the 35 sampling stations, the relative abundance of non-local species increased over time. The variance components suggest substantial heterogeneity at multiple levels, with an id-level variance of $\sigma^2_{id}$ = 819.50 (SD = 28.63) and a site-level variance of $\sigma^2_{site}$ = 1653.52 (SD = 40.66). The fitted spatial component was also large ($\tau^2$ = 8548.02, SD = 92.46), implying considerable residual structure that can be represented as a spatially correlated process. The spatial range parameter was estimated as $\rho$ = 97.31 (in the same distance units used to construct the distances), but its confidence interval was extremely wide, indicating that the distance-decay scale is only weakly constrained by the data under this proxy-distance approximation. -->
+
+<!-- ```{r} -->
+
+<!-- ``` -->
+
+<!-- ##### brms -->
+
+<!-- ```{r} -->
+<!-- #| eval: false -->
+
+<!-- dat_maire2019$id <- as.character(dat_maire2019$id) -->
+<!-- vcv <- diag(dat_maire2019$vars1) -->
+
+<!-- rownames(vcv) <- colnames(vcv) <- dat_maire2019$id -->
+
+<!-- fit_sp_eg2_exp_brms <- bf(s1 ~ 1 + -->
+<!--                  # (1|site) + # this is  -->
+<!--                  (1|gr(id, cov = vcv)) + # this is m (sampling error) -->
+<!--                 gp(x_km, y_km,  -->
+<!--                    cov = "exponential", -->
+<!--                    scale = FALSE) -->
+<!--                 ) -->
+
+<!-- # generate default priors -->
+<!-- prior <- default_prior(fit_sp_eg2_exp_brms,  -->
+<!--                            data = dat_maire2019,  -->
+<!--                            data2 = list(vcv = vcv), -->
+<!--                            family = gaussian()) -->
+
+<!-- prior$prior[5] = "constant(1)" # meta-analysis assumes sampling variance is known so fixing this to 1 -->
+<!-- prior -->
+
+<!-- # fitting model -->
+<!-- sp_eg2_exp_brms <- brm( -->
+<!--   formula = fit_sp_eg2_exp_brms, -->
+<!--   data = dat_maire2019, -->
+<!--   data2 = list(vcv=vcv), -->
+<!--   chains = 4, -->
+<!--   threads = threading(threads_per_chain), -->
+<!--   iter = 25000, -->
+<!--   warmup = 12000, -->
+<!--   prior = prior, -->
+<!--   control = list(adapt_delta=0.99, max_treedepth=18) -->
+<!-- ) -->
+<!-- summary(sp_eg2_exp_brms) -->
+<!-- ``` -->
+
+<!-- ##### glmmTMB -->
+
+<!-- ```{r} -->
+<!-- #| eval: false -->
+
+<!-- dat_maire2019$id <- factor(dat_maire2019$id) -->
+<!-- VCV <- diag(dat_maire2019$vars1, nrow = nrow(dat_maire2019))  -->
+<!-- rownames(VCV)<- colnames(VCV)<- dat_maire2019$id -->
+<!-- VCV[1:5, 1:5] -->
+
+<!-- dat_maire2019$pos <- numFactor(dat_maire2019$x_km, dat_maire2019$y_km) -->
+
+<!-- tmb_sp2_exp <- glmmTMB( -->
+<!--   s1 ~ 1 + -->
+<!--     equalto(0 + id | const, VCV) +  -->
+<!--     (1 | site) + -->
+<!--     exp(pos + 0 | const),      -->
+<!--   data = dat_maire2019, -->
+<!--   REML = TRUE -->
+<!--   ) -->
 
 
-```
+<!-- head(confint(tmb_sp2_exp), 10) -->
+
+<!-- sigma(tmb_sp2_exp) # for id -->
+
+<!-- tmb_sp2_exp_varcor <- VarCorr(tmb_sp2_exp)$cond -->
+<!-- exp(tmb_sp2_exp$fit$par[[4]]) # for spatial range parameter rho -->
+
+
+<!-- ``` -->
 
 :::
 
