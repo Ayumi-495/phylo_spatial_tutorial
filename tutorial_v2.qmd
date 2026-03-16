@@ -43,20 +43,24 @@ execute:
 ---
 
 # Intended audience and scope of this tutorial
-This tutorial is intended for researchers who already have a basic understanding of meta-analysis and some familiarity with statistical modelling in `R`. 
-It is aimed at readers who are interested in phylogenetic and spatial meta-analytic modelling, given the increasing availability of large-scale datasets that include species-level traits and geographic information.
+
+This tutorial is intended for researchers who already have a basic understanding of meta-analysis and some familiarity with statistical modelling in `R`. It is aimed at readers who are interested in phylogenetic and spatial meta-analytic modelling, given the increasing availability of large-scale datasets that include species-level traits and geographic information.
 
 In this online tutorial, we demonstrate how to conduct phylogenetic and spatial meta-analyses using R packages such as `metafor`, `brms`, and `glmmTMB`. We provide step-by-step instructions on creating phylogenetic and spatial correlation matrices, fitting models with different correlation structures, and interpreting the results.
 
 # Setup
 
 ```{r}
+#| eval: false
 
 rm(list = ls())  # remove all objects from the workspace to start from a clean session and avoid using stale variables.
 gc()  # trigger garbage collection to free memory and reduce RAM usage after clearing the workspace.
+```
+
+```{r}
 
 # install.packages("pacman") # if not already installed
-pacman::p_load(brms, metafor, metadat, tidyverse, crayon, here, ape, patchwork, dplyr, tidyr, MCMCglmm, bayesplot, tidybayes, posterior, orchaRd,purrr, stringr, readr, magrittr, janitor, glmmTMB, rotl, sf)
+pacman::p_load(brms, metafor, metadat, tidyverse, crayon, here, ape, patchwork, dplyr, tidyr, MCMCglmm, bayesplot, tidybayes, posterior, orchaRd,purrr, stringr, readr, magrittr, janitor, glmmTMB, rotl, sf, gtools)
 ```
 
 Set up parallel processing for `brms` - please adjust according to your computer's capabilities.
@@ -709,12 +713,11 @@ This ensures that the phylogenetic random effect used in meta-analysis correspon
 
 ### 1. Moura et al. (2021)
 
-We use the dataset from Moura et al. (2021), which included 1828 effect sizes from 457 studies and 341 animal species. Each effect size is a Fisher's Z transformed correlation between for one species in one population and sampling period. The response variable how strongly mates resemble each other in body size across a very broad taxonomic and ecological range. The dataset and phylogenetic tree are available in the `metadat` package as `dat.moura2021`.
+We use the dataset from [Moura et al. (2021)](https://doi.org/10.1111/ele.13690), which included 1828 effect sizes from 457 studies and 341 animal species. Each effect size is a Fisher's Z transformed correlation between for one species in one population and sampling period. The response variable how strongly mates resemble each other in body size across a very broad taxonomic and ecological range. The dataset and phylogenetic tree are available in the `metadat` package as [`dat.moura2021`](https://wviechtb.github.io/metadat/reference/dat.moura2021.html).
 
 Before fitting hierarchical meta-analytic models, it is important to assess whether key grouping variables have sufficient replication to support the estimation of random effects. In particular, the identifiability of variance components depends on having an adequate number of levels for each random factor, as well as repeated observations within those levels.
 
 So, we begin by summarising the number of unique levels for all categorical variables in the dataset, with particular attention to variables commonly used as random effects in meta-analysis, such as study identity, species identity, and effect-size identity.
-
 
 ```{r}
 #| eval: false
@@ -780,12 +783,13 @@ A <- vcv(tree, corr = TRUE)
 
 ```
 
-
 #### Brownian motion (meta-analysis)
-The Brownian motion (BM) model assumes that traits evolve according to a random walk process along the branches of the phylogenetic tree. BM is default model for continuous trait evolution in comparative methods.
-In the model, the expected variance-covariance structure among species is directly proportional to their shared evolutionary history, as represented by the phylogenetic tree.
+
+The Brownian motion (BM) model assumes that traits evolve according to a random walk process along the branches of the phylogenetic tree. BM is default model for continuous trait evolution in comparative methods. In the model, the expected variance-covariance structure among species is directly proportional to their shared evolutionary history, as represented by the phylogenetic tree.
 
 ::: panel-tabset
+##### Models
+
 ##### metafor
 
 ```{r}
@@ -860,7 +864,7 @@ phylo_heritability
 # [1] 0.479239
 ```
 
-The overall estimate $\beta_0$ is 0.368 (95% CI \[0.113, 0.623\]) on the Fisher's Z scale. Back transforming to the Pearson's r, this corresponds to a correlation of roughly 0.35 - which indicates a positive correlation between mates in body size across species. On average, larger males tend to pair with larger females across species.
+The overall estimate $\beta_0$ is 0.368 (95% CI 0.113, 0.623) on the Fisher's Z scale. Back transforming to the Pearson's r, this corresponds to a correlation of roughly 0.35 - which indicates a positive correlation between mates in body size across species. On average, larger males tend to pair with larger females across species.
 
 The $I^2$ ($\approx$ 97.31%) indicate that there is high heterogeneity among studies, effect sizes, species, and phylogenetic relatedness. About 35.48% of the total variance can be attributed to phylogenetic relatedness among species, indicating a moderate phylogenetic signal in mate size correlation. Biologically, this means that different species tend to have different average levels of mate size correlation, and closely related species tend to have more similar levels of mate size correlation than distantly related species.
 
@@ -868,75 +872,7 @@ By partitioning species level variance into phylogenetic and non-phylogenetic co
 
 In other words, closely related species tend to have similar levels of size assortative mating, but nearly half of the variation is species specific and not explained by shared ancestry.
 
-**orchard plot and variance components**
-
-Visualising results often makes them much easier to understand than presenting them only in tables or in text. We want to visualise both the overall effect size estimate and the variance components from the random effects - but how to do this nicely?
-
-Traditionally, forest plots have bee used to report the pooled estimate and confidence intervals. However, forest plots does not clearly convey each study's contribution to the overall estimates (that is, the relative precision or inverse-variance weight of each effect size). The `orchaRd` package provides a nice alternative, the orchard plot, which visualises the overall effect size along with the precision of each effect size estimate.
-
-Although orchard plots provide an effective summary of model-based estimates, they are not designed to display variance-component decomposition. We therefore construct custom visualisations in `ggplot2` to present the pooled effect size alongside the estimated variance components.
-
-```{r}
-#| eval: false
-
-metafor_p1 <- orchaRd::orchard_plot(moura_BM_metafor1, 
-                           group = "study.id",
-                           xlab = "Effect size",
-                           angle = 45) + 
-  scale_x_discrete(labels = c("Overall effect")) +
-  scale_color_manual(values = "#CDAD00") +
-  scale_fill_manual(values = "#FFD700") + 
-  theme_classic()
-
-## random effect
-ci_var <- confint(moura_BM_metafor1, level = 0.95) 
-# estimate  ci.lb  ci.ub 
-# sigma^2.1   0.0192 0.0108 0.0325 
-# sigma.1     0.1384 0.1038 0.1802 
-# 
-# estimate  ci.lb  ci.ub 
-# sigma^2.2   0.0145 0.0121 0.0172 
-# sigma.2     0.1202 0.1099 0.1311 
-# 
-# estimate  ci.lb  ci.ub 
-# sigma^2.3   0.0557 0.0334 0.0788 
-# sigma.3     0.2359 0.1827 0.2807 
-# 
-# estimate  ci.lb  ci.ub 
-# sigma^2.4   0.0512 0.0179 0.1792 
-# sigma.4     0.2263 0.1336 0.4233 
-
-tbl <- tibble::as_tibble(ci_var, rownames = "term")
-
-label_map <- c("Effect_id", "Study_id", "Species", "Phylo")
-tbl_var <- tbl |>
-  filter(str_detect(term, "^sigma\\^2\\.")) |>
-  mutate(
-    idx   = as.integer(str_match(term, "\\.(\\d+)$")[,2]),
-    label = case_when(
-      idx == 1 ~ "Study_id",
-      idx == 2 ~ "Effect_id",
-      idx == 3 ~ "Species",
-      idx == 4 ~ "Phylo"
-    ),
-    label = factor(label, levels = label_map) 
-  )
-
-metafor_p2 <- ggplot(tbl_var, aes(x = label, y = estimate)) +
-  geom_point(size = 3.0, color = "#528B8B") +
-  geom_errorbar(aes(ymin = ci.lb, ymax = ci.ub), width = 0.25, color = "#528B8B") +
-  coord_flip() +
-  labs(x = NULL, y = "Variance 95% CI") +
-  # scale_y_continuous(breaks = seq(0, 10.0, 1), limits = c(0, 10.0)) + 
-  theme_classic(base_size = 12)
-
-metafor_eg1_1 <- metafor_p1 / metafor_p2
-metafor_eg1_1
-```
-
-![moura_metafor](figs/tutorial/metafor_moura.jpg){width="80%"}
-
-##### brms
+###### brms
 
 We show two ways of specifying sampling error in brms:
 
@@ -1110,8 +1046,244 @@ Nice - the outputs are very similar to the previous model using `se()`, as expec
 
 The small differences in the estimates arise because this model is fitted in a Bayesian framework.
 
+Let's calculate $I^2$ statistics to quantify the proportion of variance attributable to different sources of heterogeneity.
 
-**Visualising brms results** In `brms`, we can extract posterior samples for both fixed and random effects, and visualise them using `ggplot2`.
+```{r}
+#| eval: false
+
+fit <- phylo_eg1_brms  
+dat <- dat_moura2021
+v_harm <- 1 / mean(1/dat$vi, na.rm = TRUE)
+
+I2_total_harm  <- var_total_hetero / (var_total_hetero + v_harm)
+I2_effect_harm <- var_effect / (var_total_hetero + v_harm)
+I2_study_harm  <- var_study / (var_total_hetero + v_harm)
+I2_species_harm<- var_species / (var_total_hetero + v_harm)
+I2_phylo_harm  <- var_phylo / (var_total_hetero + v_harm)
+
+round(rbind(
+  total  = summ_I2(I2_total_harm),
+  effect = summ_I2(I2_effect_harm),
+  study = summ_I2(I2_study_harm),
+  species = summ_I2(I2_species_harm),
+  phylo = summ_I2(I2_phylo_harm)
+), 3)
+#         mean q2.5.2.5% q50.50% q97.5.97.5%
+# total   0.978     0.969   0.978       0.990
+# effect  0.090     0.043   0.091       0.134
+# study   0.129     0.048   0.123       0.247
+# species 0.330     0.115   0.333       0.530
+# phylo   0.429     0.178   0.414       0.759
+
+```
+
+###### glmmTMB
+
+`glmmTMB` is a popular package for fitting generalised linear mixed models. Unlike dedicated meta-analytic packages such as `metafor`, it does not allow to easily account for known sampling variances of effect sizes - so when we implement a meta-analysis in `glmmTMB`, we need explicitly specify the sampling error structure of the effect sizes.
+
+In practice, this require three steps:
+
+*1. Treating each effect size as a unique random-effect level*
+
+```{r}
+#| eval: false
+
+# random effects in glmmTMB are defined over factor levels. By converting the effect-size identifier into a factor, each effect size (i) is assigned its own random effect (e_i), which will repredsent its sampling error - this is what allows the model to attach the correlation variance (v_i) to each observation
+
+dat_moura2021$effect.size.id <- as.factor(dat_moura2021$effect.size.id)
+```
+
+In `glmmTMB`, grouping variables for random effects must be factors. By converting `effect_size_ID` to a factor, we ensure that each effect size is treated as a distinct level in the random-effects structure. This step is required for the model to correctly associate each observation with its corresponding sampling variance.
+
+*2. Specifying the random effect independent grouping structure*
+
+```{r}
+#| eval: false
+
+# the equalto() and propto() terms require a grouping variable, even when there is only one group. the dummy variable 'g' assigns all observations to single group, while the covariance structure is defined entirely by supplied matrices…
+dat_moura2021$g <- 1 
+
+```
+
+*3. Constructing a variance-covariance matrix (VCV) that contains the known sampling variances of each effect size*
+
+```{r}
+#| eval: false
+
+# this creates a variance-covariance matrix - diagonal elements are the known sampling variances of the effect sizes. The off-diagonal elements are zero, reflecting the usual assumption tnat effect sizes are independent. This matrix plays the same rule as V = vi in metafor
+
+VCV <- diag(dat_moura2021$vi, nrow = nrow(dat_moura2021)) 
+rownames(VCV)<- colnames(VCV)<- dat_moura2021$effect.size.id
+```
+
+We create a variance–covariance matrix whose diagonal elements are the known sampling variances of the effect sizes. Off-diagonal elements are set to zero, reflecting the assumption that effect sizes are independent. This mirrors the standard assumption made in most meta-analyses.
+
+The `equalto()` term in `glmmTMB` requires a grouping factor. The dummy variable `g` serves this purpose, which we set to a single level (one group), i.e. all observations are assigned to the same group. If the grouping factor had more than one level, each group would have a separate independent random-effect vector with the same variance-covariance parameters. For meta-analysis, this grouping factor should always have one level.
+
+For more details, you can also refer to this vignette: <https://cran.r-project.org/web/packages/glmmTMB/vignettes/covstruct.html>
+
+And the following supplementary material for fitting meta-analysis with `glmmTMB`: <https://coraliewilliams.github.io/equalto_sim_study/webpage.html>.
+
+```{r}
+#| eval: false
+
+# reorders the rows and columns of the phylogenetic covariance matrix so that species appear in a consistent alphabetical order, ensuring that the matrix aligns correctly with the species factor used in the model.
+A <- A[sort(rownames(A)), sort(rownames(A))]
+
+system.time(
+    phylo_eg1_tmb <- glmmTMB(yi ~ 1 +
+
+# the term equalto(0 + effect.size.id|g, VCV) specifies that the random effect associated with each effect size has a covariance structure defined by the matrix VCV. This effectively encodes the known sampling variances into the model
+                         equalto(0 + effect.size.id|g, VCV) + 
+                         (1|study.id) + 
+
+# the terms (1|species.id) and propto(0 + species.id.phy|g, A) model non-phylogenetic and phylogenetic species-level variation, respectively. The propto() term uses the phylogenetic covariance matrix A to capture shared evolutionary history among species
+                         (1|species.id) +
+                         propto(0 + species.id.phy|g, A), 
+                       data = dat_moura2021,
+                       REML = T)
+    )
+
+```
+
+That is it! You can also find more detailed instruction here: <https://cran.r-project.org/web/packages/glmmTMB/vignettes/covstruct.html> <https://coraliewilliams.github.io/equalto_sim_study/webpage.html>.
+
+Now, we want to know the model output. Although the fitted model is statistically equivalent to the models fitted `metafor` and `brms`, `glmmTMB` reports variance components in a different way, which can initially confusing…
+
+```{r}
+#| eval: false
+
+head(confint(phylo_eg1_tmb), 10)
+#                                                                           2.5 %    97.5 %   Estimate
+# (Intercept)                                                            0.1132610 0.6230707 0.3681658
+# Std.Dev.(Intercept)|study.id                                           0.1056462 0.1813458 0.1384142
+# Std.Dev.(Intercept)|species.id                                         0.1932854 0.2879763 0.2359271
+# Std.Dev.species.id.phyAcanthurus_leucosternon_ott388125|g.1            0.1293612 0.3959730 0.2263262
+# Std.Dev.species.id.phyAcanthurus_nigricans_ott467313|g.1               0.1293612 0.3959730 0.2263262
+# Std.Dev.species.id.phyAcanthurus_nigrofuscus_ott605289|g.1             0.1293612 0.3959730 0.2263262
+# Std.Dev.species.id.phyAchatina_fulica_ott997087|g.1                    0.1293612 0.3959730 0.2263262
+# Std.Dev.species.id.phyAegithalos_glaucogularis_vinaceus_ott5560982|g.1 0.1293612 0.3959730 0.2263262
+# Std.Dev.species.id.phyAethia_pusilla_ott855484|g.1                     0.1293612 0.3959730 0.2263262
+# Std.Dev.species.id.phyAgalychnis_callidryas_ott9483|g.1                0.1293612 0.3959730 0.2263262
+sigma(phylo_eg1_tmb)^2
+# [1] 0.01445014 # residual variance
+
+phylo_eg1_tmb_varcor <- VarCorr(phylo_eg1_tmb)$cond
+exp(phylo_eg1_tmb$fit$par)
+#   betadisp      theta      theta      theta 
+# 0.12020875 0.13841423 0.23592711 0.05122353 <- residual variance (sd), study.id (sd), species.id (sd), species.id.phy (variance?)
+
+```
+
+You can see the outputs both `summary()` and `confint()`. The `confint()` output reports standard deviations (SD) of random effects, not [variances]{.underline} - for example,
+
+```{r}
+#| eval: false
+
+(Intercept) -> overall mean
+Std.Dev.(Intercept) |study.id -> correspond to the square roots of study-level variance
+Std.Dev.(Intercept) |species.id -> correspond to the square roots of non-phylogenetic species-level variance
+```
+
+You see the output also includes many rows such as…
+
+```{r}
+#| eval: false
+
+Std.Dev.species.id.phyAcanthurus_leucosternon_ott388125|g.1
+Std.Dev.species.id.phyAcanthurus_nigricans_ott467313|g.1
+
+```
+
+do not represent separate variance parameters for each species. They are phylogenetic random effect! They are the conditional standard deviations of individual species’ phylogenetic random effects, which are all draws from the same multivariate normal distribution defined by the phylogenetic covariance matrix \mathbf{A} and a single scaling parameter. So, we should not be interpreted as species-specific variance components.
+
+To obtain the actual variance parameters, it is more reliable to inspect the internal parameter vector:
+
+```{r}
+#| eval: false
+
+exp(phylo_eg1_tmb$fit$par)
+# betadisp   -> residual SD
+# theta[1]   -> SD of study-level random effects
+# theta[2]   -> SD of non-phylogenetic species effects
+# theta[3]   -> Variance of phylogenetic effects
+```
+
+But be careful - the meaning of theta can be changed. It depends on what random effect you included in your model. The residual variance is reported by `sigma(model)^2`.
+
+#### Visualisations
+
+##### `metafor`
+
+Visualising results often makes them much easier to understand than presenting them only in tables or in text. We want to visualise both the overall effect size estimate and the variance components from the random effects - but how to do this nicely?
+
+Traditionally, forest plots have bee used to report the pooled estimate and confidence intervals. However, forest plots does not clearly convey each study's contribution to the overall estimates (that is, the relative precision or inverse-variance weight of each effect size). The `orchaRd` package provides a nice alternative, the orchard plot, which visualises the overall effect size along with the precision of each effect size estimate.
+
+Although orchard plots provide an effective summary of model-based estimates, they are not designed to display variance-component decomposition. We therefore construct custom visualisations in `ggplot2` to present the pooled effect size alongside the estimated variance components.
+
+```{r}
+#| eval: false
+
+metafor_p1 <- orchaRd::orchard_plot(moura_BM_metafor1, 
+                           group = "study.id",
+                           xlab = "Effect size",
+                           angle = 45) + 
+  scale_x_discrete(labels = c("Overall effect")) +
+  scale_color_manual(values = "#CDAD00") +
+  scale_fill_manual(values = "#FFD700") + 
+  theme_classic()
+
+## random effect
+ci_var <- confint(moura_BM_metafor1, level = 0.95) 
+# estimate  ci.lb  ci.ub 
+# sigma^2.1   0.0192 0.0108 0.0325 
+# sigma.1     0.1384 0.1038 0.1802 
+# 
+# estimate  ci.lb  ci.ub 
+# sigma^2.2   0.0145 0.0121 0.0172 
+# sigma.2     0.1202 0.1099 0.1311 
+# 
+# estimate  ci.lb  ci.ub 
+# sigma^2.3   0.0557 0.0334 0.0788 
+# sigma.3     0.2359 0.1827 0.2807 
+# 
+# estimate  ci.lb  ci.ub 
+# sigma^2.4   0.0512 0.0179 0.1792 
+# sigma.4     0.2263 0.1336 0.4233 
+
+tbl <- tibble::as_tibble(ci_var, rownames = "term")
+
+label_map <- c("Effect_id", "Study_id", "Species", "Phylo")
+tbl_var <- tbl |>
+  filter(str_detect(term, "^sigma\\^2\\.")) |>
+  mutate(
+    idx   = as.integer(str_match(term, "\\.(\\d+)$")[,2]),
+    label = case_when(
+      idx == 1 ~ "Study_id",
+      idx == 2 ~ "Effect_id",
+      idx == 3 ~ "Species",
+      idx == 4 ~ "Phylo"
+    ),
+    label = factor(label, levels = label_map) 
+  )
+
+metafor_p2 <- ggplot(tbl_var, aes(x = label, y = estimate)) +
+  geom_point(size = 3.0, color = "#528B8B") +
+  geom_errorbar(aes(ymin = ci.lb, ymax = ci.ub), width = 0.25, color = "#528B8B") +
+  coord_flip() +
+  labs(x = NULL, y = "Variance 95% CI") +
+  # scale_y_continuous(breaks = seq(0, 10.0, 1), limits = c(0, 10.0)) + 
+  theme_classic(base_size = 12)
+
+metafor_eg1_1 <- metafor_p1 / metafor_p2
+metafor_eg1_1
+```
+
+![moura_metafor](figs/tutorial/metafor_moura.jpg){width="80%"}
+
+##### `brms`
+
+In `brms`, we can extract posterior samples for both fixed and random effects, and visualise them using `ggplot2`.
 
 ```{r}
 #| eval: false
@@ -1179,182 +1351,10 @@ brms_p2 <- ggplot(random_effects_samples_brms, aes(x = .value, y = .variable)) +
 ```
 
 ![moura_brms](figs/tutorial/brms_moura.jpg){width="80%"}
-
-Looks fine?? - let's calculate $I^2$ statistics to quantify the proportion of variance attributable to different sources of heterogeneity.
-
-```{r}
-#| eval: false
-
-fit <- phylo_eg1_brms  
-dat <- dat_moura2021
-v_harm <- 1 / mean(1/dat$vi, na.rm = TRUE)
-
-I2_total_harm  <- var_total_hetero / (var_total_hetero + v_harm)
-I2_effect_harm <- var_effect / (var_total_hetero + v_harm)
-I2_study_harm  <- var_study / (var_total_hetero + v_harm)
-I2_species_harm<- var_species / (var_total_hetero + v_harm)
-I2_phylo_harm  <- var_phylo / (var_total_hetero + v_harm)
-
-round(rbind(
-  total  = summ_I2(I2_total_harm),
-  effect = summ_I2(I2_effect_harm),
-  study = summ_I2(I2_study_harm),
-  species = summ_I2(I2_species_harm),
-  phylo = summ_I2(I2_phylo_harm)
-), 3)
-#         mean q2.5.2.5% q50.50% q97.5.97.5%
-# total   0.978     0.969   0.978       0.990
-# effect  0.090     0.043   0.091       0.134
-# study   0.129     0.048   0.123       0.247
-# species 0.330     0.115   0.333       0.530
-# phylo   0.429     0.178   0.414       0.759
-
-```
-
-##### glmmTMB
-
-`glmmTMB` is a popular package for fitting generalised linear mixed models.
-Unlike dedicated meta-analytic packages such as `metafor`, it does not allow to easily account for known sampling variances of effect sizes - so when we implement a meta-analysis in `glmmTMB`, we need explicitly specify the sampling error structure of the effect sizes.
-
-In practice, this require three steps:
-
-*1. Treating each effect size as a unique random-effect level*
-
-```{r}
-#| eval: false
-
-# random effects in glmmTMB are defined over factor levels. By converting the effect-size identifier into a factor, each effect size (i) is assigned its own random effect (e_i), which will repredsent its sampling error - this is what allows the model to attach the correlation variance (v_i) to each observation
-
-dat_moura2021$effect.size.id <- as.factor(dat_moura2021$effect.size.id)
-```
-
-In `glmmTMB`, grouping variables for random effects must be factors.
-By converting `effect_size_ID` to a factor, we ensure that each effect size is treated as a distinct level in the random-effects structure.
-This step is required for the model to correctly associate each observation with its corresponding sampling variance.
-
-*2. Specifying the random effect independent grouping structure*
-
-```{r}
-#| eval: false
-
-# the equalto() and propto() terms require a grouping variable, even when there is only one group. the dummy variable 'g' assigns all observations to single group, while the covariance structure is defined entirely by supplied matrices…
-dat_moura2021$g <- 1 
-
-```
-
-*3. Constructing a variance-covariance matrix (VCV) that contains the known sampling variances of each effect size*
-
-```{r}
-#| eval: false
-
-# this creates a variance-covariance matrix - diagonal elements are the known sampling variances of the effect sizes. The off-diagonal elements are zero, reflecting the usual assumption tnat effect sizes are independent. This matrix plays the same rule as V = vi in metafor
-
-VCV <- diag(dat_moura2021$vi, nrow = nrow(dat_moura2021)) 
-rownames(VCV)<- colnames(VCV)<- dat_moura2021$effect.size.id
-```
-
-We create a variance–covariance matrix whose diagonal elements are the known sampling variances of the effect sizes.
-Off-diagonal elements are set to zero, reflecting the assumption that effect sizes are independent.
-This mirrors the standard assumption made in most meta-analyses.
-
-The `equalto()` term in `glmmTMB` requires a grouping factor.
-The dummy variable `g` serves this purpose, which we set to a single level (one group), i.e. all observations are assigned to the same group. If the grouping factor had more than one level, each group would have a separate independent random-effect vector with the same variance-covariance parameters. For meta-analysis, this grouping factor should always have one level.
-
-For more details, you can also refer to this vignette: <https://cran.r-project.org/web/packages/glmmTMB/vignettes/covstruct.html>
-
-And the following supplementary material for fitting meta-analysis with `glmmTMB`:
-<https://coraliewilliams.github.io/equalto_sim_study/webpage.html>.
-
-
-
-```{r}
-#| eval: false
-
-# reorders the rows and columns of the phylogenetic covariance matrix so that species appear in a consistent alphabetical order, ensuring that the matrix aligns correctly with the species factor used in the model.
-A <- A[sort(rownames(A)), sort(rownames(A))]
-
-system.time(
-    phylo_eg1_tmb <- glmmTMB(yi ~ 1 +
-
-# the term equalto(0 + effect.size.id|g, VCV) specifies that the random effect associated with each effect size has a covariance structure defined by the matrix VCV. This effectively encodes the known sampling variances into the model
-                         equalto(0 + effect.size.id|g, VCV) + 
-                         (1|study.id) + 
-
-# the terms (1|species.id) and propto(0 + species.id.phy|g, A) model non-phylogenetic and phylogenetic species-level variation, respectively. The propto() term uses the phylogenetic covariance matrix A to capture shared evolutionary history among species
-                         (1|species.id) +
-                         propto(0 + species.id.phy|g, A), 
-                       data = dat_moura2021,
-                       REML = T)
-    )
-
-```
-
-That is it! You can also find more detailed instruction here: 
-<https://cran.r-project.org/web/packages/glmmTMB/vignettes/covstruct.html>
-<https://coraliewilliams.github.io/equalto_sim_study/webpage.html>.
-
-Now, we want to know the model output. Although the fitted model is statistically equivalent to the models fitted `metafor` and `brms`, `glmmTMB` reports variance components in a different way, which can initially confusing…
-
-```{r}
-#| eval: false
-
-head(confint(phylo_eg1_tmb), 10)
-#                                                                           2.5 %    97.5 %   Estimate
-# (Intercept)                                                            0.1132610 0.6230707 0.3681658
-# Std.Dev.(Intercept)|study.id                                           0.1056462 0.1813458 0.1384142
-# Std.Dev.(Intercept)|species.id                                         0.1932854 0.2879763 0.2359271
-# Std.Dev.species.id.phyAcanthurus_leucosternon_ott388125|g.1            0.1293612 0.3959730 0.2263262
-# Std.Dev.species.id.phyAcanthurus_nigricans_ott467313|g.1               0.1293612 0.3959730 0.2263262
-# Std.Dev.species.id.phyAcanthurus_nigrofuscus_ott605289|g.1             0.1293612 0.3959730 0.2263262
-# Std.Dev.species.id.phyAchatina_fulica_ott997087|g.1                    0.1293612 0.3959730 0.2263262
-# Std.Dev.species.id.phyAegithalos_glaucogularis_vinaceus_ott5560982|g.1 0.1293612 0.3959730 0.2263262
-# Std.Dev.species.id.phyAethia_pusilla_ott855484|g.1                     0.1293612 0.3959730 0.2263262
-# Std.Dev.species.id.phyAgalychnis_callidryas_ott9483|g.1                0.1293612 0.3959730 0.2263262
-sigma(phylo_eg1_tmb)^2
-# [1] 0.01445014 # residual variance
-
-phylo_eg1_tmb_varcor <- VarCorr(phylo_eg1_tmb)$cond
-exp(phylo_eg1_tmb$fit$par)
-#   betadisp      theta      theta      theta 
-# 0.12020875 0.13841423 0.23592711 0.05122353 <- residual variance (sd), study.id (sd), species.id (sd), species.id.phy (variance?)
-
-```
-
-You can see the outputs both `summary()` and `confint()`. The `confint()` output reports standard deviations (SD) of random effects, not [variances]{.underline} - for example,
-```{r}
-#| eval: false
-
-(Intercept) -> overall mean
-Std.Dev.(Intercept) |study.id -> correspond to the square roots of study-level variance
-Std.Dev.(Intercept) |species.id -> correspond to the square roots of non-phylogenetic species-level variance
-```
-
-You see the output also includes many rows such as…  
-```{r}
-#| eval: false
-
-Std.Dev.species.id.phyAcanthurus_leucosternon_ott388125|g.1
-Std.Dev.species.id.phyAcanthurus_nigricans_ott467313|g.1
-
-```
-
-do not represent separate variance parameters for each species. They are phylogenetic random effect!
-They are the conditional standard deviations of individual species’ phylogenetic random effects, which are all draws from the same multivariate normal distribution defined by the phylogenetic covariance matrix \mathbf{A} and a single scaling parameter. So, we should not be interpreted as species-specific variance components.
-
-To obtain the actual variance parameters, it is more reliable to inspect the internal parameter vector:
-```{r}
-#| eval: false
-
-exp(phylo_eg1_tmb$fit$par)
-# betadisp   -> residual SD
-# theta[1]   -> SD of study-level random effects
-# theta[2]   -> SD of non-phylogenetic species effects
-# theta[3]   -> Variance of phylogenetic effects
-```
-But be careful - the meaning of theta can be changed. It depends on what random effect you included in your model. The residual variance is reported by `sigma(model)^2`.
 :::
 
 #### Brownian motion (meta-regression)
+
 We next extend the meta-analysis model by including the categorical moderator (`temporally.pooled`: whether effect sizes were calculated from data pooled across multiple sampling periods). This allows us to examine whether methodological features of the primary studies help explain variation in effect sizes, over and above the hierarchical and phylogenetic structure already accounted for.
 
 ::: panel-tabset
@@ -1405,7 +1405,8 @@ summary(phylo_eg1.1_meta_BM)
 # temporally.pooledyes    0.0395  0.0221  1.7871  0.0739  -0.0038  0.0829   . 
 
 ```
- The estimated effect of temporal pooling is positive but statistically uncertain ($\beta_{\text{temporally.pooled}_{\text{yes}}}$ = 0.04, 95%CI = [-0.004, 0.08]). This suggests weak evidence that temporally pooled data may be associated with slightly stronger mate size correlations, although the confidence interval overlaps zero.
+
+The estimated effect of temporal pooling is positive but statistically uncertain ($\beta_{\text{temporally.pooled}_{\text{yes}}}$ = 0.04, 95%CI = \[-0.004, 0.08\]). This suggests weak evidence that temporally pooled data may be associated with slightly stronger mate size correlations, although the confidence interval overlaps zero.
 
 Importantly, this inference is made while accounting for non-independence among effect sizes arising from shared studies, repeated measurements, species identity, and phylogenetic relatedness. Thus, the moderator effect reflects systematic differences associated with temporal pooling rather than confounding hierarchical structure.
 
@@ -1519,7 +1520,6 @@ summary(phylo_eg1_brms_mr)
 
 ```
 
-
 ##### glmmTMB
 
 ```{r}
@@ -1570,6 +1570,7 @@ exp(phylo_eg1.1_tmb$fit$par)
 :::
 
 #### Ornstein-Uhlenbeck
+
 We fit a phylogenetic meta-analysis model using an Ornstein-Uhlenbeck (OU) model of trait evolution, which exploits the mathematical equivalence between the OU process and an exponential covariance function. In this model, the correlation between species decreases exponentially with increasing phylogenetic distance, controlled by the parameter $\alpha$ (the strength of selection towards an optimal trait value). A higher alpha indicates a stronger pull towards the optimum, leading to faster decay of correlation with distance.
 
 Under an OU model, the phylogenetic covariance between species i and j is given by:
@@ -1582,10 +1583,10 @@ $$Cov_{ij} = \sigma^2 \exp(-\rho d_{ij}),$$
 
 so the $\alpha$ and $\rho$ play the identical statistical role.
 
-Let $\mathbf{A}$ be the Brownian motion phylogenetic correlation matrix derived from the tree. Its entries represent phylogenetic similarity based on shared branch length.
-We define a distance matrix $\mathbf{D}$ as:$$D = I - A,$$ where $\mathbf{I}$ is the identity matrix. The entries of $\mathbf{D}$ represent phylogenetic distance between species, scaled between 0 and 1. Closely related species have small distances, while distantly related species have larger distances. This matrix is used as the spatial distance input for fitting the spatial exponential correlation model.
+Let $\mathbf{A}$ be the Brownian motion phylogenetic correlation matrix derived from the tree. Its entries represent phylogenetic similarity based on shared branch length. We define a distance matrix $\mathbf{D}$ as:$$D = I - A,$$ where $\mathbf{I}$ is the identity matrix. The entries of $\mathbf{D}$ represent phylogenetic distance between species, scaled between 0 and 1. Closely related species have small distances, while distantly related species have larger distances. This matrix is used as the spatial distance input for fitting the spatial exponential correlation model.
 
 We first fit a spatial exponential meta-analysis model using $\mathbf{D}$ as distance matrix:
+
 ```{r}
 #| eval: false
 
@@ -1644,10 +1645,10 @@ summary(phy_ou_meta)
 # ---
 # Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 ```
+
 This estimates the exponential decay parameter $\rho$. We can then convert this to the OU alpha parameter using the relationship $\alpha = 1/\rho$. Statistically, this step estimates how rapidly phylogenetic similarity decays with evolutionary distance.
 
-Using the estimated $\rho$, we can construct the OU phylogenetic correlation matrix as:$$A_{OU} = \exp(-\alpha D).$$ 
-This matrix is the theoretical phylogenetic correlation structure implied by the OU process.
+Using the estimated $\rho$, we can construct the OU phylogenetic correlation matrix as:$$A_{OU} = \exp(-\alpha D).$$ This matrix is the theoretical phylogenetic correlation structure implied by the OU process.
 
 We then refit the meta-analysis, supplying the OU covariance matrix as a fixed phylogenetic random effect:
 
@@ -1699,13 +1700,13 @@ summary(phy_ou_meta1)
 
 This two-stage procedure works as follows: First, it estimates the OU correlation decay parameter from the data. Second, it uses this parameter to incorporate biologically interpretable phylogenetic covariance into the final meta-analysis. This approach enables OU phylogenetic models to be fitted within the standard multilevel meta-analytic framework implemented in `metafor`.
 
-The OU phylogenetic model fitted the data substantially better than the BM model (AIC = 330.76 vs 345.35), indicating strong support for rapid decay of phylogenetic correlation. Although the pooled effect size was similar under both models, the uncertainty around this estimate was much smaller under OU, as reflected by its narrower confidence interval and smaller standard error. Under the OU model, species-level variation was captured almost entirely by the OU-structured phylogenetic term, whereas the BM model split this variation between phylogenetic and non phylogenetic species effects. Together, these results suggest that species differences are largely idiosyncratic, with little evidence for strong phylogenetic clustering beyond very shallow evolutionary scales. 
+The OU phylogenetic model fitted the data substantially better than the BM model (AIC = 330.76 vs 345.35), indicating strong support for rapid decay of phylogenetic correlation. Although the pooled effect size was similar under both models, the uncertainty around this estimate was much smaller under OU, as reflected by its narrower confidence interval and smaller standard error. Under the OU model, species-level variation was captured almost entirely by the OU-structured phylogenetic term, whereas the BM model split this variation between phylogenetic and non phylogenetic species effects. Together, these results suggest that species differences are largely idiosyncratic, with little evidence for strong phylogenetic clustering beyond very shallow evolutionary scales.
 
 Note: We cannot fit the OU model using `brms` or `glmmTMB`.
 
 ### 2. Lim et al. (2014)
-https://wviechtb.github.io/metadat/reference/dat.lim2014.html
-<!-- remove study from random effect -->
+
+We used the `o_o_unadj` dataset from [`dat.lim2014`](https://wviechtb.github.io/metadat/reference/dat.lim2014.html) in the `metadat` package. The dataset come from [Lim et al. (2014)](https://doi.org/10.1111/evo.12446). It includes correlation coefficients (`ri`) and sample sizes (`ni`) describing the association between offspring size and offspring number, unadjusted for maternal size, across multiple species, along with a matching phylogenetic tree. We converted ri to Fisher’s z effect sizes (`yi`) and derived the corresponding sampling variances (`vi`) prior to model fitting. The resulting example dataset contained 170 effect sizes and 120 species. <!-- remove "study" from random effect -->
 
 ```{r}
 #| eval: false
@@ -1734,12 +1735,13 @@ head(dat_lim2014)# check the dataset
 
 ```
 
-
 #### Brownian motion (meta-analysis)
 
 ::: panel-tabset
+##### Models
 
-##### metafor
+###### metafor
+
 ```{r}
 #| eval: false
 
@@ -1780,9 +1782,7 @@ summary(Lim_BM)
 
 ```
 
-
-
-##### brms
+###### brms
 
 ```{r}
 #| eval: false
@@ -1906,31 +1906,100 @@ summary(phylo_eg2_brms_ma_2)
 # sigma     0.00      0.00     0.00     0.00   NA       NA       NA
 ```
 
-##### glmmTMB
+###### glmmTMB
+
 ```{r}
 #| eval: false
 
-HubDen_vcv <- vcv.phylo(HubDen_tree_pruned, corr = TRUE)
-HubDen_vcv <- HubDen_vcv[sort(rownames(HubDen_vcv)), sort(rownames(HubDen_vcv))]
-vcv <- diag(HubDen_2004$var, nrow = nrow(HubDen_2004))
+dat_lim2014$id <- factor(
+  as.character(dat_lim2014$id),
+  levels = mixedsort(unique(as.character(dat_lim2014$id)))
+)
+class(dat_lim2014$id)
 
-rownames(vcv)<- colnames(vcv)<- HubDen_2004$effect_id
+A <- A[sort(rownames(A)), sort(rownames(A))]
+vcv <- diag(dat_lim2014$vi, nrow = nrow(dat_lim2014))
 
-HubDen_2004$effect_id <- as.factor(HubDen_2004$effect_id)
+rownames(vcv)<- colnames(vcv)<- dat_lim2014$id
 
-HubDen_2004$g <- 1
+dat_lim2014$g <- 1
 
 system.time(
-    phylo_eg2_tmb <- glmmTMB(d ~ 1 +
-                         equalto(0 + effect_id|g, vcv) +
-                         (1|Reference) +
-                         propto(0 + Phylo|g, HubDen_vcv),
-                       data = HubDen_2004,
-                       REML = T)
-    )
+  phylo_eg2_tmb <- glmmTMB(yi ~ 1 +
+                             equalto(0 + id|g, vcv) +
+                             (1| species) +
+                             propto(0 + phy|g, A),
+                           data = dat_lim2014,
+                           REML = T)
+)
 
 summary(phylo_eg2_tmb)
+# Family: gaussian  ( identity )
+# Formula:          yi ~ 1 + equalto(0 + id | g, vcv) + (1 | species) + propto(0 +      phy | g, A)
+# Data: dat_lim2014
+# 
+#       AIC       BIC    logLik -2*log(L)  df.resid 
+#     199.8     212.3     -95.9     191.8       166 
+# 
+# Random effects:
+# 
+# Conditional model:
+#  Groups   Name                         Variance  Std.Dev. Corr                                   
+#  g        id1                          0.0555556 0.23570                                         
+#           id2                          0.0909091 0.30151  0.00                                   
+#           id3                          0.0555556 0.23570  0.00 0.00                              
+#           id4                          0.0909091 0.30151  0.00 0.00 0.00                         
+#           id5                          0.0140845 0.11868  0.00 0.00 0.00 0.00                    
+#           id6                          0.0098039 0.09901  0.00 0.00 0.00 0.00 0.00               
+#           id7                          0.0099010 0.09950  0.00 0.00 0.00 0.00 0.00 0.00          
+#           id8                          0.0217391 0.14744  0.00 0.00 0.00 0.00 0.00 0.00 0.00     
+#           id9                          0.0031746 0.05634  0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00
+#           id10                         0.0208333 0.14434  0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00
+#           ...                          ...       ...      ...  ...  ...  ...  ...  ...  ...  ... 
+#  species  (Intercept)                  0.0777194 0.27878                                         
+#  g.1      phyAlectoris_rufa            0.0533848 0.23105                                         
+#           phyAlytes_obstetricans       0.0533848 0.23105  0.20                                   
+#           phyAnas_platyrhynchos        0.0533848 0.23105  0.92 0.20                              
+#           phyAnguis_fragilis           0.0533848 0.23105  0.32 0.20 0.32                         
+#           phyApalone_ferox             0.0533848 0.23105  0.65 0.20 0.65 0.32                    
+#           phyApalone_mutica            0.0533848 0.23105  0.65 0.20 0.65 0.32 0.99               
+#           phyAphrastura_spinicauda     0.0533848 0.23105  0.77 0.20 0.77 0.32 0.65 0.65          
+#           phyAraschnia_levana          0.0533848 0.23105  0.00 0.00 0.00 0.00 0.00 0.00 0.00     
+#           phyAustropotamobius_italicus 0.0533848 0.23105  0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.93
+#           phyAythya_ferina             0.0533848 0.23105  0.92 0.20 0.99 0.32 0.65 0.65 0.77 0.00
+#           ...                          ...       ...      ...  ...  ...  ...  ...  ...  ...  ... 
+#  Residual                              0.0629794 0.25096                    
+#          
+#  0.00    
+#  ...  ...
+#          
+#  0.00    
+#  ...  ...
+#          
+# Number of obs: 170, groups:  g, 1; species, 120
+# 
+# Dispersion estimate for gaussian family (sigma^2): 0.063 
+# 
+# Conditional model:
+#             Estimate Std. Error z value Pr(>|z|)
+# (Intercept)  -0.1308     0.1220  -1.072    0.284
+
+
+phylo_eg2_tmb$fit$par
+#  betadisp     theta     theta 
+# -1.382474 -1.277325 -2.930230 
 ```
+
+Across `metafor`, `brms`, and `glmmTMB`, this example yielded highly consistent results. The estimated overall mean effect was approximately $\beta_0$ = -0.13 in all three packages, and heterogeneity was partitioned similarly across effect-size, phylogenetic, and species-level components. Small differences in the reported variance terms arise from package-specific parametrisations, particularly in the way sampling variance is represented.
+
+Biologically, the negative mean effect suggests a tendency for larger offspring size to be associated with fewer offspring, consistent with the classic offspring size-number trade-off. At the same time, the non-zero phylogenetic and species-level variance components indicate that the strength of this relationship differs among taxa and is only partly explained by shared evolutionary history.
+
+##### Brawnian motion (meta-regression)
+TBU
+
+##### Figures
+TBU
+
 :::
 
 # Spatial meta-analysis
@@ -1986,7 +2055,7 @@ Then we transform the coordinates to a planar CRS (EPSG:3857) suitable for dista
 
 ### Step 2. Compute pairwise *Euclidean* distance matrix
 
-Once each effct size has projected coordinates in kilometres, we can compute the Euclidean distance between all pairs of sampling locations. These distances form the basis of spatial correlation structures in spatial meta-analysis.
+Once each effect size has projected coordinates in kilometres, we can compute the Euclidean distance between all pairs of sampling locations. These distances form the basis of spatial correlation structures in spatial meta-analysis.
 
 ```{r}
 #| eval: false
@@ -2023,20 +2092,16 @@ Spatial meta analytic models assume that residual similarity between effect size
 
 ## Examples
 
-::: panel-tabset
 ### 1. Grau-Andrés et al. (2024)
-The dataset comes from Grau-Andrés et al. (2024) and contains 2361 effect sizes of Hedges' d. Each effect size is associated with a geographic location given by latitude and longitude. These locations represent sampling sites at which the original biological measurement were collected.
 
-The original data provide latitude and longitude in degrees. We first project these coordinates to a planar CRS and convert them to kilometres. We then compute the pairwise Euclidean distance matrix among all effect sizes based on their projected coordinates. 
+The dataset comes from [Grau-Andrés et al. (2024)](https://doi.org/10.1111/geb.13858) and contains 2361 effect sizes of Hedges' d. Each effect size is associated with a geographic location given by latitude and longitude. These locations represent sampling sites at which the original biological measurement were collected.
+
+The original data provide latitude and longitude in degrees. We first project these coordinates to a planar CRS and convert them to kilometres. We then compute the pairwise Euclidean distance matrix among all effect sizes based on their projected coordinates.
 
 ```{r}
 #| eval: false
 
 dat_Roger <- read.csv(here("data", "examples", "Roger_etal_2024", "Roger_etal_2024.csv"))
-head(dat_Roger)
-
-dat_Roger$const <- 1 # add constant for spatial models
-dat_Roger$effect_id <- seq_len(nrow(dat_Roger))
 
 dat_Roger <- dat_Roger |>
   filter(!is.na(longitude))
@@ -2053,6 +2118,14 @@ dat_Roger$y_km <- coords_m[,2] / 1000
 coords_km <- cbind(dat_Roger$x_km, dat_Roger$y_km)
 dist_matrix_euclid2 <- as.matrix(dist(coords_km))
 
+
+dat_Roger$effect_id <- seq_len(nrow(dat_Roger))
+
+dat_Roger$effect_id <- factor(
+  as.character(dat_Roger$effect_id),
+  levels = mixedsort(unique(as.character(dat_Roger$effect_id)))
+  )
+
 # row and column names
 rownames(dist_matrix_euclid2) <- dat_Roger$effect_id
 colnames(dist_matrix_euclid2) <- dat_Roger$effect_id
@@ -2064,13 +2137,23 @@ dat_Roger <- dat_Roger |>
 names(dat_Roger)
 ```
 
-
+::: panel-tabset
 #### Exponential kernel
 
-The exponential kernel assumes that similarity between two effect sizes decreases smoothly as the geographic distance between their location increases. Therefore, nearby sites are strongly correlated, while distant sites are effectively independent. 
+The exponential kernel assumes that similarity between two effect sizes decreases smoothly as the geographic distance between their location increases. Therefore, nearby sites are strongly correlated, while distant sites are effectively independent.
 
 ##### metafor
-In `metafor`, the spatial process is introduced by specifying `struct = "SPEXP"` together with  either (1) via a supplied distance matrix using `random = ~ effect_id|const` and `dist = list(…)`, or (2) via coordinates using `random = ~ x_km + y_km|const`, in which case distances are computed internally.
+
+In `metafor`, the spatial process is introduced by specifying `struct = "SPEXP"` together with either (1) via a supplied distance matrix using `random = ~ effect_id|const` and `dist = list(…)`, or (2) via coordinates using `random = ~ x_km + y_km|const`, in which case distances are computed internally.
+
+```{r}
+#| eval: false
+ 
+dat_Roger$const <- 1 # add constant for spatial models
+
+```
+
+Here, `const` is a dummy outer factor set to a constant (all ones) so that all effects are allowed to be spatially correlated. If outer were set to a grouping variable (e.g., study ID), spatial correlation would only be modelled within groups (block-diagonal structure). The spatial random field is parametrised by (1) $\tau^2$, the marginal variance of the spatial process (its amplitude), and (2) $\rho$, the range/scale parameter controlling how quickly correlation decays with distance under the chosen kernel (we show `SPEXP`- exponential kernel and also `SPGAU`- Gaussian process version later). Let $d_{ij}$ be the distance between locations $i$ and $j$. The spatial random effects satisfy $\mathrm{Cov}(u_i,u_j)=\tau^2\,\mathrm{cor}_{\rho}(d_{ij})$, where $\mathrm{cor}_{\rho}(d_{ij})$ is the kernel-specific correlation function that decreases with distance, and $\rho$ controls the rate of decay. Distances can be supplied directly via `text{dist=}` or computed internally from coordinates `(~ x_km + y_km | const)`; both are equivalent when they imply the same Euclidean distance matrix.
 
 ```{r}
 #| eval: false
@@ -2169,9 +2252,11 @@ confint(sp_eg1_exp_mf)
 # rho   0.1744 <0.0174 0.8572 
 
 ```
+
 Both `metafor` models (use distance matrix or coordinates directly or Euclidean distance) returned the same output.
 
 ##### brms
+
 In `brms`, the covariance function of the Gaussian process is controlled by the `cov` argument. To use an exponential kernel, set `cov = "exponential"`. Note that scale determines whether the input predictors are rescaled (by default, to make the maximum Euclidean distance equal to 1). If the coordinates are already expressed in meaningful units such as kilometres, and you want the GP length-scale parameter to be interpretable in those units, it is advisable to use s`cale = FALSE`.
 
 ```{r}
@@ -2247,7 +2332,9 @@ summary(sp_eg1_exp_brms)
 ```
 
 ##### glmmTMB
+
 In `glmmTMB`, the exponential spatial field is specified by `exp(pos + 0 | const)`, where `pos` is an index constructed from the spatial coordinates.
+
 ```{r}
 #| eval: false
 
@@ -2346,255 +2433,602 @@ It is important to note that `metafor` and `brms` use different parametrisations
 
 Because range parameters are often weakly identified, their uncertainty is typically large. Interpretation should focus more on whether spatial structure exists and on its approximate scale rather than on the exact numeric estimate.
 
-In all three implementations, sampling error is treated as known through the reported variances of Hedges’ d.
-In `brms` and `glmmTMB`, this is enforced explicitly by supplying the variance covariance matrix of the effect sizes, which ensures that within effect size uncertainty is not re estimated. In `metafor`, the same role is played by the `vi` argument.
+In all three implementations, sampling error is treated as known through the reported variances of Hedges’ d. In `brms` and `glmmTMB`, this is enforced explicitly by supplying the variance covariance matrix of the effect sizes, which ensures that within effect size uncertainty is not re estimated. In `metafor`, the same role is played by the `vi` argument.
+
+All three models, `metafor`, `brms`, and `glmmTMB`, give a consistent output. There is strong spatial autocorrelation in effect sizes. Nearby locations tend to show much more similar Hedges’ d values than would be expected from sampling error alone. This means that a substantial fraction of the apparent heterogeneity in the dataset is structured geographically rather than being random noise. The estimated spatial range is large, on the order of hundreds of kilometres, indicating that the spatial pattern is driven by broad scale geographic gradients rather than by very local site effects. Although the exact range is uncertain, all models agree that spatial dependence extends over long distances. After accounting for this spatial structure, the overall mean effect ($\beta_0$) remains negative, around −0.3 to −0.4 across all three packges. This shows that the global negative effect is not an artefact of spatial clustering.
+
+##### Figures
+
+TBU
+
+#### Squared-exponential kernel (Gaussian process)
+
+##### metafor
+
+```{r}
+#| eval: False
+
+sp_eg1_gau_mf <- rma.mv(d_Hedges, var_Hedges, 
+                         random = list(
+                          ~ 1|effect_id,
+                          ~ x_km + y_km |const
+                          ), 
+                        struct = "SPGAU", 
+                        data = dat_Roger,
+                        sparse = TRUE,
+                        verbose = TRUE,
+                        method = "REML",
+                        test = "t"
+                        )
+
+summary(sp_eg1_gau_mf)
+# Multivariate Meta-Analysis Model (k = 2361; method: REML)
+# 
+# logLik    Deviance         AIC         BIC        AICc   
+# -4034.4772   8068.9544   8076.9544   8100.0201   8076.9714   
+# 
+# Variance Components:
+#   
+#   estim    sqrt  nlvls  fixed     factor 
+# sigma^2    0.7934  0.8907   2361     no  effect_id 
+# 
+# outer factor: const        (nlvls = 1)
+# inner term:   ~x_km + y_km (nlvls = 383)
+# 
+# estim    sqrt  fixed 
+# tau^2      1.2308  1.1094     no 
+# rho        0.0377             no 
+# 
+# Test for Heterogeneity:
+#   Q(df = 2360) = 21273.5149, p-val < .0001
+# 
+# Model Results:
+#   
+#   estimate      se     tval    df    pval    ci.lb    ci.ub      
+# -0.3340  0.0642  -5.2036  2360  <.0001  -0.4599  -0.2082  *** 
+```
+
+##### brms
+
+- *model is running * -
+
+```{r}
+#| eval: False
+
+dat_Roger$effect_id <- as.character(dat_Roger$effect_id)
+vcv <- diag(dat_Roger$var_Hedges)
+
+rownames(vcv) <- colnames(vcv) <- dat_Roger$effect_id
+
+fit_sp_eg1_gau_brms <- bf(d_Hedges ~ 1 +
+                            # (1|site_id) + # this is site-level random effect
+                            (1|gr(effect_id, cov = vcv)) + # this is m (sampling error)
+                            gp(x_km, y_km, 
+                               cov = "exp_quad",
+                               scale = FALSE)
+)
+
+# generate default priors
+prior <- default_prior(fit_sp_eg1_gau_brms, 
+                       data = dat_Roger, 
+                       data2 = list(vcv = vcv),
+                       family = gaussian())
+prior$prior[5] = "constant(1)" # meta-analysis assumes sampling variance is known so fixing this to 1
+prior
+
+# fitting model
+sp_eg1_gau_brms <- brm(
+  formula = fit_sp_eg1_gau_brms,
+  data = dat_Roger,
+  data2 = list(vcv=vcv),
+  chains = 2,
+  iter = 6000,
+  warmup = 3000,
+  prior = prior,
+  control = list(adapt_delta = 0.95, max_treedepth = 15)
+)
+summary(sp_eg1_gau_brms)
+
+```
+
+##### glmmTMB
+
+```{r}
+#| eval: False
+
+VCV <- diag(dat_Roger$var_Hedges, nrow = nrow(dat_Roger)) 
+rownames(VCV)<- colnames(VCV)<- dat_Roger$effect_id
+VCV[1:5, 1:5]
+
+dat_Roger$pos <- numFactor(dat_Roger$x_km, dat_Roger$y_km)
+
+system.time(
+  sp_eg1_gau_tmb <- glmmTMB(d_Hedges ~ 1 
+                            + equalto(0+effect_id|const, VCV)
+                            # + (1|site_id)
+                            + exp(pos+0|const),
+                            data = dat_Roger, 
+                            REML=TRUE)
+)
+#   user  system elapsed 
+# 45.570   1.369  47.530 
+
+summary(sp_eg1_gau_tmb)　
+# Family: gaussian  ( identity )
+# Formula:          d_Hedges ~ 1 + equalto(0 + effect_id | const, VCV) + exp(pos +      0 | const)
+# Data: dat_Roger
+# 
+# AIC       BIC    logLik -2*log(L)  df.resid 
+# 8084.7    8107.8   -4038.4    8076.7      2357 
+# 
+# Random effects:
+#   
+#   Conditional model:
+#   Groups   Name                                     Variance  Std.Dev. Corr                    
+# const    effect_id1                                0.202208 0.44968                          
+# effect_id2                                0.166676 0.40826  0.00                    
+# effect_id3                                0.225770 0.47515  0.00 0.00               
+# effect_id4                                0.197994 0.44497  0.00 0.00 0.00          
+# effect_id5                                3.676968 1.91754  0.00 0.00 0.00 0.00     
+# effect_id6                                0.315616 0.56180  0.00 0.00 0.00 0.00 0.00
+# effect_id7                                0.305460 0.55268  0.00 0.00 0.00 0.00 0.00
+# effect_id8                                0.313426 0.55984  0.00 0.00 0.00 0.00 0.00
+# effect_id9                                0.413540 0.64307  0.00 0.00 0.00 0.00 0.00
+# effect_id10                               0.325726 0.57072  0.00 0.00 0.00 0.00 0.00
+# ...                                      ...       ...      ...  ...  ...  ...  ... 
+# const.1  pos(16262.6644099893,-5204.51951303405)   1.232997 1.11040                          
+# pos(16280.4755285163,-5116.14629455727)   1.232997 1.11040  0.00                    
+# pos(-7965.96086752978,-5019.4733863405)   1.232997 1.11040  0.00 0.00               
+# pos(-7959.34359171906,-4693.06364429579)  1.232997 1.11040  0.00 0.00 0.00          
+# pos(-7960.45678662699,-4691.63535918108)  1.232997 1.11040  0.00 0.00 0.00 0.00     
+# pos(-7096.61753807119,-4685.92422115392)  1.232997 1.11040  0.00 0.00 0.00 0.00 0.00
+# pos(-7992.73943895704,-4607.717759142)    1.232997 1.11040  0.00 0.00 0.00 0.00 0.00
+# pos(-7903.68384632242,-4579.4258128701)   1.232997 1.11040  0.00 0.00 0.00 0.00 0.00
+# pos(16237.0609271069,-4578.0132445546)    1.232997 1.11040  0.00 0.00 0.00 0.00 0.00
+# pos(16304.594788628,-4572.36489569299)    1.232997 1.11040  0.00 0.00 0.00 0.00 0.00
+# ...                                      ...       ...      ...  ...  ...  ...  ... 
+# Residual                                           0.793492 0.89078                          
+# 
+# 0.00                   
+# 0.00 0.00              
+# 0.00 0.00 0.00         
+# 0.00 0.00 0.00 0.00    
+# ...  ...  ...  ...  ...
+# 
+# 0.00                   
+# 0.00 0.00              
+# 0.00 0.00 0.00         
+# 0.00 0.00 0.00 0.00    
+# ...  ...  ...  ...  ...
+# 
+# Number of obs: 2361, groups:  const, 1
+# 
+# Dispersion estimate for gaussian family (sigma^2): 0.793 
+# 
+# Conditional model:
+#   Estimate Std. Error z value Pr(>|z|)    
+# (Intercept) -0.33493    0.06444  -5.197 2.02e-07 ***
+
+sp_eg1_gau_tmb$fit$par
+# betadisp      theta      theta 
+# -0.1156562  0.1047238 -1.7463695 
+
+confint(sp_eg1_gau_tmb)
+```
+
+#### Figures
+
+TBU
+:::
+
+### 2. Scholer et al. (2021)
+
+We used the dataset accompanying [Scholer et al. (2020)](https://doi.org/10.1111/ele.13573), which was assembled for a meta-analysis of global avian survival across species and latitude. The dataset includes 949 estimates from 204 studies, with each row containing a survival estimate, its standard error, study and species identifiers, geographic coordinates, and several climatic and life-history variables. In our analyses, `logit_survival` was treated as the effect size (`yi`), and the known sampling variance was calculated as `vi` = `se^2`.
+
+```{r}
+#| eval: false
+
+dat_scholer2020 <- read.csv(here("data","Scholer_2020", "Scholer_2020.csv"))
+
+head(dat_scholer2020)
+# logit_survival -> yi, 1/se -> vi^2
+
+dat_scholer2020 <- dat_scholer2020 |> 
+  mutate(vi = se^2)
+
+dat_scholer2020$const <- 1 # add constant for spatial models
+dat_scholer2020$effect_id <- seq_len(nrow(dat_scholer2020))
+
+coords2 <- cbind(dat_scholer2020$long, dat_scholer2020$lat)
+
+# project to a planar coordinate system and convert to kilometers
+dat_sf2 <- st_as_sf(dat_scholer2020, coords = c("long", "lat"), crs = 4326)
+dat_sf2_proj <- st_transform(dat_sf2, crs = 3857)
+
+coords_m <- st_coordinates(dat_sf2_proj)
+dat_scholer2020$x_km <- coords_m[,1] / 1000
+dat_scholer2020$y_km <- coords_m[,2] / 1000
+
+coords_km <- cbind(dat_scholer2020$x_km, dat_scholer2020$y_km)
+dist_matrix_euclid2 <- as.matrix(dist(coords_km))
+
+# row and column names
+rownames(dist_matrix_euclid2) <- dat_scholer2020$effect_id
+colnames(dist_matrix_euclid2) <- dat_scholer2020$effect_id
+
+dat_scholer2020 <- dat_scholer2020 |>
+  group_by(lat, long) |>
+  mutate(site_id = cur_group_id()) |>
+  ungroup()
+names(dat_scholer2020)
+dat_scholer2020 <- dat_scholer2020 |>
+  mutate(site_id = as.factor(site_id),
+         effect_id = as.factor(effect_id))
+nrow(dat_scholer2020)
+# [1] 949
+
+cat_vars <- dat_scholer2020 |>
+  dplyr::select(where( ~ is.factor(.x) || is.character(.x)))
+
+n_levels <- cat_vars |> 
+  dplyr::summarise(across(
+    everything(),
+    ~ dplyr::n_distinct(.x)
+  )) |> 
+  tidyr::pivot_longer(
+    cols = everything(),
+    names_to = "variable",
+    values_to = "n_levels"
+  )
+
+n_levels
+# A tibble: 15 × 2
+# variable     n_levels
+# <chr>           <int>
+# 1 ref               205
+# 2 order              15
+# 3 species           636
+# 4 common            636
+# 5 tip_label         625
+# 6 migration           2
+# 7 sitename          207
+# 8 country            46
+# 9 hemisphere          2
+# 10 passerine           2
+# 11 realm               2
+# 12 study_type          4
+# 13 auk_used            2
+# 14 geomean_used        9
+# 15 effect_id         949
+# 16 site_id           454
+```
+
+It looks multiple sampling locations and effect sizes per studies…
+
+```{r}
+#| eval: false
+
+site_coords <- dat_scholer2020 |>
+  distinct(site_id, x_km, y_km) |>
+  arrange(site_id)
+
+coords_site <- as.matrix(site_coords[, c("x_km", "y_km")])
+dist_site <- as.matrix(dist(coords_site))
+
+rownames(dist_site) <- as.character(site_coords$site_id)
+colnames(dist_site) <- as.character(site_coords$site_id)
+dist_site
+
+dat_scholer2020$site_id <- as.character(dat_scholer2020$site_id)
+
+```
+
+::: panel-tabset
+#### Exponential kernel
+
+We initially included `site_id` as a random effect, but the model yielded a zero estimate for it. As a result, we removed it from the following models.
+
+##### metafor
+
+```{r}
+#| eval: false
+
+sp_exp_metafor_eg2 <- rma.mv(
+  yi = logit_survival,
+  V  = vi,                      
+  random = list(
+    ~ 1 | effect_id,          
+    ~ 1 | ref,                   
+    ~ site_id | const           
+  ),
+  struct = "SPEXP",
+  data = dat_scholer2020,
+  dist = list(site = dist_site), 
+  method = "REML",
+  test = "t",
+  sparse = TRUE,
+  verbose = TRUE
+)
+
+summary(sp_exp_metafor_eg2)
+# Multivariate Meta-Analysis Model (k = 949; method: REML)
+# 
+# Variance Components:
+# 
+#             estim    sqrt  nlvls  fixed     factor 
+# sigma^2.1  0.2255  0.4749    949     no  effect_id 
+# sigma^2.2  0.4471  0.6687    205     no        ref 
+# 
+# outer factor: const    (nlvls = 1)
+# inner term:   ~site_id (nlvls = 454)
+# 
+#               estim    sqrt  fixed 
+# tau^2        0.0207  0.1438     no 
+# rho        737.8164             no 
+# 
+# Test for Heterogeneity:
+# Q(df = 948) = 974007.4599, p-val < .0001
+# 
+# Model Results:
+# 
+# estimate      se     tval   df    pval   ci.lb   ci.ub      
+#   0.6540  0.0614  10.6455  948  <.0001  0.5334  0.7746  *** 
+
+confint(ma_sp2_exp)
+#           estimate  ci.lb  ci.ub 
+# sigma^2.1   0.2255 0.2025 0.2519 
+# sigma.1     0.4749 0.4500 0.5019 
+# 
+#           estimate  ci.lb  ci.ub 
+# sigma^2.2   0.4471 0.3308 0.5947 
+# sigma.2     0.6687 0.5751 0.7712 
+# 
+#       estimate  ci.lb    ci.ub 
+# tau^2   0.0207 0.0000 >10.0000 
+# tau     0.1438 0.0000  >3.1623 
+# 
+#     estimate    ci.lb      ci.ub 
+# rho 737.8164 <73.7816 >7378.1637 
+
+```
+
+##### brms
+
+```{r}
+#| eval: false
+dat_scholer2020$ref_id <- as.integer(factor(dat_scholer2020$ref))
+dat_scholer2020$effect_id <- as.character(dat_scholer2020$effect_id)
+vcv <- diag(dat_scholer2020$vi)
+
+rownames(vcv) <- colnames(vcv) <- dat_scholer2020$effect_id
+
+fit_gp_brms <- bf(logit_survival ~ 1 +
+                    (1|ref_id) + # this is site-level random effect
+                    (1|gr(effect_id, cov = vcv)) + # this is m (sampling error)
+                    gp(x_km, y_km, 
+                       cov = "exponential",
+                       scale = FALSE)
+)
+
+# generate default priors
+prior <- default_prior(fit_gp_brms, 
+                       data = dat_scholer2020, 
+                       data2 = list(vcv = vcv),
+                       family = gaussian())
+prior$prior[5] = "constant(1)" # meta-analysis assumes sampling variance is known so fixing this to 1
+prior
+
+sp_exp_brms_eg2 <- brm(
+        formula = fit_gp_brms,
+        data = dat_scholer2020,
+        data2 = list(vcv = vcv),
+        prior = prior,
+        iter = 6000, 
+        warmup = 3000,  
+        chains = num_chains,
+        backend = "cmdstanr",
+        threads = threading(threads_per_chain), 
+        control = list(adapt_delta = 0.95, max_treedepth = 15)
+        )
+
+summary(sp_exp_brms_eg2)
+# Family: gaussian 
+#   Links: mu = identity 
+# Formula: logit_survival ~ 1 + (1 | ref_id) + (1 | gr(effect_id, cov = vcv)) + gp(x_km, y_km, cov = "exponential", scale = FALSE) 
+#    Data: dat_scholer2020 (Number of observations: 949) 
+#   Draws: 2 chains, each with iter = 6000; warmup = 3000; thin = 1;
+#          total post-warmup draws = 6000
+# 
+# Gaussian Process Hyperparameters:
+#                    Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# sdgp(gpx_kmy_km)       0.18      0.09     0.02     0.39 1.00      588      998
+# lscale(gpx_kmy_km)  4062.02  11170.84   495.01 21405.11 1.00     1562     2126
+# 
+# Multilevel Hyperparameters:
+# ~effect_id (Number of levels: 949) 
+#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# sd(Intercept)     1.00      0.00     1.00     1.00   NA       NA       NA
+# 
+# ~ref_id (Number of levels: 205) 
+#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# sd(Intercept)     0.67      0.05     0.57     0.77 1.00     1520     2637
+# 
+# Regression Coefficients:
+#           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# Intercept     0.64      0.10     0.45     0.82 1.00     1854     2469
+# 
+# Further Distributional Parameters:
+#       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# sigma     0.48      0.01     0.45     0.50 1.00     3887     4592
+# 
+# Draws were sampled using sample(hmc). For each parameter, Bulk_ESS
+# and Tail_ESS are effective sample size measures, and Rhat is the potential
+# scale reduction factor on split chains (at convergence, Rhat = 1).
+```
+
+##### glmmTMB
+
+TBU
+
+```{r}
+#| eval: false
 
 
-All three models, `metafor`, `brms`, and `glmmTMB`, give a consistent output.
-There is strong spatial autocorrelation in effect sizes. Nearby locations tend to show much more similar Hedges’ d values than would be expected from sampling error alone. This means that a substantial fraction of the apparent heterogeneity in the dataset is structured geographically rather than being random noise.
-The estimated spatial range is large, on the order of hundreds of kilometres, indicating that the spatial pattern is driven by broad scale geographic gradients rather than by very local site effects. Although the exact range is uncertain, all models agree that spatial dependence extends over long distances.
-After accounting for this spatial structure, the overall mean effect ($\beta_0$) remains negative, around −0.3 to −0.4 across all three packges. This shows that the global negative effect is not an artefact of spatial clustering.
+```
 
-### TBU
-<!-- ### 2. Maire et al. (2019) <TBU> -->
-<!-- We use a dataset from the `metadat` package as our second illustrative example. In the original study, spatial correlations among sampling stations were modelled using station-level coordinates along river networks. However, precise latitude and longitude information for individual stations is not available in the published dataset; only the locations of study sites can be geo-referenced. We therefore used site-level coordinates as proxies for station-level positions. Although this approximation allows us to compare the implementation of spatial meta-analytic models across `metafor`, `brms`, and `glmmTMB`, the resulting estimates are not directly comparable to those reported by Maire et al. (2019), where station-level spatial random effects were explicitly modelled. -->
+The `metafor` and `brms` implementations produced very similar substantive results. In both models, the estimated intercept was about 0.65, with broadly overlapping uncertainty intervals. Among-study heterogeneity was also highly consistent across packages: `metafor` estimated a study-level variance of 0.45, while `brms` estimated standard deviation as 0.68 (var = 0.462). At the effect-size level, `metafor` estimated a variance of 0.23. In the analogous `brms` model, the residual standard deviation (`sigma`) was 0.48, giving a closely comparable estimate of effect-size-level variation.
 
-<!-- ```{r} -->
-<!-- #| eval: false -->
+The spatial term was smaller in magnitude, with `metafor` estimating $\tau^2$ \approx 0.021 and `brms` estimating `sdgp` at about 0.18 (sdgp\^2 = 0.032). However, the spatial range parameter was very imprecisely estimated in both implementations, suggesting limited information about the exact distance scale of spatial autocorrelation.
 
-<!-- dat <- dat.maire2019$dat -->
-<!-- dmat <- dat.maire2019$dmat -->
-<!-- dmat[1:35,1:35] -->
+This implies that average adult survival was positive on the logit scale, while also varying appreciably among studies and locations. The spatial component suggests that geographically proximate populations may show somewhat similar survival values, although the exact scale of that dependence is not estimated very precisely in this example.
 
-<!-- sites <- tribble( -->
-<!--   ~site_id, ~site_name,   ~lat,    ~lon, -->
-<!--   "site1",  "Belleville",  47.5,    2.65, -->
-<!--   "site2",  "Bugey",       45.8,    5.27, -->
-<!--   "site3",  "Chinon",      47.2,    0.18, -->
-<!--   "site4",  "Chooz",       50.1,    4.80, -->
-<!--   "site5",  "Civaux",      46.4,    0.65, -->
-<!--   "site6",  "Cruas",       44.6,    4.76, -->
-<!--   "site7",  "Dampierre",   47.7,    2.51, -->
-<!--   "site8",  "Nogent",      48.5,    3.52, -->
-<!--   "site9",  "St Alban",    45.3,    4.75, -->
-<!--   "site10", "St Laurent",  47.7,    2.53, -->
-<!--   "site11", "Tricastin",   44.3,    4.73 -->
-<!-- ) -->
+#### Squared-exponential kernel (gaussian process)
 
+##### metafor
 
-<!-- dat_maire2019 <- dat |> -->
-<!--   left_join(sites, by = c("site" = "site_id")) |>  -->
-<!--   mutate(id = row_number()) -->
+```{r}
+#| eval: false
 
-<!-- dat_maire2019$const <- 1 # add constant for spatial models -->
+sp_gau_metafor_eg2 <- rma.mv(
+  yi = logit_survival,
+  V  = vi,                      
+  random = list(
+    ~ 1 | effect_id,          
+    ~ 1 | ref,                   
+    ~ site_id | const           
+  ),
+  struct = "SPGAU",
+  data = dat_scholer2020,
+  dist = list(site = dist_site), 
+  method = "REML",
+  test = "t",
+  sparse = TRUE,
+  verbose = TRUE
+)
 
-<!-- # project to a planar coordinate system and convert to kilometres -->
-<!-- dat_sf <- st_as_sf(dat_maire2019, coords = c("lon", "lat"), crs = 4326) -->
-<!-- dat_sf_proj <- st_transform(dat_sf, crs = 3857) -->
+summary(sp_gau_metafor_eg2)
+# Multivariate Meta-Analysis Model (k = 949; method: REML)
+# 
+#    logLik   Deviance        AIC        BIC       AICc   
+# -824.5113  1649.0225  1659.0225  1683.2943  1659.0862   
+# 
+# Variance Components:
+# 
+#             estim    sqrt  nlvls  fixed     factor 
+# sigma^2.1  0.2297  0.4793    949     no  effect_id 
+# sigma^2.2  0.4578  0.6766    205     no        ref 
+# 
+# outer factor: const    (nlvls = 1)
+# inner term:   ~site_id (nlvls = 454)
+# 
+#                estim    sqrt  fixed 
+# tau^2         0.0202  0.1420     no 
+# rho        4713.8765             no 
+# 
+# Test for Heterogeneity:
+# Q(df = 948) = 974007.4599, p-val < .0001
+# 
+# Model Results:
+# 
+# estimate      se    tval   df    pval   ci.lb   ci.ub      
+#   0.6466  0.0830  7.7876  948  <.0001  0.4837  0.8096  *** 
 
-<!-- coords_m <- st_coordinates(dat_sf_proj) -->
-<!-- dat_maire2019$x_km <- coords_m[,1] / 1000 -->
-<!-- dat_maire2019$y_km <- coords_m[,2] / 1000 -->
+confint(sp_gau_metafor_eg2)
+#           estimate  ci.lb  ci.ub 
+# sigma^2.1   0.2297 0.2069 0.2559 
+# sigma.1     0.4793 0.4548 0.5059 
+# 
+#           estimate  ci.lb  ci.ub 
+# sigma^2.2   0.4578 0.3435 0.6054 
+# sigma.2     0.6766 0.5861 0.7781 
+# 
+#       estimate  ci.lb    ci.ub 
+# tau^2   0.0202 0.0000 >10.0000 
+# tau     0.1420 0.0000  >3.1623 
+# 
+#      estimate     ci.lb       ci.ub 
+# rho 4713.8765 <471.3877 >47138.7654 
+```
 
-<!-- coords_km <- cbind(dat_maire2019$x_km, dat_maire2019$y_km) -->
-<!-- dist_matrix_euclid <- as.matrix(dist(coords_km)) -->
+##### brms
 
-<!-- # row and column names -->
-<!-- rownames(dist_matrix_euclid) <- dat_maire2019$id -->
-<!-- colnames(dist_matrix_euclid) <- dat_maire2019$id -->
+```{r}
+#| eval: false
 
-<!-- head(dat_maire2019) -->
-<!-- ``` -->
+fit_gp_brms <- bf(logit_survival ~ 1 +
+                    (1|ref) + # this is site-level random effect
+                    (1|gr(effect_id, cov = vcv)) + # this is m (sampling error)
+                    gp(x_km, y_km, 
+                       cov = "exp_quad",
+                       scale = FALSE)
+)
 
-<!-- #### Exponential kernel -->
-<!-- The models estimate the overall mean Mann Kendall trend statistic for non-local species (s1), while accounting for (1) clustering of stations within sites and (2) residual spatial correlation that decays with distance under an exponential kernel (`SPEXP`). The intercept is positive and statistically different from zero, indicating an overall increasing temporal trend in the relative abundance of non-local species. However, in our implementation spatial distances are approximated using site-level coordinates rather than station positions along the river network, so the estimated spatial range parameter should be interpreted as illustrative of the modelling approach rather than directly comparable to Maire et al. (2019). -->
+# generate default priors
+prior <- default_prior(fit_gp_brms, 
+                       data = dat_scholer2020, 
+                       data2 = list(vcv = vcv),
+                       family = gaussian())
+prior$prior[5] = "constant(1)" # meta-analysis assumes sampling variance is known so fixing this to 1
+prior
 
-<!-- ##### metafor -->
+sp_gau_brms_eg2 <- brm(
+  formula = fit_gp_brms,
+  data = dat_scholer2020,
+  data2 = list(vcv = vcv),
+  prior = prior,
+  iter = 8000, 
+  warmup = 4000,  
+  chains = num_chains,
+  backend = "cmdstanr",
+  threads = threading(threads_per_chain), 
+  control = list(adapt_delta = 0.95, max_treedepth = 15)
+)
 
-<!-- ```{r} -->
-<!-- #| eval: false -->
+summary(sp_gau_brms_eg2)
+#  Family: gaussian 
+#   Links: mu = identity 
+# Formula: logit_survival ~ 1 + (1 | ref) + (1 | gr(effect_id, cov = vcv)) + gp(x_km, y_km, cov = "exp_quad", scale = FALSE) 
+#    Data: dat_scholer2020 (Number of observations: 949) 
+#   Draws: 2 chains, each with iter = 8000; warmup = 4000; thin = 1;
+#          total post-warmup draws = 8000
+# 
+# Gaussian Process Hyperparameters:
+#                    Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# sdgp(gpx_kmy_km)       0.16      0.11     0.02     0.42 1.00      836      969
+# lscale(gpx_kmy_km)  3465.74  13257.32   365.32 19298.85 1.00      242      525
+# 
+# Multilevel Hyperparameters:
+# ~effect_id (Number of levels: 949) 
+#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# sd(Intercept)     1.00      0.00     1.00     1.00   NA       NA       NA
+# 
+# ~ref (Number of levels: 205) 
+#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# sd(Intercept)     0.68      0.05     0.58     0.78 1.00     2069     3664
+# 
+# Regression Coefficients:
+#           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# Intercept     0.65      0.10     0.47     0.82 1.00     2347     1774
+# 
+# Further Distributional Parameters:
+#       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+# sigma     0.48      0.01     0.45     0.51 1.00     4263     5271
+# 
+# Draws were sampled using sample(hmc). For each parameter, Bulk_ESS
+# and Tail_ESS are effective sample size measures, and Rhat is the potential
+# scale reduction factor on split chains (at convergence, Rhat = 1).
 
-<!-- # Use distance matrix -->
-<!-- ma_sp2_exp0 <- rma.mv(s1, vars1,  -->
-<!--                  random = list( -->
-<!--                    ~ 1|id,  -->
-<!--                    ~ id|const -->
-<!--                  ),  -->
-<!--                  struct = "SPEXP",  -->
-<!--                  data = dat_maire2019, -->
-<!--                  dist = list(Site = dist_matrix_euclid), -->
-<!--                  test = "t", -->
-<!--                  method = "REML", -->
-<!--                  sparse = TRUE, -->
-<!--                  verbose = TRUE) -->
+```
 
-<!-- summary(ma_sp2_exp0) -->
-<!-- # Multivariate Meta-Analysis Model (k = 35; method: REML) -->
-<!-- #  -->
-<!-- #    logLik   Deviance        AIC        BIC       AICc    -->
-<!-- # -199.2067   398.4135   406.4135   412.5189   407.7928    -->
-<!-- #  -->
-<!-- # Variance Components: -->
-<!-- #  -->
-<!-- #                estim     sqrt  nlvls  fixed  factor  -->
-<!-- # sigma^2    1055.3246  32.4858     35     no      id  -->
-<!-- #  -->
-<!-- # outer factor: const (nlvls = 1) -->
-<!-- # inner term:   ~id   (nlvls = 35) -->
-<!-- #  -->
-<!-- #                 estim      sqrt  fixed  -->
-<!-- # tau^2      10046.6981  100.2332     no  -->
-<!-- # rho           67.9506               no  -->
-<!-- #  -->
-<!-- # Test for Heterogeneity: -->
-<!-- # Q(df = 34) = 191.4837, p-val < .0001 -->
-<!-- #  -->
-<!-- # Model Results: -->
-<!-- #  -->
-<!-- # estimate       se    zval    pval     ci.lb     ci.ub       -->
-<!-- # 192.7523  39.0265  4.9390  <.0001  116.2617  269.2429  ***  -->
+##### glmmTMB
 
-<!-- # Use the coordinates directly (Euclidean distance) -->
-<!-- ma_sp2_exp <- rma.mv(s1, vars1,  -->
-<!--              random = list( -->
-<!--                        ~ 1|id, -->
-<!--                        ~ 1|site, -->
-<!--                        ~ x_km + y_km | const),  -->
-<!--              struct = "SPEXP",  -->
-<!--              data = dat_maire2019, -->
-<!--              test = "t", -->
-<!--              method = "REML", -->
-<!--              sparse = TRUE, -->
-<!--              verbose = TRUE -->
-<!--              ) -->
+TBU
 
-<!-- summary(ma_sp2_exp) -->
-<!-- # Multivariate Meta-Analysis Model (k = 35; method: REML) -->
-<!-- #  -->
-<!-- # logLik   Deviance        AIC        BIC       AICc    -->
-<!-- # -199.0469   398.0939   408.0939   415.7257   410.2367    -->
-<!-- #  -->
-<!-- # Variance Components: -->
-<!-- #    -->
-<!-- #   estim     sqrt  nlvls  fixed  factor  -->
-<!-- # sigma^2.1   819.5017  28.6269     35     no      id  -->
-<!-- # sigma^2.2  1653.5229  40.6635     11     no    site  -->
-<!-- #  -->
-<!-- # outer factor: const        (nlvls = 1) -->
-<!-- # inner term:   ~x_km + y_km (nlvls = 11) -->
-<!-- #  -->
-<!-- # estim     sqrt  fixed  -->
-<!-- # tau^2      8548.0233  92.4555     no  -->
-<!-- # rho          97.3090              no  -->
-<!-- #  -->
-<!-- # Test for Heterogeneity: -->
-<!-- #   Q(df = 34) = 191.4837, p-val < .0001 -->
-<!-- #  -->
-<!-- # Model Results: -->
-<!-- #    -->
-<!-- #   estimate       se    zval    pval     ci.lb     ci.ub       -->
-<!-- # 190.8255  40.9187  4.6635  <.0001  110.6263  271.0246  *** -->
+The Gaussian-process kernel gave us the identical results to exponential kernel model except for `rho` and `lscale`. The `metafor` and `brms` implementations gave very similar substantive results. In both models, the estimated intercept was about 0.65, with broadly overlapping 95% CI and CrI. Variation among individual effect sizes was estimated at approximately 0.48 on the standard deviation scale, and between-study heterogeneity was also nearly identical across packages at about 0.68. The spatial term was smaller in magnitude, with `metafor` estimating \tau \approx 0.14 and `brms` estimating the Gaussian process standard deviation at about 0.16 (sdgp\^2 = 0.026). However, the distance-scale parameter of spatial correlation remained weakly identified, with wide uncertainty in both implementations.
 
-<!-- confint(ma_sp2_exp) -->
-<!-- # estimate  ci.lb     ci.ub  -->
-<!-- # sigma^2.1 819.5017 0.0000 4240.3900  -->
-<!-- # sigma.1    28.6269 0.0000   65.1183  -->
-<!-- #  -->
-<!-- # estimate  ci.lb      ci.ub  -->
-<!-- # sigma^2.2 1653.5229 0.0000 21698.5229  -->
-<!-- # sigma.2     40.6635 0.0000   147.3042  -->
-<!-- #  -->
-<!-- # estimate  ci.lb        ci.ub  -->
-<!-- # tau^2 8548.0233 0.0000 >854802.3263  -->
-<!-- # tau     92.4555 0.0000    >924.5552  -->
-<!-- #  -->
-<!-- # estimate   ci.lb     ci.ub  -->
-<!-- # rho  97.3090 <9.7309 >973.0899  -->
+#### Figures
 
-<!-- ``` -->
-
-<!-- The outcome S1 is the Mann-Kendall trend statistic for the relative abundance of non-local species, with positive values indicating a monotonically increasing trend over time. We fitted an exponential spatial correlation structure (`SPEXP`) using Euclidean distances derived from site-level coordinates (used here as proxies for station positions), and included additional random intercepts for sampling station (id) and site to account for clustering beyond the spatial structure. -->
-
-<!-- The estimated overall mean trend was positive (intercept = 190.83, 95% CI [110.63, 271.02]), indicating that, on average across the 35 sampling stations, the relative abundance of non-local species increased over time. The variance components suggest substantial heterogeneity at multiple levels, with an id-level variance of $\sigma^2_{id}$ = 819.50 (SD = 28.63) and a site-level variance of $\sigma^2_{site}$ = 1653.52 (SD = 40.66). The fitted spatial component was also large ($\tau^2$ = 8548.02, SD = 92.46), implying considerable residual structure that can be represented as a spatially correlated process. The spatial range parameter was estimated as $\rho$ = 97.31 (in the same distance units used to construct the distances), but its confidence interval was extremely wide, indicating that the distance-decay scale is only weakly constrained by the data under this proxy-distance approximation. -->
-
-<!-- ```{r} -->
-
-<!-- ``` -->
-
-<!-- ##### brms -->
-
-<!-- ```{r} -->
-<!-- #| eval: false -->
-
-<!-- dat_maire2019$id <- as.character(dat_maire2019$id) -->
-<!-- vcv <- diag(dat_maire2019$vars1) -->
-
-<!-- rownames(vcv) <- colnames(vcv) <- dat_maire2019$id -->
-
-<!-- fit_sp_eg2_exp_brms <- bf(s1 ~ 1 + -->
-<!--                  # (1|site) + # this is  -->
-<!--                  (1|gr(id, cov = vcv)) + # this is m (sampling error) -->
-<!--                 gp(x_km, y_km,  -->
-<!--                    cov = "exponential", -->
-<!--                    scale = FALSE) -->
-<!--                 ) -->
-
-<!-- # generate default priors -->
-<!-- prior <- default_prior(fit_sp_eg2_exp_brms,  -->
-<!--                            data = dat_maire2019,  -->
-<!--                            data2 = list(vcv = vcv), -->
-<!--                            family = gaussian()) -->
-
-<!-- prior$prior[5] = "constant(1)" # meta-analysis assumes sampling variance is known so fixing this to 1 -->
-<!-- prior -->
-
-<!-- # fitting model -->
-<!-- sp_eg2_exp_brms <- brm( -->
-<!--   formula = fit_sp_eg2_exp_brms, -->
-<!--   data = dat_maire2019, -->
-<!--   data2 = list(vcv=vcv), -->
-<!--   chains = 4, -->
-<!--   threads = threading(threads_per_chain), -->
-<!--   iter = 25000, -->
-<!--   warmup = 12000, -->
-<!--   prior = prior, -->
-<!--   control = list(adapt_delta=0.99, max_treedepth=18) -->
-<!-- ) -->
-<!-- summary(sp_eg2_exp_brms) -->
-<!-- ``` -->
-
-<!-- ##### glmmTMB -->
-
-<!-- ```{r} -->
-<!-- #| eval: false -->
-
-<!-- dat_maire2019$id <- factor(dat_maire2019$id) -->
-<!-- VCV <- diag(dat_maire2019$vars1, nrow = nrow(dat_maire2019))  -->
-<!-- rownames(VCV)<- colnames(VCV)<- dat_maire2019$id -->
-<!-- VCV[1:5, 1:5] -->
-
-<!-- dat_maire2019$pos <- numFactor(dat_maire2019$x_km, dat_maire2019$y_km) -->
-
-<!-- tmb_sp2_exp <- glmmTMB( -->
-<!--   s1 ~ 1 + -->
-<!--     equalto(0 + id | const, VCV) +  -->
-<!--     (1 | site) + -->
-<!--     exp(pos + 0 | const),      -->
-<!--   data = dat_maire2019, -->
-<!--   REML = TRUE -->
-<!--   ) -->
-
-
-<!-- head(confint(tmb_sp2_exp), 10) -->
-
-<!-- sigma(tmb_sp2_exp) # for id -->
-
-<!-- tmb_sp2_exp_varcor <- VarCorr(tmb_sp2_exp)$cond -->
-<!-- exp(tmb_sp2_exp$fit$par[[4]]) # for spatial range parameter rho -->
-
-
-<!-- ``` -->
-
+TBU
 :::
 
 # Software and package versions
@@ -2607,9 +3041,10 @@ sessionInfo()
 ```
 
 # References
--  Lim, J. N., Senior, A. M., & Nakagawa, S. (2014). Heterogeneity in individual quality and reproductive trade-offs within species. Evolution, 68(8), 2306–2318. <https://doi.org/10.1111/evo.12446>
--   Maire, A., Thierry, E., Viechtbauer, W., & Daufresne, M. (2019). Poleward shift in large-river fish communities detected with a novel meta-analysis framework. Freshwater Biology, 64(6), 1143–1156. <https://doi.org/10.1111/fwb.13291>
--   Grau‐Andrés, R., Moreira, B., & Pausas, J. G. (2024). Global plant responses to intensified fire regimes. Global Ecology and Biogeography, 33(8), e13858. <https://doi.org/10.1111/geb.13858>
+
+-   Lim, J. N., Senior, A. M., & Nakagawa, S. (2014). Heterogeneity in individual quality and reproductive trade-offs within species. Evolution, 68(8), 2306–2318. <https://doi.org/10.1111/evo.12446>
+-   Scholer, M. N., Strimas‐Mackey, M., & Jankowski, J. E. (2020). A meta‐analysis of global avian survival across species and latitude. Ecology Letters, 23(10), 1537-1549. <https://doi.org/10.1111/ele.13573>
+-   Grau-Andrés, R., Moreira, B., & Pausas, J. G. (2024). Global plant responses to intensified fire regimes. Global Ecology and Biogeography, 33(8), e13858. <https://doi.org/10.1111/geb.13858>
 -   Viechtbauer, W., White, T., Noble, D., Senior, A., & Hamilton, W. K. (2025). metadat: Meta-analysis datasets (Version 1.5-2) \[R package\]. <https://github.com/wviechtb/metadat>
 -   Rios Moura, R., Oliveira Gonzaga, M., Silva Pinto, N., Vasconcellos-Neto, J., & Requena, G. S. (2021). Assortative mating in space and time: Patterns and biases. Ecology Letters, 24(5), 1089–1102. <https://doi.org/10.1111/ele.13690>
 -   Jetz, W., G. H. Thomas, J. B. Joy, K. Hartmann, and A. O. Mooers. 2012. The global diversity of birds in space and time. Nature 491:444-448. <https://doi.org/10.1038/nature11631>

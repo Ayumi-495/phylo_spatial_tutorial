@@ -1,3 +1,6 @@
+library(gtools)
+
+
 dat_scholer2020 <- read.csv("data/Scholer_2020/Scholer_2020.csv")
 
 head(dat_scholer2020)
@@ -8,6 +11,12 @@ dat_scholer2020 <- dat_scholer2020 |>
 
 dat_scholer2020$const <- 1 # add constant for spatial models
 dat_scholer2020$effect_id <- seq_len(nrow(dat_scholer2020))
+
+dat_scholer2020$effect_id <- factor(
+  as.character(dat_scholer2020$effect_id),
+  levels = mixedsort(unique(as.character(dat_scholer2020$effect_id)))
+)
+levels(dat_scholer2020$effect_id)
 
 coords2 <- cbind(dat_scholer2020$long, dat_scholer2020$lat)
 
@@ -76,7 +85,7 @@ ma_sp1_exp0_mf <- rma.mv(logit_survival, vi,
                          random = list(
                            ~ 1|effect_id, 
                            ~ 1|ref,
-                           ~ 1|site_id,                           
+                           # ~ 1|site_id,                           
                            ~ effect_id|const
                          ), 
                          struct = "SPEXP", 
@@ -118,7 +127,7 @@ rownames(dist_site) <- as.character(site_coords$site_id)
 colnames(dist_site) <- as.character(site_coords$site_id)
 dist_site
 
-dat_Roger$site_id <- as.character(dat_Roger$site_id)
+dat_scholer2020$site_id <- as.character(dat_scholer2020$site_id)
 
 ## metafor ------------------------------------------
 ma_sp_site <- rma.mv(
@@ -140,7 +149,7 @@ ma_sp_site <- rma.mv(
 )
 
 ma_sp_site
-
+saveRDS(ma_sp_site, here("Rdata", "tutorial_v2", "sp_exp_metafor_eg2.rds"))
 
 sp_eg1_exp_mf <- rma.mv(logit_survival, vi,
                         random = list(
@@ -156,7 +165,7 @@ sp_eg1_exp_mf <- rma.mv(logit_survival, vi,
                         method = "REML",
                         test = "t")
 summary(sp_eg1_exp_mf)
-
+profile(sp_eg1_exp_mf, cline = TRUE)
 # >>> Gaussian kernel version
 ma_sp_site_gau <- rma.mv(
   yi = logit_survival,
@@ -177,16 +186,28 @@ ma_sp_site_gau <- rma.mv(
 )
 
 summary(ma_sp_site_gau)
+saveRDS(ma_sp_site_gau, here("Rdata", "tutorial_v2", "sp_gau_metafor_eg2.rds"))
+confint(ma_sp_site_gau)
 
 ## brms ------------------------------------------
 ### exponential ver
+# ref_chr <- as.character(dat_scholer2020$ref)
+# ref_utf8 <- iconv(ref_chr, from = "", to = "UTF-8", sub = "")
+# dat_scholer2020$ref <- ref_utf8
+# 
+# dat_scholer2020$ref <- gsub("\u00A0", " ", dat_scholer2020$ref)     # NBSP -> space
+# dat_scholer2020$ref <- gsub("[[:space:]]+", " ", dat_scholer2020$ref)
+# dat_scholer2020$ref <- trimws(dat_scholer2020$ref)
+# dat_scholer2020$ref <- factor(dat_scholer2020$ref)
+
+dat_scholer2020$ref_id <- as.integer(factor(dat_scholer2020$ref))
 dat_scholer2020$effect_id <- as.character(dat_scholer2020$effect_id)
 vcv <- diag(dat_scholer2020$vi)
 
 rownames(vcv) <- colnames(vcv) <- dat_scholer2020$effect_id
 
 fit_gp_brms <- bf(logit_survival ~ 1 +
-                    (1|ref) + # this is site-level random effect
+                    (1|ref_id) + # this is site-level random effect
                     (1|gr(effect_id, cov = vcv)) + # this is m (sampling error)
                     gp(x_km, y_km, 
                        cov = "exponential",
@@ -206,19 +227,20 @@ sp_exp_brms <- brm(
   data = dat_scholer2020,
   data2 = list(vcv = vcv),
   prior = prior,
-  iter = 2000, 
-  warmup = 1000,  
+  iter = 6000, 
+  warmup = 3000,  
   chains = num_chains,
   backend = "cmdstanr",
   threads = threading(threads_per_chain), 
   control = list(adapt_delta = 0.95, max_treedepth = 15)
 )
-summary(sp_exp_brms)
-
+summary(sp_exp_brms_eg2)
+sp_exp_brms_eg2 <- readRDS(here("Rdata", "tutorial_v2", "sp_exp_brms_eg2.rds"))
+saveRDS(sp_exp_brms, here("Rdata", "tutorial_v2", "sp_exp_brms_eg2.rds"))
 
 ### gaussian ver
 ma_brms_gau <- bf(logit_survival | se(sqrt(vi)) ~ 1 +
-                      (1 | ref) +
+                      (1 | ref_id) +
                       (1| effect_id) + 
                       gp(x_km, y_km, scale = FALSE))
 
@@ -233,8 +255,8 @@ fit_gp <- brm(
   prior = prior_brms,
   data = dat_scholer2020,
   family = gaussian(),
-  iter = 2000, 
-  warmup = 1000,  
+  iter = 5000, 
+  warmup = 2000,  
   chains = num_chains,
   backend = "cmdstanr",
   threads = threading(threads_per_chain), 
@@ -263,16 +285,56 @@ prior <- default_prior(fit_gp_brms,
 prior$prior[5] = "constant(1)" # meta-analysis assumes sampling variance is known so fixing this to 1
 prior
 
-sp_exp_quad_brms <- brm(
+sp_gau_brms_eg2 <- brm(
   formula = fit_gp_brms,
   data = dat_scholer2020,
   data2 = list(vcv = vcv),
   prior = prior,
-  iter = 2000, 
-  warmup = 1000,  
+  iter = 8000, 
+  warmup = 4000,  
   chains = num_chains,
   backend = "cmdstanr",
   threads = threading(threads_per_chain), 
   control = list(adapt_delta = 0.95, max_treedepth = 15)
 )
 summary(sp_exp_quad_brms)
+saveRDS(sp_exp_quad_brms, here("Rdata", "tutorial_v2", "sp_gau_brms_eg2.rds"))
+sp_gau_brms_eg2 <- readRDS(here("Rdata", "tutorial_v2", "sp_gau_brms_eg2.rds"))
+
+## glmmTMB -----------------------------------------------------------------
+dat_scholer2020$const <- 1
+dat_scholer2020$site_id <- factor(dat_scholer2020$site_id)
+
+VCV <- diag(dat_scholer2020$vi, nrow = nrow(dat_scholer2020)) 
+rownames(VCV) <- colnames(VCV) <- dat_scholer2020$effect_id
+VCV[1:5, 1:5]
+
+dat_scholer2020$pos <- numFactor(dat_scholer2020$x_km, dat_scholer2020$y_km)
+
+system.time(
+  sp_eg1_exp_tmb <- glmmTMB(logit_survival ~ 1 
+                            + equalto(0+effect_id|const, VCV)
+                            + (1|ref)
+                            + exp(pos + 0 |const),
+                            data = dat_scholer2020, 
+                            dispformula=~0, 
+                            REML=TRUE)
+)
+
+summary(sp_eg1_exp_tmb)
+
+
+m1 <- glmmTMB(
+  logit_survival ~ 1 +
+    equalto(0 + effect_id | const, VCV) +
+    (1 | ref) +
+    exp(pos + 0 | const),
+  data = dat_scholer2020,
+  family = gaussian(),
+  dispformula = ~0,
+  control=glmmTMBControl(optimizer=optim,
+                         optArgs=list(method="BFGS")),
+  REML = TRUE
+)
+summary(m1)
+levels(dat_scholer2020$effect_id)[1:30]
