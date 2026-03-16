@@ -1,5 +1,5 @@
 ---
-title: "TUTORIAL: Phylo spatial meta-analysis"
+title: "TUTORIAL: Phylogenetic and spatial meta-analysis"
 date: "`r Sys.Date()`"
 # author: " "
 format: 
@@ -2138,6 +2138,7 @@ names(dat_Roger)
 ```
 
 ::: panel-tabset
+
 #### Exponential kernel
 
 The exponential kernel assumes that similarity between two effect sizes decreases smoothly as the geographic distance between their location increases. Therefore, nearby sites are strongly correlated, while distant sites are effectively independent.
@@ -2619,6 +2620,7 @@ confint(sp_eg1_gau_tmb)
 #### Figures
 
 TBU
+
 :::
 
 ### 2. Scholer et al. (2021)
