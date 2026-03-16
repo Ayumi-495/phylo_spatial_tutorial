@@ -2101,7 +2101,7 @@ The original data provide latitude and longitude in degrees. We first project th
 ```{r}
 #| eval: false
 
-dat_Roger <- read.csv(here("data", "examples", "Roger_etal_2024", "Roger_etal_2024.csv"))
+dat_Roger <- read.csv(here("data", "Roger_etal_2024", "Roger_etal_2024.csv"))
 
 dat_Roger <- dat_Roger |>
   filter(!is.na(longitude))
