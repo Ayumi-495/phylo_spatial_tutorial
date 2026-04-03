@@ -4,7 +4,19 @@ subtitle: "concepts, implementation, and practical guidance"
 date: "`r Sys.Date()`"
 title-block-banner: "#778899"
 title-block-banner-color: "#FFFAFA"
-# author: " "
+authors:
+  - name: Ayumi Mizuno
+    orcid: 0000-0003-0822-5637
+  - name: Coralie Williams
+    orcid: 0000-0003-1312-4953
+  - name: Malgorzata Lagisz
+    orcid: 0000-0002-3993-6127
+  - name: Alistair M. Senior
+    orcid: 0000-0001-9805-7280
+  - name: Shinichi Nakagawa
+    orcid: 0000-0002-7765-5182
+   
+    
 format: 
   html:
     toc: true
@@ -190,10 +202,7 @@ Phylogenetic trees often contain more species than required for a given analysis
 ```{r}
 #| eval: false
 
-tree_pruned  <- drop.tip(
-  tree,
-  setdiff(tree$tip.label, species_data)
-  )
+tree_pruned  <- drop.tip(tree,setdiff(tree$tip.label, species_data))
 
 lwngth(tree_pruned$tip.label) # check how many species left on the pruned tree
 plot(tree_pruned) # check the pruned tree
@@ -218,10 +227,7 @@ tree <- trees[[1]]
 species_data <- unique(dat$Phylo)
 
 
-tree_pruned  <- drop.tip(
-  tree,
-  setdiff(tree$tip.label, species_data)
-  )
+tree_pruned  <- drop.tip(tree, setdiff(tree$tip.label, species_data))
 
 plot(tree_pruned) 
 ```
@@ -254,7 +260,7 @@ This matrix represents the expected pirwise correlation among species due to sha
 
 ### Using the `rotl` package (Open Tree of Life) {#using-the-rotl-package-open-tree-of-life}
 
-Life is not so that easy that you always have a phylogenetic tree for your species of interest. In such cases, you can use the `rotl` package to access the Open Tree of Life database and retrieve a phylogenetic tree based on the *Latin* species names in your dataset.
+In practice, you will not always have a phylogenetic tree readily available for the species in your dataset. In such cases, the `rotl` package can be used to access the Open Tree of Life and retrieve a tree based on the *Latin* species names in your dataset.
 
 ::: callout-note
 -   Make sure that the species names in your dataset are in Latin (scientific names) and are spelled correctly. The `rotl` package relies on these names to find the corresponding species in the Open Tree of Life (https://opentreeoflife.github.io/use).
@@ -291,11 +297,12 @@ tol_about()
 
 #### Step 1. Provide a species list
 
-Here, we use 10 commpnly used lab model taxa across different animal groups as an example. Use Latin names, not common names.
+Here, we use 10 commonly used lab model taxa across different animal groups as an example. Use Latin names, not common names.
 
 ```{r}
 #| eval: false
 
+# make species list
 myspecies <- c(
   "Escherichia colli",                # typo on purpose
   "Chlamydomonas reinhardtii",
@@ -312,14 +319,16 @@ myspecies <- c(
 
 #### Step 2. Resolve species names using OpenTree TNRS
 
-We first try a strict match, and then a fuzzy match for any unmatched names. This is useful to detect typos or synonyms in species names.
+We start with strict matching to identify exact matches and flag names that may require manual attention. 
+We then use approximate matching only as a diagnostic step for unresolved names, because fuzzy matches can help detect likely typos or synonyms but should always be checked before being accepted.
 
 ```{r}
 #| eval: false
 
+# strict matching first:
 taxa_strict <- tnrs_match_names(
   names = myspecies, 
-  do_approximate_matching = FALSE
+  do_approximate_matching = FALSE # set FALSE
   )
 #   Warning message:
 # Escherichia colli, Saccharomyces cervisae are not matched 
@@ -348,9 +357,11 @@ taxa_strict
 # 9       NA         NA  <NA>             NA
 # 10 1005914      FALSE                    1
 
+
+# fuzzy matching for unresolved names:
 taxa <- tnrs_match_names(
   names = myspecies,
-  do_approximate_matching = TRUE
+  do_approximate_matching = TRUE # set TRUE
 )
 
 taxa
@@ -378,11 +389,21 @@ taxa
 # 10 1.0000000 1005914      FALSE                             1
 ```
 
-If the strict match fails or returns NAs, you can enable approximate matching. Approximate matching uses fuzzy string matching to find the closest matches in the OpenTree taxonomy (but you should always check the returned matches).
+In this example, the strict match flags two misspelled names, and approximate matching helps identify their likely intended taxa. In practice, once these likely matches have been identified, it is better to correct the original species names and rerun strict matching than to proceed with fuzzy matches in the final workflow.
 
-Key columns to check include: - `unique_name`: the matched OpenTree taxon name - `ott_id`: the OpenTree taxonomy identifier used for tree retrieval - `approximate_match`: `TRUE` indicates a non-exact match (for example due to a typo) - `is_synonym`: `TRUE` indicates the input name was treated as a synonym
+If the strict match fails or returns `NAs`, you can enable approximate matching. Approximate matching uses fuzzy string matching to find the closest matches in the OpenTree taxonomy, but you should always inspect the returned matches carefully.
 
-A practical rule of thumb is the following: - If `approximate_match == TRUE` and the reason is an obvious typo (e.g. misspelling of a well-known species name), correct the original species list and re-run the name matching. This ensures that the final dataset contains clean and unambiguous names. - If a match looks suspicious (for example, the matched taxon belongs to a different genus, or the name could plausibly refer to multiple taxa), do not accept the match blindly. Instead, inspect the additional information returned by `tnrs_match_names()` to confirm that the matched taxon is indeed the one you intended to include.
+Key columns to check include 
+
+-   `unique_name`: the matched OpenTree taxon name 
+-   `ott_id`: the OpenTree taxonomy identifier used for tree retrieval
+-   `approximate_match`: `TRUE` indicates a non-exact match, for example due to a typo
+-   `is_synonym`: `TRUE` indicates the input name was treated as a synonym
+
+A useful rule of thumb is as follows:
+
+-   if `approximate_match == TRUE` and the reason is an obvious typo, correct the original species list and rerun the name matching. This ensures that the final dataset contains clean and unambiguous names.
+-   If a match looks suspicious, for example because the matched taxon belongs to a different genus or the name could plausibly refer to multiple taxa, do not accept the match blindly. Instead, inspect the additional information returned by `tnrs_match_names()` to confirm that the matched taxon is indeed the one you intended to include.
 
 #### Step 3. Fix typos and re-run matching
 
@@ -390,22 +411,22 @@ A practical rule of thumb is the following: - If `approximate_match == TRUE` and
 #| eval: false
 
 myspecies_fixed <- c(
-  "Escherichia coli",
-  "Chlamydomonas reinhardtii",
-  "Drosophila melanogaster",
-  "Arabidopsis thaliana",
-  "Rattus norvegicus",
-  "Mus musculus",
-  "Cavia porcellus",
-  "Xenopus laevis",
-  "Saccharomyces cerevisiae",
-  "Danio rerio"
-)
-
+          "Escherichia coli",
+          "Chlamydomonas reinhardtii",
+          "Drosophila melanogaster",
+          "Arabidopsis thaliana",
+          "Rattus norvegicus",
+          "Mus musculus",
+          "Cavia porcellus",
+          "Xenopus laevis",
+          "Saccharomyces cerevisiae",
+          "Danio rerio"
+           )
+  
 taxa_fixed <- tnrs_match_names(
-  names = myspecies_fixed,
-  do_approximate_matching = FALSE
-)
+                    names = myspecies_fixed,
+                    do_approximate_matching = FALSE
+                     )
 
 # taxa_fixed
 #                search_string               unique_name approximate_match score
@@ -432,55 +453,62 @@ taxa_fixed <- tnrs_match_names(
 # 10 1005914      FALSE                             1
 ```
 
-At this point, you should confirm that: - All species have a valid ott_id. - The returned matches correspond to the intended taxa.
+At this point, you should confirm that: - All species have a valid `ott_id`. - the returned matches correspond to the intended taxa.
 
 #### Step 4. Retrieve the phylogenetic tree from OpenTree
 
-Once you are satisfied with the matched OpenTree identifiers, you can request a trimmed subtree from the OpenTree synthetic tree using `tol_induced_subtree()`.
+Once you are satisfied with the matched OpenTree identifiers, you can request a trimmed subtree from the OpenTree synthetic tree using `tol_induced_subtree()`. 
+At this stage, the OpenTree subtree provides a convenient phylogenetic topology for the matched taxa. However, before using it in comparative or meta-analytic models, you should still check whether the tip labels are appropriate, whether branch lengths are available, and whether the tree satisfies assumptions such as bifurcation and ultrametricity.
 
 ```{r}
 #| eval: false
 
 tree <- tol_induced_subtree(
-  ott_ids = taxa_fixed[["ott_id"]],
-  label_format = "name"
-) 
-# we can get a Warning meassage here about collapsing single nodes - this is fine.
+            ott_ids = taxa_fixed[["ott_id"]],
+            label_format = "name"
+            ) 
+# returns a trimmed subtree as an ape::phylo object
+# warnings about collapsing single nodes are common and usually not problematic here
 ```
 
 ```{r}
 #| echo: false
 
 myspecies_fixed <- c(
-  "Escherichia coli",
-  "Chlamydomonas reinhardtii",
-  "Drosophila melanogaster",
-  "Arabidopsis thaliana",
-  "Rattus norvegicus",
-  "Mus musculus",
-  "Cavia porcellus",
-  "Xenopus laevis",
-  "Saccharomyces cerevisiae",
-  "Danio rerio"
-)
+            "Escherichia coli",
+            "Chlamydomonas reinhardtii",
+            "Drosophila melanogaster",
+            "Arabidopsis thaliana",
+            "Rattus norvegicus",
+            "Mus musculus",
+            "Cavia porcellus",
+            "Xenopus laevis",
+            "Saccharomyces cerevisiae",
+            "Danio rerio"
+          )
 
 taxa_fixed <- tnrs_match_names(
-  names = myspecies_fixed,
-  do_approximate_matching = FALSE
-)
+                names = myspecies_fixed,
+                do_approximate_matching = FALSE
+                )
 
 tree <- tol_induced_subtree(
-  ott_ids = taxa_fixed[["ott_id"]],
-  label_format = "name") 
-# the tree is returned as an ape::phylo object, which can be manipulated and plotted using functions from the ape package.
+          ott_ids = taxa_fixed[["ott_id"]],
+          label_format = "name") 
+
+# plot the retrieved subtree for quick inspection
 plot(tree, cex=.8, label.offset =.1, no.margin = TRUE)
+
 ```
+
 
 #### Step 5. Clean and standardise tip labels
 
-OpenTree tip labels can include underscores, and sometimes a tip represents a non-taxon internal node (such as an MRCA node). This often happens when only one representative from a large clade is included (e.g., a single bacterial species).
+The tip labels returned by OpenTree are not always directly ready for downstream analyses. They may contain underscores, appended identifiers, or labels corresponding to internal nodes rather than named terminal taxa. The goal of this step is therefore to standardise the labels for readability and to check that each tip can be matched unambiguously to the intended species in the dataset.
 
-In our example, you can see that species names have OpenTree identifiers appended, and E. coli is replaced with “mrcaott616ott617”, a non-taxon node within Bacteria. Since there are no other bacteria in the data set and the tree position is correct, we can simply rename the tip back to “Escherichia coli.”
+In our example, one tip is labelled `"mrcaott616ott617"` rather than *Escherichia coli*. This is a non-taxon internal node within Bacteria, which can arise when only one representative from a large clade is included. Since there are no other bacteria in the dataset and the tree position is appropriate for our purposes, we relabel this tip as *Escherichia coli* for didactic purposes.
+
+
 
 ```{r}
 #| eval: false
@@ -492,39 +520,48 @@ tree$tip.label # see the current tree tip labels
 #  [7] "Danio_rerio"               "Drosophila_melanogaster"  
 #  [9] "Saccharomyces_cerevisiae"  "mrcaott616ott617"   
 
-# Replace underscores with spaces for readability
+# replace underscores with spaces for readability
 tree$tip.label <- gsub("_", " ", tree$tip.label)
 
-# Relabel MRCA-like tips for didactic plotting purposes
+# inspect the lineage of the E. coli OTT identifier
 ecoli <- tol_node_info(ott_id = 474506, include_lineage = TRUE)
 tax_lineage(ecoli) # domain within Bacteria
 #      rank               name        unique_name ott_id
 # 1  domain           Bacteria           Bacteria 844192
 # 2 no rank cellular organisms cellular organisms  93302
 
-tnrs_match_names(names = ("Escherichia"))  # we can see what info is available for this genus - not much, looks like a messy bit of a tree flagged as "INCONSISTENT"
-tree$tip.label <- gsub("mrcaott616ott617", "Escherichia coli", tree$tip.label) # replace the tip label back with our species name
+# we can see what info is available for this genus - not much, looks like a messy bit of a tree flagged as "INCONSISTENT"
+# tnrs_match_names(names = ("Escherichia")) 
+
+# relabel the MRCA-like tip for plotting and matching
+tree$tip.label <- gsub("mrcaott616ott617", "Escherichia coli", tree$tip.label)
+
 ```
 
-It is time to plot and tidy up the tree (note no branch lengths are included, they can be created later via simulations).
+We can now plot the cleaned tree for inspection. 
+Note that branch lengths are not yet included, so at this stage the tree is mainly useful for checking topology and tip labels.
 
 ```{r}
 #| echo: false
-tree$tip.label 
+
 tree$tip.label <- gsub("_", " ", tree$tip.label)
 
-# Relabel MRCA-like tips for didactic plotting purposes
-ecoli <- tol_node_info(ott_id = 474506, include_lineage = TRUE)
-tax_lineage(ecoli) # domain within Bacteria
+# # Relabel MRCA-like tips for didactic plotting purposes
+# ecoli <- tol_node_info(ott_id = 474506, include_lineage = TRUE)
+# tax_lineage(ecoli) # domain within Bacteria
+# tnrs_match_names(names = ("Escherichia")) 
 
-tnrs_match_names(names = ("Escherichia")) 
 tree$tip.label <- gsub("mrcaott616ott617", "Escherichia coli", tree$tip.label) 
 plot(tree, cex=.8, label.offset =.1, no.margin = TRUE) 
+
 ```
 
 #### Step 6. Final checks (binary tree and matching tip labels)
 
-Before using the tree in downstream analyses, it is good practice to confirm that: 1. The tree is fully binary (no polytomies), if that is required for your method. 2. The tip labels match exactly the species list in your dataset.
+Before using the tree in downstream analyses, it is good practice to confirm that:
+
+-   The tree is fully binary, if that is required for your method.
+-   The tip labels match exactly the species list in your dataset.
 
 ```{r}
 #| eval: false
@@ -549,9 +586,9 @@ setdiff(as.character(tree$tip.label), myspecies_fixed)
 ```
 
 #### Step 7. Compute the phylogenetic correlation matrix (handling missing branch lengths)
+At this point, the tree topology may be usable for plotting or simple inspection, but it is not yet guaranteed to be suitable for phylogenetic covariance calculations. In particular, `vcv()` requires branch lengths, and many comparative models additionally assume a fully bifurcating and often ultrametric tree. The Open Tree of Life synthetic tree often provides a well-resolved topology, but it does not always include branch lengths.
 
-To compute a phylogenetic variance covariance (VCV) or correlation matrix under a Brownian motion (BM) process, we use `vcv()` from the `ape` package. Importantly, `vcv()` requires branch lengths. However, the Open Tree of Life synthetic tree often provides a well-resolved tpology but does not always include branch lengths.
-
+To compute a phylogenetic variance-covariance (VCV) or correlation matrix under a Brownian motion (BM) process, we use `vcv()` from the `ape` package.
 If the tree has no branch lengths, `vcv()` will fail with:
 
 ```{r}
@@ -561,7 +598,9 @@ A <- vcv(tree, corr = TRUE)
 # Error in vcv.phylo(tree, corr = TRUE) : the tree has no branch lengths
 ```
 
-For didactic purposes in this tutorial, we assign equal branch lengths to all edges (that is, all branch lengths are set to 1). This allows us to demonstrate the workflow and obtain a valid correlation matrix. In real analyses, you should consider using a tree with biologically meaningful branch lengths (for example, a time-calibrated phylogeny).
+For didactic purposes in this tutorial, we assign equal branch lengths to all edges (that is, all branch lengths are set to 1). 
+This allows us to demonstrate the workflow and obtain a valid correlation matrix. 
+In real analyses, you should consider using a tree with biologically meaningful branch lengths (for example, a time-calibrated phylogeny).
 
 ```{r}
 #| eval: false
@@ -573,7 +612,7 @@ is.null(tree$edge.length)
 # if branch lengths are missing, add equal branch lengths for didactic purposes
 if (is.null(tree$edge.length)) {
   tree$edge.length <- rep(1, nrow(tree$edge))
-  }
+    }
 
 # compute the phylogenetic correlation matrix under Brownian motion
 A <- vcv(tree, corr = TRUE)
@@ -598,35 +637,34 @@ A[1:5, 1:5]
 ```
 
 ### What if there are polytomies or non-ultrametric trees?
+The subtree returned by OpenTree may be sufficient for demonstration purposes, but many phylogenetic models require additional assumptions about branching structure and branch lengths. We therefore illustrate how to diagnose and handle two common issues: *polytomies* and *non-ultrametric* trees.
 
-A polytomy occurs when an internal node has more than two descendant branches (a multifurcation).\
+A polytomy occurs when an internal node has more than two descendant branches (a multifurcation).
+
 A non-ultrametric tree is a tree in which not all tips are equidistant from the root, meaning that the tree is not time-calibrated.
 
-Many phylogenetic comparative and meta-analytic models assume a fully bifurcating and ultrametric tree, because the expected covariance among species is defined under a continuous-time branching process (for example Brownian motion or Ornstein–Uhlenbeck evolution).\
+Many phylogenetic comparative and meta-analytic models assume a fully bifurcating and ultrametric tree, because the expected covariance among species is defined under a continuous-time branching process (for example Brownian motion or Ornstein–Uhlenbeck evolution). 
 Here we illustrate what these issues mean, and how they can be handled, using a simple toy example.
 
 #### Create a toy tree with a polytomy
 
 ```{r}
-#| eval: false
+
 library(ape)
 library(phytools)
 
 # A simple tree with one polytomy (A, B, C diverge simultaneously)
 tree_poly <- read.tree(text = "((A,B,C),D,E);")
 plot(tree_poly)
-is.binary(tree_poly)
-# [1] FALSE
 ```
 
+
 ```{r}
-#| echo: false
+#| eval: FALSE
 
-library(ape)
-library(phytools)
+is.binary(tree_poly)
+# [1] FALSE
 
-tree_poly <- read.tree(text = "((A,B,C),D,E);")
-plot(tree_poly)
 ```
 
 Here, species A, B, and C form a polytomy because their common ancestor has three descendants instead of two…
@@ -639,17 +677,24 @@ When a node is a polytomy, the relative order of divergence among its descendant
 `multi2di()` resolves a polytomy by inserting very short branches, creating an arbitrary but fully bifurcating tree. This corresponds to assuming that the true branching order is unknown but occurred over a very short evolutionary time.
 
 ```{r}
-#| eval: false
 
 set.seed(1)
 
 tree_bin <- multi2di(tree_poly, random = TRUE)
+
+```
+
+
+```{r}
+#| eval: FALSE
+
 is.binary(tree_bin)
 # [1] TRUE
+
 ```
 
 ```{r}
-#| echo: false
+
 tree_bin <- multi2di(tree_poly, random = TRUE)
 plot(tree_bin)
 ```
@@ -663,27 +708,36 @@ tree_bin1 <- multi2di(tree_poly, random = TRUE)
 set.seed(50)
 tree_bin2 <- multi2di(tree_poly, random = TRUE)
 
+```
+
+
+```{r}
+#| echo: FALSE
+
 par(mfrow = c(1,2))
 plot(tree_bin1); title("Tree 1")
 plot(tree_bin2); title("Tree 2")
+
 par(mfrow = c(1,1))
 ```
 
 #### Create a non-ultrametric toy tree
 
 ```{r}
-#| eval: false
+#| eval: FALSE
 
 tree_nonultra <- read.tree(text = "((A:2,B:2):3,(C:1,D:4):2,E:5);")
 is.ultrametric(tree_nonultra)
 # [1] FALSE
+
 ```
 
 ```{r}
-#| echo: false
+#| echo: FALSE
 
 tree_nonultra <- read.tree(text = "((A:2,B:2):3,(C:1,D:4):2,E:5);")
 plot(tree_nonultra)
+
 ```
 
 As you can see, the tips do not all end at the same distance from the root, so the tree is not ultrametric. This means that branch lengths cannot be interpreted directly as shared evolutionary time, which is required for Brownian motion or Ornstein–Uhlenbeck based phylogenetic covariance models.
@@ -692,15 +746,22 @@ As you can see, the tips do not all end at the same distance from the root, so t
 This is required when phylogenetic covariance is interpreted as shared evolutionary time.
 
 ```{r}
-#| eval: false
 
 tree_ultra1 <- chronos(tree_nonultra)
+
+```
+
+
+```{r}
+#| eval: FALSE
+
 is.ultrametric(tree_ultra1)
 # [1] TRUE
+
 ```
 
 ```{r}
-#| echo: false
+#| echo: FALSE
 
 tree_ultra1 <- chronos(tree_nonultra)
 plot(tree_ultra1)
@@ -709,16 +770,19 @@ plot(tree_ultra1)
 Or, you can use `force.ultrametric()` from the `phytools` package to coerce a tree into an ultrametric form by extending branch lengths.
 
 ```{r}
-#| eval: false
+#| eval: FALSE
 
 tree_ultra2 <- force.ultrametric(tree_nonultra, method = "extend")
 is.ultrametric(tree_ultra2)
+
 ```
 
 ```{r}
-#| echo: false
+#| echo: FALSE
+
 tree_ultra2 <- force.ultrametric(tree_nonultra, method = "extend")
 plot(tree_ultra2)
+
 ```
 
 In practice, the typical workflow is:
@@ -838,15 +902,16 @@ In the model, the expected variance-covariance structure among species is direct
 #| eval: false
 
 phylo_eg1_meta_ma_BM <- rma.mv(yi, vi,
-                       random = list(~ 1 | study.id, 
-                       ~ 1 | effect.size.id, 
-                       ~ 1 | species.id, 
-                       ~ 1 | species.id.phy),
-                       R = list(species.id.phy = A), 
-                       data = dat_moura2021,
-                       verbose = TRUE,
-                       sparse = TRUE,
-                       method = "REML"
+                 random = list(
+                     ~ 1 | study.id, # among-study variation 
+                     ~ 1 | effect.size.id,　# additional effect-size-level variation
+                     ~ 1 | species.id, # species-specific, non-phylogenetic variation
+                     ~ 1 | species.id.phy), # species-specific, phylogenetic variation
+                     R = list(species.id.phy = A), # Brownian motion phylogenetic correlation matrix
+                 data = dat_moura2021,
+                 verbose = TRUE,
+                 sparse = TRUE,
+                 method = "REML"
                        )
 
 summary(phylo_eg1_meta_ma_BM)
@@ -1011,10 +1076,10 @@ vcv <- diag(dat_moura2021$vi)
 rownames(vcv) <- colnames(vcv) <- dat_moura2021$effect.size.id
 
 fit_phylo_eg1.1_brms_ma <-  bf(yi ~ 1 + 
-                                   (1 | study.id) + 
-                                   (1 | species.id) + 
-                                   (1 | gr(species.id.phy, cov = A)) +
-                                   (1 | gr(effect.size.id, cov = vcv))
+                               (1 | study.id) + 
+                               (1 | species.id) + 
+                               (1 | gr(species.id.phy, cov = A)) +
+                               (1 | gr(effect.size.id, cov = vcv))
                              )
 
 prior_brms1.1 <- default_prior(fit_phylo_eg1.1_brms, 
@@ -1088,16 +1153,16 @@ v_harm <- 1 / mean(1/dat$vi, na.rm = TRUE)
 I2_total_harm  <- var_total_hetero / (var_total_hetero + v_harm)
 I2_effect_harm <- var_effect / (var_total_hetero + v_harm)
 I2_study_harm  <- var_study / (var_total_hetero + v_harm)
-I2_species_harm<- var_species / (var_total_hetero + v_harm)
+I2_species_harm　<- var_species / (var_total_hetero + v_harm)
 I2_phylo_harm  <- var_phylo / (var_total_hetero + v_harm)
 
 round(rbind(
-  total  = summ_I2(I2_total_harm),
-  effect = summ_I2(I2_effect_harm),
-  study = summ_I2(I2_study_harm),
-  species = summ_I2(I2_species_harm),
-  phylo = summ_I2(I2_phylo_harm)
-), 3)
+      total  = summ_I2(I2_total_harm),
+      effect = summ_I2(I2_effect_harm),
+      study = summ_I2(I2_study_harm),
+      species = summ_I2(I2_species_harm),
+      phylo = summ_I2(I2_phylo_harm)
+    ), 3)
 #         mean q2.5.2.5% q50.50% q97.5.97.5%
 # total   0.978     0.969   0.978       0.990
 # effect  0.090     0.043   0.091       0.134
@@ -1144,6 +1209,7 @@ dat_moura2021$g <- 1
 
 VCV <- diag(dat_moura2021$vi, nrow = nrow(dat_moura2021)) 
 rownames(VCV)<- colnames(VCV)<- dat_moura2021$effect.size.id
+
 ```
 
 We create a variance–covariance matrix whose diagonal elements are the known sampling variances of the effect sizes. Off-diagonal elements are set to zero, reflecting the assumption that effect sizes are independent. This mirrors the standard assumption made in most meta-analyses.
@@ -1166,17 +1232,15 @@ system.time(
 # the term equalto(0 + effect.size.id|g, VCV) specifies that the random effect associated with each effect size has a covariance structure defined by the matrix VCV. This effectively encodes the known sampling variances into the model
                          equalto(0 + effect.size.id|g, VCV) + 
                          (1|study.id) + 
-
+  
 # the terms (1|species.id) and propto(0 + species.id.phy|g, A) model non-phylogenetic and phylogenetic species-level variation, respectively. The propto() term uses the phylogenetic covariance matrix A to capture shared evolutionary history among species
                          (1|species.id) +
                          propto(0 + species.id.phy|g, A), 
                        data = dat_moura2021,
                        REML = T)
-    )
+　　　　　　　)
 
 ```
-
-That is it! You can also find more detailed instruction here: <https://cran.r-project.org/web/packages/glmmTMB/vignettes/covstruct.html> <https://coraliewilliams.github.io/equalto_sim_study/webpage.html>.
 
 Now, we want to know the model output. Although the fitted model is statistically equivalent to the models fitted `metafor` and `brms`, `glmmTMB` reports variance components in a different way, which can initially confusing…
 
@@ -1205,18 +1269,18 @@ exp(phylo_eg1_tmb$fit$par)
 
 ```
 
-You can see the outputs both `summary()` and `confint()`. The `confint()` output reports standard deviations (SD) of random effects, not [variances]{.underline} - for example,
+You can see the outputs both `summary()` and `confint()`. The `confint()` output reports standard deviations (SD) of random effects, not [variances]{.underline}
 
+For example…
 ```{r}
 #| eval: false
 
 (Intercept) -> overall mean
-Std.Dev.(Intercept) |study.id -> correspond to the square roots of study-level variance
-Std.Dev.(Intercept) |species.id -> correspond to the square roots of non-phylogenetic species-level variance
+Std.Dev.(Intercept) | study.id -> correspond to the square roots of study-level variance
+Std.Dev.(Intercept) | species.id -> correspond to the square roots of non-phylogenetic species-level variance
 ```
 
 You see the output also includes many rows such as…
-
 ```{r}
 #| eval: false
 
