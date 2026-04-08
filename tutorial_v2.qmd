@@ -2170,8 +2170,8 @@ Biologically, the negative mean effect suggests a tendency for larger offspring 
 fit_phylo_eg2_metafor_mr <- rma.mv(yi, vi,
                               mods = ~ environment,
                               random = list(~ 1 | id,
-                                           ~ 1 | phy,
-                                           ~ 1| species),
+                                            ~ 1 | phy,
+                                            ~ 1 | species),
                               R = list(phy = A),
                               data = dat_lim2014,
                               verbose = TRUE,
@@ -2336,10 +2336,163 @@ summary(phylo_eg2_tmb_mr)
 # environmentwild  0.01661    0.08469   0.196    0.844
 ```
 
-##### Figures
+:::
+
+#### Visualisations
+
+In this dataset, we plot the meta-regression model output.
+
+::: panel-tabset
+
+##### metafor
+
+```{r}
+#| echo: FALSE
+#| eval: false
+
+
+fit_phylo_eg2_metafor_mr <- here("Rdata", "tutorial_v2", "phylo_eg2_metafor_BM_mr.rds")
+
+
+```
+
+```{r}
+#| eval: false
+
+mr_res <- orchaRd::mod_results(
+  fit_phylo_eg2_metafor_mr,
+  mod   = "environment",
+  group = "id"
+)
+
+mr_res
+
+## 3. orchard plot
+metafor_mr_p1 <- orchaRd::orchard_plot(
+  mr_res,
+  mod   = "environment",
+  group = "id",
+  xlab  = "Effect size",
+  angle = 45
+) +
+#   scale_color_manual(values = "#CDAD00") +
+#   scale_fill_manual(values = "#FFD700") +
+  theme_classic()
+
+metafor_mr_p1
+
+## for random effect
+ci_var_mr <- confint(fit_phylo_eg2_metafor_mr, level = 0.95)
+
+tbl_mr <- tibble::as_tibble(ci_var_mr, rownames = "term")
+
+label_map_mr <- c("Effect_id", "Species", "Phylo")
+
+tbl_var_mr <- tbl_mr |>
+  filter(str_detect(term, "^sigma\\^2\\.")) |>
+  mutate(
+    idx = as.integer(str_match(term, "\\.(\\d+)$")[, 2]),
+    label = case_when(
+      idx == 1 ~ "Effect_id",   # ~1 | id
+      idx == 2 ~ "Phylo",       # ~1 | phy
+      idx == 3 ~ "Species"      # ~1 | species
+    ),
+    label = factor(label, levels = label_map_mr)
+  )
+
+metafor_mr_p2 <- ggplot(tbl_var_mr, aes(x = label, y = estimate)) +
+  geom_point(size = 3.0, color = "#528B8B") +
+  geom_errorbar(aes(ymin = ci.lb, ymax = ci.ub), width = 0.25, color = "#528B8B") +
+  coord_flip() +
+  labs(x = NULL, y = "Variance (95% CI)") +
+  theme_classic(base_size = 12)
+
+metafor_eg2_1 <- metafor_mr_p1 / metafor_mr_p2
+metafor_eg2_1
+
+ggsave(
+  filename = "figs/metafor_lim.png",
+  plot = metafor_eg2_1,
+  width = 8,
+  height = 7,
+  dpi = 300
+)
+
+```
+![Lim_metafor](figs/tutorial/metafor_moura.jpg){width="80%"}
+
+
+##### brms
+
+```{r}
+#| eval: false
+
+
+moura_BM_brms1 <- readRDS(here("Rdata", "tutorial_v2", "moura2021_BM_brms.rds"))
+get_variables(moura_BM_brms1)
+
+## fixed effects
+fixed_effects_samples_brms <- phylo_eg2_brms_mr |>
+  spread_draws(b_Intercept)
+fixed_effects_samples_brms <- fixed_effects_samples_brms |>
+  pivot_longer(cols = starts_with("b_"), 
+               names_to = ".variable", 
+               values_to = ".value")
+
+brms_p1 <- ggplot(fixed_effects_samples_brms, aes(x = .value, y = .variable)) +
+  stat_halfeye(
+    normalize = "xy", 
+    point_interval = "mean_qi", 
+    fill           = "#FFD700",
+    color          = "#CDAD00"
+  ) +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
+  scale_x_continuous(breaks = seq(-1.0, 2.0, 1)) + 
+  labs(y = "Overall effect"
+  ) +
+  theme_classic()
+head(fixed_effects_samples_brms)
+
+## random effects
+random_effects_samples_brms <- phylo_eg2_brms_mr |>
+  spread_draws(sd_species.id.phy__Intercept, sd_effect.size.id__Intercept, sd_species.id__Intercept, sd_study.id__Intercept)
+random_effects_samples_brms <- random_effects_samples_brms |>
+  pivot_longer(cols = starts_with("sd_"), 
+               names_to = ".variable", 
+  #              values_to = ".value")　|> 
+  # mutate(.value = .value^2,
+  #        .variable = case_when(
+  #          .variable == "sd_species.id.phy__Intercept" ~ "Phylo",
+  #          .variable == "sd_study.id__Intercept" ~ "Study",
+  #          .variable == "sd_species.id__Intercept" ~ "Species",
+  #          .variable == "sd_effect.size.id__Intercept" ~ "Effect_id"
+  #        ),
+  #        .variable = factor(.variable, 
+  #                           levels = c("Effect_id", "Study", "Species", "Phylo")
+  #                           )
+         )
+
+head(random_effects_samples_brms)
+
+brms_p2 <- ggplot(random_effects_samples_brms, aes(x = .value, y = .variable)) +
+  stat_halfeye(
+    normalize = "xy",
+    point_interval = "mean_qi", 
+    fill = "#98F5FF",
+    color = "#528B8B"
+  ) +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
+　scale_x_continuous(breaks = seq(0, 0.08, 0.02), limits = c(0, 0.08)) + 
+  labs(
+    # title = "Posterior distributions of random effects - brms",
+    y = "Random effects (variance)"
+  ) +
+  theme_classic() 
+
+```
+
 
 TBU
-
 :::
 
 # Spatial meta-analysis
