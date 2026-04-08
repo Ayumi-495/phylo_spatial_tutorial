@@ -21,25 +21,23 @@ format:
   html:
     toc: true
     toc-location: left
-    toc-depth: 6
+    toc-depth: 8
     toc-float: false
     toc-title: "**CONTENTS**"
     output-file: "index.html"
     embed-resources: true
-    # code-fold: true
     code-tools: 
       source: false
     number-sections: false
-    # bibliography: ./bib/ref.bib
     fontsize: "12"
     mainfont: "Roboto"
     monofont: "Roboto"
-    # fontcolor: ""
     page-layout: full
     code-overflow: wrap
     df_print: paged
     theme: united
     code-line-numbers: false
+    # css: styles.css
     # grid:
     #   margin-width: 190px
 crossref: 
@@ -57,7 +55,7 @@ execute:
   # cache: true
 ---
 
-# Intended audience and scope of this tutorial
+# Intended audience and scope
 
 *This online tutorial accompanies our tutorial paper: A unified framework for phylogenetic and spatial meta-analysis: concepts, implementation, and practical guidance [LINK]*
 
@@ -1205,7 +1203,7 @@ dat_moura2021$g <- 1
 ```{r}
 #| eval: false
 
-# this creates a variance-covariance matrix - diagonal elements are the known sampling variances of the effect sizes. The off-diagonal elements are zero, reflecting the usual assumption tnat effect sizes are independent. This matrix plays the same rule as V = vi in metafor
+# this creates a variance-covariance matrix - diagonal elements are the known sampling variances of the effect sizes. The off-diagonal elements are zero, reflecting the usual assumption that effect sizes are independent. This matrix plays the same rule as V = vi in metafor
 
 VCV <- diag(dat_moura2021$vi, nrow = nrow(dat_moura2021)) 
 rownames(VCV)<- colnames(VCV)<- dat_moura2021$effect.size.id
@@ -1265,7 +1263,7 @@ sigma(phylo_eg1_tmb)^2
 phylo_eg1_tmb_varcor <- VarCorr(phylo_eg1_tmb)$cond
 exp(phylo_eg1_tmb$fit$par)
 #   betadisp      theta      theta      theta 
-# 0.12020875 0.13841423 0.23592711 0.05122353 <- residual variance (sd), study.id (sd), species.id (sd), species.id.phy (variance?)
+# 0.12020875 0.13841423 0.23592711 0.05122353 <- residual, study.id, species.id, species.id.phy
 
 ```
 
@@ -1305,146 +1303,6 @@ exp(phylo_eg1_tmb$fit$par)
 
 But be careful - the meaning of theta can be changed. It depends on what random effect you included in your model. The residual variance is reported by `sigma(model)^2`.
 
-#### Visualisations
-
-##### `metafor`
-
-Visualising results often makes them much easier to understand than presenting them only in tables or in text. We want to visualise both the overall effect size estimate and the variance components from the random effects - but how to do this nicely?
-
-Traditionally, forest plots have bee used to report the pooled estimate and confidence intervals. However, forest plots does not clearly convey each study's contribution to the overall estimates (that is, the relative precision or inverse-variance weight of each effect size). The [`orchaRd`](https://doi.org/10.1111/2041-210X.14152) package provides a nice alternative, the orchard plot, which visualises the overall effect size along with the precision of each effect size estimate.
-
-Although orchard plots provide an effective summary of model-based estimates, they are not designed to display variance-component decomposition. We therefore construct custom visualisations in `ggplot2` to present the pooled effect size alongside the estimated variance components.
-
-```{r}
-#| eval: false
-
-metafor_p1 <- orchaRd::orchard_plot(moura_BM_metafor1, 
-                           group = "study.id",
-                           xlab = "Effect size",
-                           angle = 45) + 
-  scale_x_discrete(labels = c("Overall effect")) +
-  scale_color_manual(values = "#CDAD00") +
-  scale_fill_manual(values = "#FFD700") + 
-  theme_classic()
-
-## random effect
-ci_var <- confint(moura_BM_metafor1, level = 0.95) 
-# estimate  ci.lb  ci.ub 
-# sigma^2.1   0.0192 0.0108 0.0325 
-# sigma.1     0.1384 0.1038 0.1802 
-# 
-# estimate  ci.lb  ci.ub 
-# sigma^2.2   0.0145 0.0121 0.0172 
-# sigma.2     0.1202 0.1099 0.1311 
-# 
-# estimate  ci.lb  ci.ub 
-# sigma^2.3   0.0557 0.0334 0.0788 
-# sigma.3     0.2359 0.1827 0.2807 
-# 
-# estimate  ci.lb  ci.ub 
-# sigma^2.4   0.0512 0.0179 0.1792 
-# sigma.4     0.2263 0.1336 0.4233 
-
-tbl <- tibble::as_tibble(ci_var, rownames = "term")
-
-label_map <- c("Effect_id", "Study_id", "Species", "Phylo")
-tbl_var <- tbl |>
-  filter(str_detect(term, "^sigma\\^2\\.")) |>
-  mutate(
-    idx   = as.integer(str_match(term, "\\.(\\d+)$")[,2]),
-    label = case_when(
-      idx == 1 ~ "Study_id",
-      idx == 2 ~ "Effect_id",
-      idx == 3 ~ "Species",
-      idx == 4 ~ "Phylo"
-    ),
-    label = factor(label, levels = label_map) 
-  )
-
-metafor_p2 <- ggplot(tbl_var, aes(x = label, y = estimate)) +
-  geom_point(size = 3.0, color = "#528B8B") +
-  geom_errorbar(aes(ymin = ci.lb, ymax = ci.ub), width = 0.25, color = "#528B8B") +
-  coord_flip() +
-  labs(x = NULL, y = "Variance 95% CI") +
-  # scale_y_continuous(breaks = seq(0, 10.0, 1), limits = c(0, 10.0)) + 
-  theme_classic(base_size = 12)
-
-metafor_eg1_1 <- metafor_p1 / metafor_p2
-metafor_eg1_1
-```
-
-![moura_metafor](figs/tutorial/metafor_moura.jpg){width="80%"}
-
-##### `brms`
-
-In `brms`, we can extract posterior samples for both fixed and random effects, and visualise them using `ggplot2`.
-
-```{r}
-#| eval: false
-
-moura_BM_brms1 <- readRDS(here("Rdata", "tutorial_v2", "moura2021_BM_brms.rds"))
-get_variables(moura_BM_brms1)
-
-## fixed effects
-fixed_effects_samples_brms <- moura_BM_brms1 |>
-  spread_draws(b_Intercept)
-fixed_effects_samples_brms <- fixed_effects_samples_brms |>
-  pivot_longer(cols = starts_with("b_"), 
-               names_to = ".variable", 
-               values_to = ".value")
-
-brms_p1 <- ggplot(fixed_effects_samples_brms, aes(x = .value, y = .variable)) +
-  stat_halfeye(
-    normalize = "xy", 
-    point_interval = "mean_qi", 
-    fill           = "#FFD700",
-    color          = "#CDAD00"
-  ) +
-  geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
-  scale_x_continuous(breaks = seq(-1.0, 2.0, 1)) + 
-  labs(y = "Overall effect"
-  ) +
-  theme_classic()
-head(fixed_effects_samples_brms)
-
-## random effects
-random_effects_samples_brms <- moura_BM_brms1 |>
-  spread_draws(sd_species.id.phy__Intercept, sd_effect.size.id__Intercept, sd_species.id__Intercept, sd_study.id__Intercept)
-random_effects_samples_brms <- random_effects_samples_brms |>
-  pivot_longer(cols = starts_with("sd_"), 
-               names_to = ".variable", 
-               values_to = ".value")　|> 
-  mutate(.value = .value^2,
-         .variable = case_when(
-           .variable == "sd_species.id.phy__Intercept" ~ "Phylo",
-           .variable == "sd_study.id__Intercept" ~ "Study",
-           .variable == "sd_species.id__Intercept" ~ "Species",
-           .variable == "sd_effect.size.id__Intercept" ~ "Effect_id"
-         ),
-         .variable = factor(.variable, 
-                            levels = c("Effect_id", "Study", "Species", "Phylo")
-                            )
-         )
-
-head(random_effects_samples_brms)
-
-brms_p2 <- ggplot(random_effects_samples_brms, aes(x = .value, y = .variable)) +
-  stat_halfeye(
-    normalize = "xy",
-    point_interval = "mean_qi", 
-    fill = "#98F5FF",
-    color = "#528B8B"
-  ) +
-  geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
-　scale_x_continuous(breaks = seq(0, 0.08, 0.02), limits = c(0, 0.08)) + 
-  labs(
-    # title = "Posterior distributions of random effects - brms",
-    y = "Random effects (variance)"
-  ) +
-  theme_classic() 
-```
-
-![moura_brms](figs/tutorial/brms_moura.jpg){width="80%"}
 :::
 
 #### Brownian motion (meta-regression)
@@ -1854,15 +1712,164 @@ summary(phy_ou_meta_reg2)
 ```
 
 
-The OU phylogenetic model fitted the data substantially better than the BM model (AIC = 330.76 vs 345.35), indicating that phylogenetic similarity in assortative mating strength decays rapidly with evolutionary distance. In other words, closely related species tend to resemble one another in mate size correlation, but this resemblance weakens quickly as phylogenetic distance increases. This pattern is consistent with an OU process in which species are pulled towards their own lineage-specific optima, rather than retaining strong similarity over deep evolutionary timescales.
+The OU phylogenetic model fitted the data substantially better than the BM model (AIC = 330.76 vs 345.35), indicating that phylogenetic similarity in assortative mating strength decays rapidly with evolutionary distance. In other words, closely related species tend to resemble one another in mate size correlation, but this resemblance weakens quickly as phylogenetic distance increases. This pattern is consistent with an OU process in which species are pulled towards their own lineage-specific optima, rather than retaining strong similarity over deep evolutionary time-scales.
 
-Although the pooled effect size was similar under both models, the uncertainty around this estimate was smaller under OU, as reflected by the narrower confidence interval and smaller standard error. Under the OU model, species-level variation was captured almost entirely by the OU-structured phylogenetic term, whereas the BM model partitioned this variation between phylogenetic and non-phylogenetic species effects. Together, these results suggest that assortative mating strength shows only limited deep phylogenetic inertia and is instead dominated by relatively shallow phylogenetic resemblance and species-specific variation.
+Although the pooled effect size (meta-analysis) and moderator effect(meta-regression) was similar under both models, the uncertainty around this estimate was slightly smaller under OU, as reflected by the narrower confidence interval and smaller standard error. Under the OU model, species-level variation was captured almost entirely by the OU-structured phylogenetic term, whereas the BM model partitioned this variation between phylogenetic and non-phylogenetic species effects. Together, these results suggest that assortative mating strength shows only limited deep phylogenetic inertia and is instead dominated by relatively shallow phylogenetic resemblance and species-specific variation.
 
 Note: We cannot currently fit this OU model directly in `brms` or `glmmTMB`.
 
+
+#### Visualisations
+
+Visualising results often makes them much easier to understand than presenting them only in tables or in text. We want to visualise both the overall effect size estimate and the variance components from the random effects - but how to do this nicely?
+
+Traditionally, forest plots have bee used to report the pooled estimate and confidence intervals. However, forest plots does not clearly convey each study's contribution to the overall estimates (that is, the relative precision or inverse-variance weight of each effect size). The [`orchaRd`](https://doi.org/10.1111/2041-210X.14152) package provides a nice alternative, the orchard plot, which visualises the overall effect size along with the precision of each effect size estimate.
+
+Although orchard plots provide an effective summary of model-based estimates, they are not designed to display variance-component decomposition. We therefore construct custom visualisations in `ggplot2` to present the pooled effect size alongside the estimated variance components.
+
+Here, we present how to make figures from `metafor` and `brms` using meta-analysis model outputs.
+
+::: panel-tabset
+
+##### metafor
+
+```{r}
+#| eval: false
+
+metafor_p1 <- orchaRd::orchard_plot(moura_BM_metafor1, 
+                           group = "study.id",
+                           xlab = "Effect size",
+                           angle = 45) + 
+  scale_x_discrete(labels = c("Overall effect")) +
+  scale_color_manual(values = "#CDAD00") +
+  scale_fill_manual(values = "#FFD700") + 
+  theme_classic()
+
+## random effect
+ci_var <- confint(moura_BM_metafor1, level = 0.95) 
+# estimate  ci.lb  ci.ub 
+# sigma^2.1   0.0192 0.0108 0.0325 
+# sigma.1     0.1384 0.1038 0.1802 
+# 
+# estimate  ci.lb  ci.ub 
+# sigma^2.2   0.0145 0.0121 0.0172 
+# sigma.2     0.1202 0.1099 0.1311 
+# 
+# estimate  ci.lb  ci.ub 
+# sigma^2.3   0.0557 0.0334 0.0788 
+# sigma.3     0.2359 0.1827 0.2807 
+# 
+# estimate  ci.lb  ci.ub 
+# sigma^2.4   0.0512 0.0179 0.1792 
+# sigma.4     0.2263 0.1336 0.4233 
+
+tbl <- tibble::as_tibble(ci_var, rownames = "term")
+
+label_map <- c("Effect_id", "Study_id", "Species", "Phylo")
+tbl_var <- tbl |>
+  filter(str_detect(term, "^sigma\\^2\\.")) |>
+  mutate(
+    idx   = as.integer(str_match(term, "\\.(\\d+)$")[,2]),
+    label = case_when(
+      idx == 1 ~ "Study_id",
+      idx == 2 ~ "Effect_id",
+      idx == 3 ~ "Species",
+      idx == 4 ~ "Phylo"
+    ),
+    label = factor(label, levels = label_map) 
+  )
+
+metafor_p2 <- ggplot(tbl_var, aes(x = label, y = estimate)) +
+  geom_point(size = 3.0, color = "#528B8B") +
+  geom_errorbar(aes(ymin = ci.lb, ymax = ci.ub), width = 0.25, color = "#528B8B") +
+  coord_flip() +
+  labs(x = NULL, y = "Variance 95% CI") +
+  # scale_y_continuous(breaks = seq(0, 10.0, 1), limits = c(0, 10.0)) + 
+  theme_classic(base_size = 12)
+
+metafor_eg1_1 <- metafor_p1 / metafor_p2
+metafor_eg1_1
+```
+
+![moura_metafor](figs/tutorial/metafor_moura.jpg){width="80%"}
+
+##### brms
+
+In `brms`, we can extract posterior samples for both fixed and random effects, and visualise them using `ggplot2`.
+
+```{r}
+#| eval: false
+
+moura_BM_brms1 <- readRDS(here("Rdata", "tutorial_v2", "moura2021_BM_brms.rds"))
+get_variables(moura_BM_brms1)
+
+## fixed effects
+fixed_effects_samples_brms <- moura_BM_brms1 |>
+  spread_draws(b_Intercept)
+fixed_effects_samples_brms <- fixed_effects_samples_brms |>
+  pivot_longer(cols = starts_with("b_"), 
+               names_to = ".variable", 
+               values_to = ".value")
+
+brms_p1 <- ggplot(fixed_effects_samples_brms, aes(x = .value, y = .variable)) +
+  stat_halfeye(
+    normalize = "xy", 
+    point_interval = "mean_qi", 
+    fill           = "#FFD700",
+    color          = "#CDAD00"
+  ) +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
+  scale_x_continuous(breaks = seq(-1.0, 2.0, 1)) + 
+  labs(y = "Overall effect"
+  ) +
+  theme_classic()
+head(fixed_effects_samples_brms)
+
+## random effects
+random_effects_samples_brms <- moura_BM_brms1 |>
+  spread_draws(sd_species.id.phy__Intercept, sd_effect.size.id__Intercept, sd_species.id__Intercept, sd_study.id__Intercept)
+random_effects_samples_brms <- random_effects_samples_brms |>
+  pivot_longer(cols = starts_with("sd_"), 
+               names_to = ".variable", 
+               values_to = ".value")　|> 
+  mutate(.value = .value^2,
+         .variable = case_when(
+           .variable == "sd_species.id.phy__Intercept" ~ "Phylo",
+           .variable == "sd_study.id__Intercept" ~ "Study",
+           .variable == "sd_species.id__Intercept" ~ "Species",
+           .variable == "sd_effect.size.id__Intercept" ~ "Effect_id"
+         ),
+         .variable = factor(.variable, 
+                            levels = c("Effect_id", "Study", "Species", "Phylo")
+                            )
+         )
+
+head(random_effects_samples_brms)
+
+brms_p2 <- ggplot(random_effects_samples_brms, aes(x = .value, y = .variable)) +
+  stat_halfeye(
+    normalize = "xy",
+    point_interval = "mean_qi", 
+    fill = "#98F5FF",
+    color = "#528B8B"
+  ) +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
+　scale_x_continuous(breaks = seq(0, 0.08, 0.02), limits = c(0, 0.08)) + 
+  labs(
+    # title = "Posterior distributions of random effects - brms",
+    y = "Random effects (variance)"
+  ) +
+  theme_classic() 
+```
+
+![moura_brms](figs/tutorial/brms_moura.jpg){width="80%"}
+:::
+
+
 ### 2. Lim et al. (2014)
 
-We used the `o_o_unadj` dataset from [`dat.lim2014`](https://wviechtb.github.io/metadat/reference/dat.lim2014.html) in the `metadat` package. The dataset come from [Lim et al. (2014)](https://doi.org/10.1111/evo.12446). It includes correlation coefficients (`ri`) and sample sizes (`ni`) describing the association between offspring size and offspring number, unadjusted for maternal size, across multiple species, along with a matching phylogenetic tree. We converted ri to Fisher’s z effect sizes (`yi`) and derived the corresponding sampling variances (`vi`) prior to model fitting. The resulting example dataset contained 170 effect sizes and 120 species. <!-- remove "study" from random effect -->
+We used the `o_o_unadj` dataset from [`dat.lim2014`](https://wviechtb.github.io/metadat/reference/dat.lim2014.html) in the `metadat` package. The dataset come from [Lim et al. (2014)](https://doi.org/10.1111/evo.12446). It includes correlation coefficients (`ri`) and sample sizes (`ni`) describing the association between offspring size and offspring number, unadjusted for maternal size, across multiple species, along with a matching phylogenetic tree. We converted `ri` to Fisher’s z effect sizes (`yi`) and derived the corresponding sampling variances (`vi`) prior to model fitting. The resulting example dataset contained 170 effect sizes and 120 species. 
+<!-- remove "study" from random effect -->
 
 ```{r}
 #| eval: false
@@ -1871,14 +1878,15 @@ We used the `o_o_unadj` dataset from [`dat.lim2014`](https://wviechtb.github.io/
 dat_lim2014 <- dat.lim2014$o_o_unadj
 tre_lim2014 <- dat.lim2014$o_o_unadj_tree
 
-# calculate effect size  and sampling variances
+# calculate effect size and sampling variances
 dat_lim2014 <- escalc(measure = "ZCOR", ri = ri, ni = ni, data = dat_lim2014)
 
 # check the tree
-is.ultrametric(tre_lim2014) # FALSE
 is.binary(tre_lim2014)  # TRUE
-
-# need to compute branch length
+is.ultrametric(tre_lim2014)
+# in .is.ultrametric_ape(phy, tol, option, length(phy$tip.label)) : the tree has no branch lengths
+# -> so we need to get the branch length…
+# compute branch length
 tre_lim2014 <- compute.brlen(tre_lim2014)
 
 # make the additional species column - we will use this to consider phylo- and non-phylo random effects
@@ -1905,8 +1913,8 @@ A <- vcv(tre_lim2014, corr = TRUE)
 
 fit_phylo_eg2_metafor_ma <- rma.mv(yi, vi,
                       random = list(~ 1 | id,
-                                   ~ 1 | phy,
-                                   ~ 1| species),
+                                    ~ 1 | phy,
+                                    ~ 1| species),
                       R = list(phy = A),
                       data = dat_lim2014,
                       verbose = TRUE,
@@ -2331,6 +2339,7 @@ summary(phylo_eg2_tmb_mr)
 ##### Figures
 
 TBU
+
 :::
 
 # Spatial meta-analysis
