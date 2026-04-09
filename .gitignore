@@ -24,7 +24,6 @@ my.tr.tre
 *.rds
 *.ai
 /figs
-/figs
 Rplot.pdf
 Rplot01.pdf
 /Rdata

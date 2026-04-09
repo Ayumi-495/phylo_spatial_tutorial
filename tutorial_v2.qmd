@@ -57,7 +57,7 @@ execute:
 
 # Intended audience and scope
 
-*This online tutorial accompanies our tutorial paper: A unified framework for phylogenetic and spatial meta-analysis: concepts, implementation, and practical guidance [LINK]*
+*This online tutorial accompanies our tutorial paper: A unified framework for phylogenetic and spatial meta-analysis: concepts, implementation, and practical guidance \[LINK\]*
 
 This is intended for researchers who already have a basic understanding of meta-analysis and some familiarity with statistical modelling in `R`. It is aimed at readers who are interested in phylogenetic and spatial meta-analytic modelling, given the increasing availability of large-scale datasets that include species-level traits and geographic information.
 
@@ -99,18 +99,14 @@ First, we will show how to make a phylogenetic correlation matrix to account for
 1.  Using a specific phylogenetic tree
 2.  Using the `rotl` package (accessing a synthetic tree from Open Tree of Life; <https://opentreeoflife.github.io/>)
 
-In the following two sections, we introduce how to make the correlation matrix from phylogenetic trees in these two ways. When making a correlation matrix from a phylogenetic tree we need to assume an evolutionary model (process), which determines how branch lengths are transformed into expected covariances between species. The example below demonstrates how to compute a correlation matrix under the Brownian motion process. 
-<!-- For the *Ornstein–Uhlenbeck process*, please refer to their respective sections.  -->
+In the following two sections, we introduce how to make the correlation matrix from phylogenetic trees in these two ways. When making a correlation matrix from a phylogenetic tree we need to assume an evolutionary model (process), which determines how branch lengths are transformed into expected covariances between species. The example below demonstrates how to compute a correlation matrix under the Brownian motion process. <!-- For the *Ornstein–Uhlenbeck process*, please refer to their respective sections.  -->
 
 ::: callout
 **Note on tree preparation and cleaning/pruning**
 
-The starting point usually is a list of species represented in your data set – ideally, it is a list of correct Latin binomial names, using the most recent and accepted taxonomic naming convention. Sometimes, the species names in your data may not match those in the tree you are using to create your phylogenetic correlation matrix. 
-Data matching and cleaning are not covered in this tutorial - please ensure that naming is consistent and fully matched before creating the phylogenetic correlation matrix. There are some helper `R` packages for resolving mismatched taxonomic names among datasets and phylogenetic trees (reviewed in [Grenié et al. 2022](https://doi.org/10.1111/2041-210X.13802)). 
-Meta-analytic models will not run if the lists of names in the data set and those in the correlation matrix do not match exactly.
+The starting point usually is a list of species represented in your data set – ideally, it is a list of correct Latin binomial names, using the most recent and accepted taxonomic naming convention. Sometimes, the species names in your data may not match those in the tree you are using to create your phylogenetic correlation matrix. Data matching and cleaning are not covered in this tutorial - please ensure that naming is consistent and fully matched before creating the phylogenetic correlation matrix. There are some helper `R` packages for resolving mismatched taxonomic names among datasets and phylogenetic trees (reviewed in [Grenié et al. 2022](https://doi.org/10.1111/2041-210X.13802)). Meta-analytic models will not run if the lists of names in the data set and those in the correlation matrix do not match exactly.
 
-Also, when subsetting a larger existing phylogenetic tree to match your list of species, it will be necessary to remove (drop) extra species from the tree that are not in your dataset (i.e. prune the tree). In that case, you can use `TreeTools::DropTip()` / `ape::drop.tip()` (or` TreeTools::KeepTip()` / `ape::keep.tip()`). You can see how to do this in the example below)
-
+Also, when subsetting a larger existing phylogenetic tree to match your list of species, it will be necessary to remove (drop) extra species from the tree that are not in your dataset (i.e. prune the tree). In that case, you can use `TreeTools::DropTip()` / `ape::drop.tip()` (or`TreeTools::KeepTip()` / `ape::keep.tip()`). You can see how to do this in the example below)
 :::
 
 :::: panel-tabset
@@ -122,10 +118,9 @@ We now illustrate how to use an existing phylogenetic tree provided as a file an
 
 #### Step 1. Read the tree from a file
 
-Phylogenetic trees are commonly distributed in formats such as Newick (`.nwk`, `.tre`) or Nexus (`.nex`). The `ape` package can read most of these standard-format files. 
+Phylogenetic trees are commonly distributed in formats such as Newick (`.nwk`, `.tre`) or Nexus (`.nex`). The `ape` package can read most of these standard-format files.
 
-Here, we will use a sample dataset on *Sylviidae* (Sylviid warblers; a family of passerines).
-We have a Nexus file containing a phylogenetic tree for 294 species from the Sylvidae family. However, our meta-analytic dataset only includes 10 species (for didactic purposes). So, we first need to "prune" the tree to remove those species that are not in our data set.
+Here, we will use a sample dataset on *Sylviidae* (Sylviid warblers; a family of passerines). We have a Nexus file containing a phylogenetic tree for 294 species from the Sylvidae family. However, our meta-analytic dataset only includes 10 species (for didactic purposes). So, we first need to "prune" the tree to remove those species that are not in our data set.
 
 ```{r}
 #| label: way 1 - phylometa
@@ -190,8 +185,7 @@ setdiff(tree$tip.label, species_data) # species names from the tree not found in
 
 ```
 
-Given that we only have 10 species in the dataset and 294 species in the tree, most species from tree will not be present in the dataset. At this point, it is also very important to look at the other mismatch result, which checks whether all of the species in our dataset can be matched to the tree. 
-If mismatches occur, we need to consider whether it is a truly missing species, typographical errors, outdated taxonomy, hybrid species which do not fit on binomial tree, or differences in naming conventions (e.g. using underscores vs spaces between name segments, or using subspecies names). These issues must be resolved manually before proceeding. In our example, we have a dataset with species names that match the tree, si we do not need to deal with such issues.
+Given that we only have 10 species in the dataset and 294 species in the tree, most species from tree will not be present in the dataset. At this point, it is also very important to look at the other mismatch result, which checks whether all of the species in our dataset can be matched to the tree. If mismatches occur, we need to consider whether it is a truly missing species, typographical errors, outdated taxonomy, hybrid species which do not fit on binomial tree, or differences in naming conventions (e.g. using underscores vs spaces between name segments, or using subspecies names). These issues must be resolved manually before proceeding. In our example, we have a dataset with species names that match the tree, si we do not need to deal with such issues.
 
 #### Step 4. Prune the tree to include only species in the dataset
 
@@ -317,8 +311,7 @@ myspecies <- c(
 
 #### Step 2. Resolve species names using OpenTree TNRS
 
-We start with strict matching to identify exact matches and flag names that may require manual attention. 
-We then use approximate matching only as a diagnostic step for unresolved names, because fuzzy matches can help detect likely typos or synonyms but should always be checked before being accepted.
+We start with strict matching to identify exact matches and flag names that may require manual attention. We then use approximate matching only as a diagnostic step for unresolved names, because fuzzy matches can help detect likely typos or synonyms but should always be checked before being accepted.
 
 ```{r}
 #| eval: false
@@ -391,9 +384,9 @@ In this example, the strict match flags two misspelled names, and approximate ma
 
 If the strict match fails or returns `NAs`, you can enable approximate matching. Approximate matching uses fuzzy string matching to find the closest matches in the OpenTree taxonomy, but you should always inspect the returned matches carefully.
 
-Key columns to check include 
+Key columns to check include
 
--   `unique_name`: the matched OpenTree taxon name 
+-   `unique_name`: the matched OpenTree taxon name
 -   `ott_id`: the OpenTree taxonomy identifier used for tree retrieval
 -   `approximate_match`: `TRUE` indicates a non-exact match, for example due to a typo
 -   `is_synonym`: `TRUE` indicates the input name was treated as a synonym
@@ -455,8 +448,7 @@ At this point, you should confirm that: - All species have a valid `ott_id`. - t
 
 #### Step 4. Retrieve the phylogenetic tree from OpenTree
 
-Once you are satisfied with the matched OpenTree identifiers, you can request a trimmed subtree from the OpenTree synthetic tree using `tol_induced_subtree()`. 
-At this stage, the OpenTree subtree provides a convenient phylogenetic topology for the matched taxa. However, before using it in comparative or meta-analytic models, you should still check whether the tip labels are appropriate, whether branch lengths are available, and whether the tree satisfies assumptions such as bifurcation and ultrametricity.
+Once you are satisfied with the matched OpenTree identifiers, you can request a trimmed subtree from the OpenTree synthetic tree using `tol_induced_subtree()`. At this stage, the OpenTree subtree provides a convenient phylogenetic topology for the matched taxa. However, before using it in comparative or meta-analytic models, you should still check whether the tip labels are appropriate, whether branch lengths are available, and whether the tree satisfies assumptions such as bifurcation and ultrametricity.
 
 ```{r}
 #| eval: false
@@ -499,14 +491,11 @@ plot(tree, cex=.8, label.offset =.1, no.margin = TRUE)
 
 ```
 
-
 #### Step 5. Clean and standardise tip labels
 
 The tip labels returned by OpenTree are not always directly ready for downstream analyses. They may contain underscores, appended identifiers, or labels corresponding to internal nodes rather than named terminal taxa. The goal of this step is therefore to standardise the labels for readability and to check that each tip can be matched unambiguously to the intended species in the dataset.
 
 In our example, one tip is labelled `"mrcaott616ott617"` rather than *Escherichia coli*. This is a non-taxon internal node within Bacteria, which can arise when only one representative from a large clade is included. Since there are no other bacteria in the dataset and the tree position is appropriate for our purposes, we relabel this tip as *Escherichia coli* for didactic purposes.
-
-
 
 ```{r}
 #| eval: false
@@ -536,8 +525,7 @@ tree$tip.label <- gsub("mrcaott616ott617", "Escherichia coli", tree$tip.label)
 
 ```
 
-We can now plot the cleaned tree for inspection. 
-Note that branch lengths are not yet included, so at this stage the tree is mainly useful for checking topology and tip labels.
+We can now plot the cleaned tree for inspection. Note that branch lengths are not yet included, so at this stage the tree is mainly useful for checking topology and tip labels.
 
 ```{r}
 #| echo: false
@@ -584,10 +572,10 @@ setdiff(as.character(tree$tip.label), myspecies_fixed)
 ```
 
 #### Step 7. Compute the phylogenetic correlation matrix (handling missing branch lengths)
+
 At this point, the tree topology may be usable for plotting or simple inspection, but it is not yet guaranteed to be suitable for phylogenetic covariance calculations. In particular, `vcv()` requires branch lengths, and many comparative models additionally assume a fully bifurcating and often ultrametric tree. The Open Tree of Life synthetic tree often provides a well-resolved topology, but it does not always include branch lengths.
 
-To compute a phylogenetic variance-covariance (VCV) or correlation matrix under a Brownian motion (BM) process, we use `vcv()` from the `ape` package.
-If the tree has no branch lengths, `vcv()` will fail with:
+To compute a phylogenetic variance-covariance (VCV) or correlation matrix under a Brownian motion (BM) process, we use `vcv()` from the `ape` package. If the tree has no branch lengths, `vcv()` will fail with:
 
 ```{r}
 #| eval: false
@@ -596,9 +584,7 @@ A <- vcv(tree, corr = TRUE)
 # Error in vcv.phylo(tree, corr = TRUE) : the tree has no branch lengths
 ```
 
-For didactic purposes in this tutorial, we assign equal branch lengths to all edges (that is, all branch lengths are set to 1). 
-This allows us to demonstrate the workflow and obtain a valid correlation matrix. 
-In real analyses, you should consider using a tree with biologically meaningful branch lengths (for example, a time-calibrated phylogeny).
+For didactic purposes in this tutorial, we assign equal branch lengths to all edges (that is, all branch lengths are set to 1). This allows us to demonstrate the workflow and obtain a valid correlation matrix. In real analyses, you should consider using a tree with biologically meaningful branch lengths (for example, a time-calibrated phylogeny).
 
 ```{r}
 #| eval: false
@@ -635,14 +621,14 @@ A[1:5, 1:5]
 ```
 
 ### What if there are polytomies or non-ultrametric trees?
+
 The subtree returned by OpenTree may be sufficient for demonstration purposes, but many phylogenetic models require additional assumptions about branching structure and branch lengths. We therefore illustrate how to diagnose and handle two common issues: *polytomies* and *non-ultrametric* trees.
 
 A polytomy occurs when an internal node has more than two descendant branches (a multifurcation).
 
 A non-ultrametric tree is a tree in which not all tips are equidistant from the root, meaning that the tree is not time-calibrated.
 
-Many phylogenetic comparative and meta-analytic models assume a fully bifurcating and ultrametric tree, because the expected covariance among species is defined under a continuous-time branching process (for example Brownian motion or Ornstein–Uhlenbeck evolution). 
-Here we illustrate what these issues mean, and how they can be handled, using a simple toy example.
+Many phylogenetic comparative and meta-analytic models assume a fully bifurcating and ultrametric tree, because the expected covariance among species is defined under a continuous-time branching process (for example Brownian motion or Ornstein–Uhlenbeck evolution). Here we illustrate what these issues mean, and how they can be handled, using a simple toy example.
 
 #### Create a toy tree with a polytomy
 
@@ -655,7 +641,6 @@ library(phytools)
 tree_poly <- read.tree(text = "((A,B,C),D,E);")
 plot(tree_poly)
 ```
-
 
 ```{r}
 #| eval: FALSE
@@ -682,7 +667,6 @@ tree_bin <- multi2di(tree_poly, random = TRUE)
 
 ```
 
-
 ```{r}
 #| eval: FALSE
 
@@ -707,7 +691,6 @@ set.seed(50)
 tree_bin2 <- multi2di(tree_poly, random = TRUE)
 
 ```
-
 
 ```{r}
 #| echo: FALSE
@@ -748,7 +731,6 @@ This is required when phylogenetic covariance is interpreted as shared evolution
 tree_ultra1 <- chronos(tree_nonultra)
 
 ```
-
 
 ```{r}
 #| eval: FALSE
@@ -797,10 +779,7 @@ This ensures that the phylogenetic random effect used in meta-analysis correspon
 
 ### 1. Moura et al. (2021)
 
-Here we use the dataset from [Moura et al. (2021)](https://doi.org/10.1111/ele.13690), which collated 1,828 effect sizes from 457 studies and 341 animal species to investigate assortative mating patterns.
-Each effect size is a Fisher's Z transformed correlation coefficient for body size correlations paired couples for within a single population and sampling period; each correlation is species-specific, and there are multiple correlations per species.
-The effect size indicates how strongly mates resemble each other in body size across a very broad taxonomic and ecological range. 
-The dataset and phylogenetic tree are available in the `metadat` package as [`dat.moura2021`](https://wviechtb.github.io/metadat/reference/dat.moura2021.html).
+Here we use the dataset from [Moura et al. (2021)](https://doi.org/10.1111/ele.13690), which collated 1,828 effect sizes from 457 studies and 341 animal species to investigate assortative mating patterns. Each effect size is a Fisher's Z transformed correlation coefficient for body size correlations paired couples for within a single population and sampling period; each correlation is species-specific, and there are multiple correlations per species. The effect size indicates how strongly mates resemble each other in body size across a very broad taxonomic and ecological range. The dataset and phylogenetic tree are available in the `metadat` package as [`dat.moura2021`](https://wviechtb.github.io/metadat/reference/dat.moura2021.html).
 
 Before fitting hierarchical meta-analytic models, it is important to assess whether key categorical predictor variables have sufficient replication to support the estimation of random effects (or fixed effects). In particular, the identifiability of variance components depends on having an adequate number of levels for each random factor, as well as repeated observations within those levels.
 
@@ -856,12 +835,9 @@ n_levels # shows how many levels each categorical variable has
 
 ```
 
-The dataset contains 1,828 effect sizes (`effect.size.id`) drawn from 457 independent studies (`study.id`) and 341 animal species (`species.id.phy`). This provides replication at both the study and species levels, which is generally important for estimating random-effects variance components. 
-There is, however, no universal rule for what constitutes sufficient replication, because this depends on the number of levels, the distribution of observations across levels, and the magnitudes of the variance components. As a general guide, variance components are more likely to be estimable when each random effect has multiple levels and when at least some levels contribute repeated observations. 
-In the present dataset, the relatively large number of species particularly supports the inclusion of species-level random effects, including both non-phylogenetic (`species.id`) and phylogenetic (`species.id.phy`) terms.
+The dataset contains 1,828 effect sizes (`effect.size.id`) drawn from 457 independent studies (`study.id`) and 341 animal species (`species.id.phy`). This provides replication at both the study and species levels, which is generally important for estimating random-effects variance components. There is, however, no universal rule for what constitutes sufficient replication, because this depends on the number of levels, the distribution of observations across levels, and the magnitudes of the variance components. As a general guide, variance components are more likely to be estimable when each random effect has multiple levels and when at least some levels contribute repeated observations. In the present dataset, the relatively large number of species particularly supports the inclusion of species-level random effects, including both non-phylogenetic (`species.id`) and phylogenetic (`species.id.phy`) terms.
 
-Let's move on to compute the phylogenetic correlation matrix.
-A matching tree is supplied as a data object in the `metadat` package, so we just load it and can compute the matrix without additional checking and processing
+Let's move on to compute the phylogenetic correlation matrix. A matching tree is supplied as a data object in the `metadat` package, so we just load it and can compute the matrix without additional checking and processing
 
 ```{r}
 #| eval: false
@@ -882,11 +858,9 @@ A <- vcv(tree, corr = TRUE)
 
 #### Brownian motion (meta-analysis)
 
-The Brownian Motion (BM) model assumes that traits evolve according to a random walk process along the branches of the phylogenetic tree. BM is default model for continuous trait evolution in comparative methods.
-In the model, the expected variance-covariance structure among species is directly proportional to their shared evolutionary history, as represented by the phylogenetic tree.
+The Brownian Motion (BM) model assumes that traits evolve according to a random walk process along the branches of the phylogenetic tree. BM is default model for continuous trait evolution in comparative methods. In the model, the expected variance-covariance structure among species is directly proportional to their shared evolutionary history, as represented by the phylogenetic tree.
 
 ::: panel-tabset
-
 ###### metafor
 
 ```{r}
@@ -1270,6 +1244,7 @@ exp(phylo_eg1_tmb$fit$par)
 You can see the outputs both `summary()` and `confint()`. The `confint()` output reports standard deviations (SD) of random effects, not [variances]{.underline}
 
 For example…
+
 ```{r}
 #| eval: false
 
@@ -1279,6 +1254,7 @@ Std.Dev.(Intercept) | species.id -> correspond to the square roots of non-phylog
 ```
 
 You see the output also includes many rows such as…
+
 ```{r}
 #| eval: false
 
@@ -1302,13 +1278,11 @@ exp(phylo_eg1_tmb$fit$par)
 ```
 
 But be careful - the meaning of theta can be changed. It depends on what random effect you included in your model. The residual variance is reported by `sigma(model)^2`.
-
 :::
 
 #### Brownian motion (meta-regression)
 
-We next extend the meta-analysis model by including the categorical moderator as a fixed effect (predictor). We will use variable called `temporally.pooled`　(yes/no) as our moderator - it codes whether effect sizes were calculated from data pooled across multiple sampling periods. 
-The resulting meta-regression model will allows us to examine whether methodological features of the primary studies help explain some of the variation among effect sizes, over and above the hierarchical and phylogenetic structure already accounted for.
+We next extend the meta-analysis model by including the categorical moderator as a fixed effect (predictor). We will use variable called `temporally.pooled`　(yes/no) as our moderator - it codes whether effect sizes were calculated from data pooled across multiple sampling periods. The resulting meta-regression model will allows us to examine whether methodological features of the primary studies help explain some of the variation among effect sizes, over and above the hierarchical and phylogenetic structure already accounted for.
 
 ::: panel-tabset
 ##### metafor
@@ -1359,7 +1333,7 @@ summary(phylo_eg1.1_meta_BM)
 
 ```
 
-For studies without temporal pooling, the intercept $\beta_0$ represents the estimated mean effect size and was 0.356 (95% CI 0.099, 0.613) on the Fisher's Z scale. Relative to this baseline, temporally pooled studies tended to show slightly larger effect sizes on average, but the uncertainty interval overlapped zero ($\beta_{\text{temporally.pooled}_{\text{yes}}}$ = 0.040, 95% CI = [-0.004, 0.083]).
+For studies without temporal pooling, the intercept $\beta_0$ represents the estimated mean effect size and was 0.356 (95% CI 0.099, 0.613) on the Fisher's Z scale. Relative to this baseline, temporally pooled studies tended to show slightly larger effect sizes on average, but the uncertainty interval overlapped zero ($\beta_{\text{temporally.pooled}_{\text{yes}}}$ = 0.040, 95% CI = \[-0.004, 0.083\]).
 
 Importantly, this inference is made while accounting for non-independence among effect sizes arising from shared studies, repeated measurements, species identity, and phylogenetic relatedness. Thus, the moderator effect reflects systematic differences associated with temporal pooling rather than confounding hierarchical structure.
 
@@ -1550,12 +1524,9 @@ $$
 
 where $\mathbf{I}$ is the identity matrix. The entries of $\mathbf{D}$ represent phylogenetic distances between species, scaled between 0 and 1. Closely related species have smaller distances, whereas distantly related species have larger distances.
 
-We fit the OU phylogenetic model using a two-stage procedure. 
-First, we estimate the rate at which phylogenetic correlation decays with distance by fitting a meta-analysis model with an exponential correlation structure, using $\mathbf{D}$ as the phylogenetic distance matrix. 
-Second, we use this fitted decay structure to construct an OU based phylogenetic correlation matrix for the final meta-analysis or meta-regression model. This provides a practical way to incorporate OU style phylogenetic dependence within the standard multilevel meta-analytic framework implemented in `metafor`.
+We fit the OU phylogenetic model using a two-stage procedure. First, we estimate the rate at which phylogenetic correlation decays with distance by fitting a meta-analysis model with an exponential correlation structure, using $\mathbf{D}$ as the phylogenetic distance matrix. Second, we use this fitted decay structure to construct an OU based phylogenetic correlation matrix for the final meta-analysis or meta-regression model. This provides a practical way to incorporate OU style phylogenetic dependence within the standard multilevel meta-analytic framework implemented in `metafor`.
 
 We first fit a meta-analysis model with an exponential correlation structure, using $\mathbf{D}$ as the phylogenetic distance matrix:
-
 
 ```{r}
 #| eval: false
@@ -1620,8 +1591,7 @@ $$
 \mathbf{A}_{OU} = \exp(-\alpha \mathbf{D}).
 $$
 
-This matrix represents the phylogenetic correlation structure implied by the fitted OU model. 
-We then refit the meta-analysis, supplying $\mathbf{A}_{OU}$ as a fixed phylogenetic correlation matrix:
+This matrix represents the phylogenetic correlation structure implied by the fitted OU model. We then refit the meta-analysis, supplying $\mathbf{A}_{OU}$ as a fixed phylogenetic correlation matrix:
 
 ```{r}
 #| eval: false
@@ -1667,6 +1637,7 @@ summary(phy_ou_meta1)
 ```
 
 We can extend the same correlation structure to a meta-regression model by including moderators while retaining the OU based phylogenetic random effect:
+
 ```{r}
 #| eval: FALSE
 
@@ -1711,13 +1682,11 @@ summary(phy_ou_meta_reg2)
 # temporally.pooledyes    0.0293  0.0215  1.3641  1826  0.1727  -0.0128  0.0713   
 ```
 
-
 The OU phylogenetic model fitted the data substantially better than the BM model (AIC = 330.76 vs 345.35), indicating that phylogenetic similarity in assortative mating strength decays rapidly with evolutionary distance. In other words, closely related species tend to resemble one another in mate size correlation, but this resemblance weakens quickly as phylogenetic distance increases. This pattern is consistent with an OU process in which species are pulled towards their own lineage-specific optima, rather than retaining strong similarity over deep evolutionary time-scales.
 
 Although the pooled effect size (meta-analysis) and moderator effect(meta-regression) was similar under both models, the uncertainty around this estimate was slightly smaller under OU, as reflected by the narrower confidence interval and smaller standard error. Under the OU model, species-level variation was captured almost entirely by the OU-structured phylogenetic term, whereas the BM model partitioned this variation between phylogenetic and non-phylogenetic species effects. Together, these results suggest that assortative mating strength shows only limited deep phylogenetic inertia and is instead dominated by relatively shallow phylogenetic resemblance and species-specific variation.
 
 Note: We cannot currently fit this OU model directly in `brms` or `glmmTMB`.
-
 
 #### Visualisations
 
@@ -1730,7 +1699,6 @@ Although orchard plots provide an effective summary of model-based estimates, th
 Here, we present how to make figures from `metafor` and `brms` using meta-analysis model outputs.
 
 ::: panel-tabset
-
 ##### metafor
 
 ```{r}
@@ -1865,11 +1833,9 @@ brms_p2 <- ggplot(random_effects_samples_brms, aes(x = .value, y = .variable)) +
 ![moura_brms](figs/tutorial/brms_moura.jpg){width="80%"}
 :::
 
-
 ### 2. Lim et al. (2014)
 
-We used the `o_o_unadj` dataset from [`dat.lim2014`](https://wviechtb.github.io/metadat/reference/dat.lim2014.html) in the `metadat` package. The dataset come from [Lim et al. (2014)](https://doi.org/10.1111/evo.12446). It includes correlation coefficients (`ri`) and sample sizes (`ni`) describing the association between offspring size and offspring number, unadjusted for maternal size, across multiple species, along with a matching phylogenetic tree. We converted `ri` to Fisher’s z effect sizes (`yi`) and derived the corresponding sampling variances (`vi`) prior to model fitting. The resulting example dataset contained 170 effect sizes and 120 species. 
-<!-- remove "study" from random effect -->
+We used the `o_o_unadj` dataset from [`dat.lim2014`](https://wviechtb.github.io/metadat/reference/dat.lim2014.html) in the `metadat` package. The dataset come from [Lim et al. (2014)](https://doi.org/10.1111/evo.12446). It includes correlation coefficients (`ri`) and sample sizes (`ni`) describing the association between offspring size and offspring number, unadjusted for maternal size, across multiple species, along with a matching phylogenetic tree. We converted `ri` to Fisher’s z effect sizes (`yi`) and derived the corresponding sampling variances (`vi`) prior to model fitting. The resulting example dataset contained 170 effect sizes and 120 species. <!-- remove "study" from random effect -->
 
 ```{r}
 #| eval: false
@@ -1902,7 +1868,6 @@ head(dat_lim2014)# check the dataset
 #### Brownian motion (meta-analysis)
 
 ::: panel-tabset
-
 ##### metafor
 
 ```{r}
@@ -2150,18 +2115,15 @@ phylo_eg2_tmb$fit$par
 #  betadisp     theta     theta 
 # -1.382474 -1.277325 -2.930230 
 ```
-
 :::
 
 Across `metafor`, `brms`, and `glmmTMB`, this example yielded highly consistent results. The estimated overall mean effect was approximately $\beta_0$ = -0.13 in all three packages, and heterogeneity was partitioned similarly across effect-size, phylogenetic, and species-level components. Small differences in the reported variance terms arise from package-specific parametrisations, particularly in the way sampling variance is represented.
 
 Biologically, the negative mean effect suggests a tendency for larger offspring size to be associated with fewer offspring, consistent with the classic offspring size-number trade-off. At the same time, the non-zero phylogenetic and species-level variance components indicate that the strength of this relationship differs among taxa and is only partly explained by shared evolutionary history.
 
-
 #### Brawnian motion (meta-regression)
 
 ::: panel-tabset
-
 ##### metafor
 
 ```{r}
@@ -2335,7 +2297,6 @@ summary(phylo_eg2_tmb_mr)
 # (Intercept)     -0.13951    0.12893  -1.082    0.279
 # environmentwild  0.01661    0.08469   0.196    0.844
 ```
-
 :::
 
 #### Visualisations
@@ -2343,16 +2304,15 @@ summary(phylo_eg2_tmb_mr)
 In this dataset, we plot the meta-regression model output.
 
 ::: panel-tabset
-
 ##### metafor
 
 ```{r}
 #| echo: FALSE
-#| eval: false
+#| eval: FALSE
 
 
 fit_phylo_eg2_metafor_mr <- here("Rdata", "tutorial_v2", "phylo_eg2_metafor_BM_mr.rds")
-
+phylo_eg2_brms_mr <- readRDS(here("Rdata", "tutorial_v2", "phylo_eg2_brms_mr.rds"))
 
 ```
 
@@ -2412,16 +2372,14 @@ metafor_eg2_1
 
 
 ```
-![Lim_metafor](figs/tutorial/metafor_lim.png){width="80%"}
 
+![Lim_metafor](figs/tutorial/metafor_lim.png){width="80%"}
 
 ##### brms
 
 ```{r}
 #| eval: false
 
-saveRDS(phylo_eg2_brms_mr, here("Rdata", "tutorial_v2", "phylo_eg2_brms_mr.rds"))
-phylo_eg2_brms_mr <- readRDS(here("Rdata", "tutorial_v2", "phylo_eg2_brms_mr.rds"))
 get_variables(phylo_eg2_brms_mr)
 
 ## fixed effects
@@ -2487,29 +2445,21 @@ brms_p2 <- ggplot(random_effects_samples_brms, aes(x = .value, y = .variable)) +
 
 brms_eg2 <- brms_p1 / brms_p2
 
-ggsave(
-  filename = "figs/tutorial/brms_eg2_phylo.png",
-  plot = brms_eg2,
-  width = 8,
-  height = 7,
-  dpi = 300
-)
-
-
 ```
-![lim_brms](figs/tutorial/brms_eg2_phylo.png){width="80%"}
 
+![lim_brms](figs/tutorial/brms_eg2_phylo.png){width="80%"}
 :::
 
 # Spatial meta-analysis
 
 ## How to make spatial correlation matrix?
 
-In spatial meta-analysis, we model the residual similarity between effect sizes as a function of the geographic distance between their sampling locations. The key input is a representation of the pairwise distances among all effect sizes in the dataset. Depending on the spatial correlation structure assumed (for example, exponential, Gaussian, spherical), these distances are then transformed into a correlation matrix that describes the expected similarity between effect sizes based on their geographic proximity.
+In spatial meta-analysis, we model the residual similarity between effect sizes as a function of the pairwise spatial separation among observations. In many applications, each effect size is associated with a sampling location defined by latitude and longitude, from which pairwise geographic distances can be calculated. More generally, however, the key input is a matrix describing the pairwise separation among effect sizes, which may reflect straight-line geographic distance or other biologically meaningful measures of spatial separation, such as habitat connectivity, landscape resistance, barriers to movement, or distances among broader spatial units when exact sampling coordinates are unavailable. Depending on the spatial correlation structure assumed (for example, exponential, Gaussian, or spherical), this pairwise distance matrix is then transformed into a correlation matrix that describes the expected similarity between effect sizes based on their spatial proximity. In this context, the kernel is the mathematical function that maps pairwise distances to expected correlations, thereby specifying how quickly similarity declines with distance. In the examples below, we use pairwise distances calculated from exact sampling coordinates.
 
-### Step 1. Ensure each effect size has geographic coordinates, a unique identifer and projected coordinates in km
+### Step 1. Prepare data:
+**Ensure each effect size has geographic coordinates, a unique identifier and projected coordinates in km**
 
-Each effect size should have geographic coordinates (latitude and longitude) indicating where the data were collected. Because latitude and longitude are measured in degrees, we first project them to a planar coordinate reference system (CRS) and then convert the resulting coordinates to kilometres. This allows us to compute meaningful Euclidean distances.
+Each effect size should have geographic coordinates (latitude and longitude) indicating where the data were collected. Normally, these data would be extracted from the study and/or imputed/approximated if unreported. Because latitude and longitude are measured in degrees, we first project them to a planar coordinate reference system (CRS) and then convert the resulting coordinates to kilometres. This allows us to compute meaningful Euclidean distances.
 
 ```{r}
 #| eval: false
@@ -2583,11 +2533,13 @@ Each element $D_{ij}$ is the straight-line distance (in kilometers) between effe
 
 **Why this matrix matters?**
 
-Spatial meta analytic models assume that residual similarity between effect sizes decays with geographic distance. The distance matrix $\mathbf{D}$ encodes this information.
+Spatial meta-analytic models assume that residual similarity between effect sizes decays with geographic distance. The distance matrix $\mathbf{D}$ encodes this information.
 
--   In `metafor`, $\mathbf{D}$ is supplied directly and transformed into a residual correlation matrix using kernels such as linear, exponential, and Gaussian (more info: [here](https://wviechtb.github.io/metafor/reference/rma.mv.html)).
--   In `brms`, geographic coordinates are provided and an equivalent distance based kernel is constructed internally.
--   In `glmmTMB`, spatial dependence is represented through a continuous spatial random field whose covariance structure is implicitly governed by geographic distance rather than by an explicit distance matrix.
+Differences in implementation and requirements between $R$ packages:
+
+-   In `metafor`, we supply $\mathbf{D}$ directly, and `metafor` transforms it into a residual correlation matrix using a specified kernel, such as a linear, exponential, or Gaussian kernel(more info: [here](https://wviechtb.github.io/metafor/reference/rma.mv.html)).
+-   In `brms`, we supply the geographic coordinates, and `brms` internally computes the pairwise distances and applies the corresponding distance-based kernel.
+-   In `glmmTMB`, we supply geographic coordinates, and it models spatial dependence through a continuous spatial random field whose covariance structure is implicitly governed by distance rather than by an explicit user-supplied distance matrix.
 
 ## Examples from real meta-analyses
 
@@ -3540,10 +3492,11 @@ sessionInfo()
 ```
 
 # References
+
 -   Jetz, W., G. H. Thomas, J. B. Joy, K. Hartmann, and A. O. Mooers. (2012). The global diversity of birds in space and time. Nature. 491:444-448. <https://doi.org/10.1038/nature11631>
 -   Grafen A. (1989). The phylogenetic regression. Philosophical Transactions of the Royal Society of London. B, Biological Sciences. 326:119-157. <https://doi.org/10.1098/rstb.1989.0106>
 -   Grau-Andrés, R., Moreira, B., & Pausas, J. G. (2024). Global plant responses to intensified fire regimes. Global Ecology and Biogeography. 33:e13858. <https://doi.org/10.1111/geb.13858>
--  Grenié M, Berti E, Carvajal‐Quintero J, Dädlow GM, Sagouis A, Winter M. (2022). Harmonizing taxon names in biodiversity data: A review of tools, databases and best practices. Methods in Ecology and Evolution. 14:12-25. <https://doi.org/10.1111/2041-210X.13802>
+-   Grenié M, Berti E, Carvajal‐Quintero J, Dädlow GM, Sagouis A, Winter M. (2022). Harmonizing taxon names in biodiversity data: A review of tools, databases and best practices. Methods in Ecology and Evolution. 14:12-25. <https://doi.org/10.1111/2041-210X.13802>
 -   Lim, J. N., Senior, A. M., & Nakagawa, S. (2014). Heterogeneity in individual quality and reproductive trade-offs within species. Evolution. 68:2306–2318. <https://doi.org/10.1111/evo.12446>
 -   Nakagawa, S., Lagisz, M., O’Dea, R. E., Pottier, P., Rutkowska, J., Senior, A. M., Yang, Y., & Noble, D. W. A. (2023). orchaRd 2.0: An R package for visualising meta-analyses with orchard plots. Methods in Ecology and Evolution. 14:2003–2010. <https://doi.org/10.1111/2041-210X.14152>
 -   Scholer, M. N., Strimas‐Mackey, M., & Jankowski, J. E. (2020). A meta‐analysis of global avian survival across species and latitude. Ecology Letters. 23:1537-1549. <https://doi.org/10.1111/ele.13573>
