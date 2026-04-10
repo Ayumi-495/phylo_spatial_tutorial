@@ -854,6 +854,9 @@ tree <- compute.brlen(tree)
 # compute phylogenetic correlation matrix
 A <- vcv(tree, corr = TRUE)
 
+# check ultrametricity
+is.ultrametric(tree)
+
 ```
 
 #### Brownian motion (meta-analysis)
@@ -866,7 +869,7 @@ The Brownian Motion (BM) model assumes that traits evolve according to a random 
 ```{r}
 #| echo: false
 
-# phylo_eg1_meta_ma_BM <- readRDS(here("Rdata", "tutorial_v2", "moura2021_BM_metafor.rds"))
+# phylo_eg1_meta_ma_BM <- readRDS(here("Rdata", "tutorial_v2", "phylo_eg1_meta_BM.rds"))
 
 ```
 
@@ -1704,7 +1707,7 @@ Here, we present how to make figures from `metafor` and `brms` using meta-analys
 ```{r}
 #| eval: false
 
-metafor_p1 <- orchaRd::orchard_plot(moura_BM_metafor1, 
+metafor_p1 <- orchaRd::orchard_plot(phylo_eg1_meta_ma_BM, 
                            group = "study.id",
                            xlab = "Effect size",
                            angle = 45) + 
@@ -1714,7 +1717,7 @@ metafor_p1 <- orchaRd::orchard_plot(moura_BM_metafor1,
   theme_classic()
 
 ## random effect
-ci_var <- confint(moura_BM_metafor1, level = 0.95) 
+ci_var <- confint(phylo_eg1_meta_ma_BM, level = 0.95) 
 # estimate  ci.lb  ci.ub 
 # sigma^2.1   0.0192 0.0108 0.0325 
 # sigma.1     0.1384 0.1038 0.1802 
@@ -1756,6 +1759,9 @@ metafor_p2 <- ggplot(tbl_var, aes(x = label, y = estimate)) +
   theme_classic(base_size = 12)
 
 metafor_eg1_1 <- metafor_p1 / metafor_p2
+
+ggsave(metafor_eg1_1, file = "metafor_moura2021")
+
 metafor_eg1_1
 ```
 

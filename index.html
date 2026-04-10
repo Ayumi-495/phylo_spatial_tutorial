@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="dcterms.date" content="2026-04-08">
+<meta name="dcterms.date" content="2026-04-10">
 
 <title>TUTORIAL: A unified framework for phylogenetic and spatial meta-analysis</title>
 <style>
@@ -2352,7 +2352,7 @@ window.Quarto = {
       <div>
       <div class="quarto-title-meta-heading">Published</div>
       <div class="quarto-title-meta-contents">
-        <p class="date">April 8, 2026</p>
+        <p class="date">April 10, 2026</p>
       </div>
     </div>
     
@@ -3115,7 +3115,10 @@ PHIIC = 49.73 </code></pre>
 <span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>tree <span class="ot">&lt;-</span> <span class="fu">compute.brlen</span>(tree)</span>
 <span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a><span class="co"># compute phylogenetic correlation matrix</span></span>
-<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a>A <span class="ot">&lt;-</span> <span class="fu">vcv</span>(tree, <span class="at">corr =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a>A <span class="ot">&lt;-</span> <span class="fu">vcv</span>(tree, <span class="at">corr =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb34-12"><a href="#cb34-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-13"><a href="#cb34-13" aria-hidden="true" tabindex="-1"></a><span class="co"># check ultrametricity</span></span>
+<span id="cb34-14"><a href="#cb34-14" aria-hidden="true" tabindex="-1"></a><span class="fu">is.ultrametric</span>(tree)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <section id="brownian-motion-meta-analysis" class="level4">
 <h4 class="anchored" data-anchor-id="brownian-motion-meta-analysis">Brownian motion (meta-analysis)</h4>
@@ -3823,7 +3826,7 @@ PHIIC = 49.73 </code></pre>
 <div class="tab-content">
 <div id="tabset-4-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-4-1-tab">
 <div class="cell">
-<div class="sourceCode cell-code" id="cb55"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a>metafor_p1 <span class="ot">&lt;-</span> orchaRd<span class="sc">::</span><span class="fu">orchard_plot</span>(moura_BM_metafor1, </span>
+<div class="sourceCode cell-code" id="cb55"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a>metafor_p1 <span class="ot">&lt;-</span> orchaRd<span class="sc">::</span><span class="fu">orchard_plot</span>(phylo_eg1_meta_ma_BM, </span>
 <span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a>                           <span class="at">group =</span> <span class="st">&quot;study.id&quot;</span>,</span>
 <span id="cb55-3"><a href="#cb55-3" aria-hidden="true" tabindex="-1"></a>                           <span class="at">xlab =</span> <span class="st">&quot;Effect size&quot;</span>,</span>
 <span id="cb55-4"><a href="#cb55-4" aria-hidden="true" tabindex="-1"></a>                           <span class="at">angle =</span> <span class="dv">45</span>) <span class="sc">+</span> </span>
@@ -3833,7 +3836,7 @@ PHIIC = 49.73 </code></pre>
 <span id="cb55-8"><a href="#cb55-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>()</span>
 <span id="cb55-9"><a href="#cb55-9" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb55-10"><a href="#cb55-10" aria-hidden="true" tabindex="-1"></a><span class="do">## random effect</span></span>
-<span id="cb55-11"><a href="#cb55-11" aria-hidden="true" tabindex="-1"></a>ci_var <span class="ot">&lt;-</span> <span class="fu">confint</span>(moura_BM_metafor1, <span class="at">level =</span> <span class="fl">0.95</span>) </span>
+<span id="cb55-11"><a href="#cb55-11" aria-hidden="true" tabindex="-1"></a>ci_var <span class="ot">&lt;-</span> <span class="fu">confint</span>(phylo_eg1_meta_ma_BM, <span class="at">level =</span> <span class="fl">0.95</span>) </span>
 <span id="cb55-12"><a href="#cb55-12" aria-hidden="true" tabindex="-1"></a><span class="co"># estimate  ci.lb  ci.ub </span></span>
 <span id="cb55-13"><a href="#cb55-13" aria-hidden="true" tabindex="-1"></a><span class="co"># sigma^2.1   0.0192 0.0108 0.0325 </span></span>
 <span id="cb55-14"><a href="#cb55-14" aria-hidden="true" tabindex="-1"></a><span class="co"># sigma.1     0.1384 0.1038 0.1802 </span></span>
@@ -3875,7 +3878,10 @@ PHIIC = 49.73 </code></pre>
 <span id="cb55-50"><a href="#cb55-50" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>(<span class="at">base_size =</span> <span class="dv">12</span>)</span>
 <span id="cb55-51"><a href="#cb55-51" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb55-52"><a href="#cb55-52" aria-hidden="true" tabindex="-1"></a>metafor_eg1_1 <span class="ot">&lt;-</span> metafor_p1 <span class="sc">/</span> metafor_p2</span>
-<span id="cb55-53"><a href="#cb55-53" aria-hidden="true" tabindex="-1"></a>metafor_eg1_1</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb55-53"><a href="#cb55-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-54"><a href="#cb55-54" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(metafor_eg1_1, <span class="at">file =</span> <span class="st">&quot;metafor_moura2021&quot;</span>)</span>
+<span id="cb55-55"><a href="#cb55-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-56"><a href="#cb55-56" aria-hidden="true" tabindex="-1"></a>metafor_eg1_1</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
