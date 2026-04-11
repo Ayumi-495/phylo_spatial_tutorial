@@ -2560,8 +2560,7 @@ Differences in implementation and requirements between $R$ packages:
 
 ### 1. Grau-Andrés et al. (2024)
 
-The dataset comes from [Grau-Andrés et al. (2024)](https://doi.org/10.1111/geb.13858) and contains 2361 effect sizes of Hedges' d. Each effect size is associated with a geographic location given by latitude and longitude. These locations represent sampling sites at which the original biological measurement were collected.
-
+The dataset comes from [Grau-Andrés et al. (2024)](https://doi.org/10.1111/geb.13858) and contains 2361 effect sizes of Hedges' d, a bias-corrected standardized mean difference. In this dataset, each Hedges’ d quantifies the direction and magnitude of the difference in plant response between sites or conditions with more intense fire regimes and those with less intense fire regimes. Positive values indicate higher plant responses under more intense fire regimes, whereas negative values indicate lower responses. Each effect size is associated with a geographic location given by latitude and longitude. These locations represent sampling sites at which the original biological measurements were collected.
 The original data provide latitude and longitude in degrees. We first project these coordinates to a planar CRS and convert them to kilometres. We then compute the pairwise Euclidean distance matrix among all effect sizes based on their projected coordinates.
 
 ```{r}
@@ -2606,20 +2605,19 @@ names(dat_Roger)
 ::: panel-tabset
 #### Exponential kernel
 
-The exponential kernel assumes that similarity between two effect sizes decreases smoothly as the geographic distance between their location increases. Therefore, nearby sites are strongly correlated, while distant sites are effectively independent.
+The exponential kernel assumes that the similarity between two effect sizes decreases smoothly as the geographic distance between their locations increases. As a result, nearby sites are more strongly correlated, whereas correlation declines exponentially with distance and becomes negligible for sites that are far apart. This can provide a simple way to represent spatial autocorrelation without requiring a hard distance threshold.
 
 ##### metafor
-
-In `metafor`, the spatial process is introduced by specifying `struct = "SPEXP"` together with either (1) via a supplied distance matrix using `random = ~ effect_id|const` and `dist = list(…)`, or (2) via coordinates using `random = ~ x_km + y_km|const`, in which case distances are computed internally.
+Here, we treat each effect size as associated with a sampling location.
+In `metafor`, the spatial process is introduced by specifying `struct = "SPEXP"` for a random term representing the observational units to be spatially correlated. This can be done either by supplying coordinates, for example with `random = list(…, ~ x_km + y_km | const)`, in which case pairwise Euclidean distances are computed internally, or by supplying a precomputed distance matrix with `random = list(…, ~ location_id | const)` together with `dist = list(location_id = D)`, where `location_id` indexes the rows and columns of the distance matrix.
 
 ```{r}
 #| eval: false
- 
-dat_Roger$const <- 1 # add constant for spatial models
 
+dat_Roger$const <- 1  # add constant for spatial models
 ```
 
-Here, `const` is a dummy outer factor set to a constant (all ones) so that all effects are allowed to be spatially correlated. If outer were set to a grouping variable (e.g., study ID), spatial correlation would only be modelled within groups (block-diagonal structure). The spatial random field is parametrised by (1) $\tau^2$, the marginal variance of the spatial process (its amplitude), and (2) $\rho$, the range/scale parameter controlling how quickly correlation decays with distance under the chosen kernel (we show `SPEXP`- exponential kernel and also `SPGAU`- Gaussian process version later). Let $d_{ij}$ be the distance between locations $i$ and $j$. The spatial random effects satisfy $\mathrm{Cov}(u_i,u_j)=\tau^2\,\mathrm{cor}_{\rho}(d_{ij})$, where $\mathrm{cor}_{\rho}(d_{ij})$ is the kernel-specific correlation function that decreases with distance, and $\rho$ controls the rate of decay. Distances can be supplied directly via `text{dist=}` or computed internally from coordinates `(~ x_km + y_km | const)`; both are equivalent when they imply the same Euclidean distance matrix.
+Here, `const` is a dummy outer factor set to a constant so that all effect sizes are allowed to be spatially correlated. If the outer term were instead set to a grouping variable, such as study ID, spatial correlation would be modelled only within groups, yielding a block-diagonal structure. The spatial random field is parameterised by (1) $\tau^2$, the marginal variance of the spatial process, and (2) $\rho$, the range or scale parameter controlling how quickly correlation decays with distance under the chosen kernel. Let $d_{ij}$ be the distance between locations $i$ and $j$. The spatial random effects satisfy $\mathrm{Cov}(u_i,u_j)=\tau^2,\mathrm{cor}{\rho}(d{ij})$, where $\mathrm{cor}{\rho}(d{ij})$ is the kernel-specific correlation function. Distances can either be supplied directly via the `dist` argument or computed internally from coordinates with `~ x_km + y_km | const`; the two approaches are equivalent when they imply the same Euclidean distance matrix.
 
 ```{r}
 #| eval: false
@@ -2632,7 +2630,7 @@ ma_sp1_exp0_mf <- rma.mv(d_Hedges, var_Hedges,
                  ), 
                  struct = "SPEXP", 
                  data = dat_Roger,
-                 dist = list(Site = dist_matrix_euclid2),
+                 dist = list(effect_id = dist_matrix_euclid2),
                  test = "t",
                  method = "REML",
                  sparse = TRUE,

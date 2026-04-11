@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="dcterms.date" content="2026-04-10">
+<meta name="dcterms.date" content="2026-04-11">
 
 <title>TUTORIAL: A unified framework for phylogenetic and spatial meta-analysis</title>
 <style>
@@ -2352,7 +2352,7 @@ window.Quarto = {
       <div>
       <div class="quarto-title-meta-heading">Published</div>
       <div class="quarto-title-meta-contents">
-        <p class="date">April 10, 2026</p>
+        <p class="date">April 11, 2026</p>
       </div>
     </div>
     
@@ -4651,8 +4651,6 @@ Then we transform the coordinates to a planar CRS (EPSG:3857) suitable for dista
 <h2 class="anchored" data-anchor-id="examples-from-real-meta-analyses-1">Examples from real meta-analyses</h2>
 <section id="grau-andrés-et-al.-2024" class="level3">
 <h3 class="anchored" data-anchor-id="grau-andrés-et-al.-2024">1. Grau-Andrés et al. (2024)</h3>
-<p>The dataset comes from <a href="https://doi.org/10.1111/geb.13858">Grau-Andrés et al. (2024)</a> and contains 2361 effect sizes of Hedges’ d. Each effect size is associated with a geographic location given by latitude and longitude. These locations represent sampling sites at which the original biological measurement were collected.</p>
-<p>The original data provide latitude and longitude in degrees. We first project these coordinates to a planar CRS and convert them to kilometres. We then compute the pairwise Euclidean distance matrix among all effect sizes based on their projected coordinates.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb68"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a>dat_Roger <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="fu">here</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;Roger_etal_2024&quot;</span>, <span class="st">&quot;Roger_etal_2024.csv&quot;</span>))</span>
 <span id="cb68-2"><a href="#cb68-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -4693,14 +4691,14 @@ Then we transform the coordinates to a planar CRS (EPSG:3857) suitable for dista
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-8-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-8-1" role="tab" aria-controls="tabset-8-1" aria-selected="true" href>Exponential kernel</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-8-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-8-2" role="tab" aria-controls="tabset-8-2" aria-selected="false" href>Squared-exponential kernel (Gaussian process)</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-8-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-8-3" role="tab" aria-controls="tabset-8-3" aria-selected="false" href>Figures</a></li></ul>
 <div class="tab-content">
 <div id="tabset-8-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-8-1-tab">
-<p>The exponential kernel assumes that similarity between two effect sizes decreases smoothly as the geographic distance between their location increases. Therefore, nearby sites are strongly correlated, while distant sites are effectively independent.</p>
+<p>The exponential kernel assumes that the similarity between two effect sizes decreases smoothly as the geographic distance between their locations increases. As a result, nearby sites are more strongly correlated, whereas correlation declines exponentially with distance and becomes negligible for sites that are far apart. This can provide a simple way to represent spatial autocorrelation without requiring a hard distance threshold.</p>
 <section id="metafor-6" class="level5">
 <h5 class="anchored" data-anchor-id="metafor-6">metafor</h5>
-<p>In <code>metafor</code>, the spatial process is introduced by specifying <code>struct = &quot;SPEXP&quot;</code> together with either (1) via a supplied distance matrix using <code>random = ~ effect_id|const</code> and <code>dist = list(…)</code>, or (2) via coordinates using <code>random = ~ x_km + y_km|const</code>, in which case distances are computed internally.</p>
+<p>Here, we treat each effect size as associated with a sampling location. In <code>metafor</code>, the spatial process is introduced by specifying <code>struct = &quot;SPEXP&quot;</code> for a random term representing the observational units to be spatially correlated. This can be done either by supplying coordinates, for example with <code>random = list(…, ~ x_km + y_km | const)</code>, in which case pairwise Euclidean distances are computed internally, or by supplying a precomputed distance matrix with <code>random = list(…, ~ location_id | const)</code> together with <code>dist = list(location_id = D)</code>, where <code>location_id</code> indexes the rows and columns of the distance matrix.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb69"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true" tabindex="-1"></a>dat_Roger<span class="sc">$</span>const <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="co"># add constant for spatial models</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb69"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true" tabindex="-1"></a>dat_Roger<span class="sc">$</span>const <span class="ot">&lt;-</span> <span class="dv">1</span>  <span class="co"># add constant for spatial models</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Here, <code>const</code> is a dummy outer factor set to a constant (all ones) so that all effects are allowed to be spatially correlated. If outer were set to a grouping variable (e.g., study ID), spatial correlation would only be modelled within groups (block-diagonal structure). The spatial random field is parametrised by (1) <span class="math inline">\(\tau^2\)</span>, the marginal variance of the spatial process (its amplitude), and (2) <span class="math inline">\(\rho\)</span>, the range/scale parameter controlling how quickly correlation decays with distance under the chosen kernel (we show <code>SPEXP</code>- exponential kernel and also <code>SPGAU</code>- Gaussian process version later). Let <span class="math inline">\(d_{ij}\)</span> be the distance between locations <span class="math inline">\(i\)</span> and <span class="math inline">\(j\)</span>. The spatial random effects satisfy <span class="math inline">\(\mathrm{Cov}(u_i,u_j)=\tau^2\,\mathrm{cor}_{\rho}(d_{ij})\)</span>, where <span class="math inline">\(\mathrm{cor}_{\rho}(d_{ij})\)</span> is the kernel-specific correlation function that decreases with distance, and <span class="math inline">\(\rho\)</span> controls the rate of decay. Distances can be supplied directly via <code>text{dist=}</code> or computed internally from coordinates <code>(~ x_km + y_km | const)</code>; both are equivalent when they imply the same Euclidean distance matrix.</p>
+<p>Here, <code>const</code> is a dummy outer factor set to a constant so that all effect sizes are allowed to be spatially correlated. If the outer term were instead set to a grouping variable, such as study ID, spatial correlation would be modelled only within groups, yielding a block-diagonal structure. The spatial random field is parameterised by (1) <span class="math inline">\(\tau^2\)</span>, the marginal variance of the spatial process, and (2) <span class="math inline">\(\rho\)</span>, the range or scale parameter controlling how quickly correlation decays with distance under the chosen kernel. Let <span class="math inline">\(d_{ij}\)</span> be the distance between locations <span class="math inline">\(i\)</span> and <span class="math inline">\(j\)</span>. The spatial random effects satisfy <span class="math inline">\(\mathrm{Cov}(u_i,u_j)=\tau^2,\mathrm{cor}{\rho}(d{ij})\)</span>, where <span class="math inline">\(\mathrm{cor}{\rho}(d{ij})\)</span> is the kernel-specific correlation function. Distances can either be supplied directly via the <code>dist</code> argument or computed internally from coordinates with <code>~ x_km + y_km | const</code>; the two approaches are equivalent when they imply the same Euclidean distance matrix.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb70"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb70-1"><a href="#cb70-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Use distance matrix</span></span>
 <span id="cb70-2"><a href="#cb70-2" aria-hidden="true" tabindex="-1"></a>ma_sp1_exp0_mf <span class="ot">&lt;-</span> <span class="fu">rma.mv</span>(d_Hedges, var_Hedges, </span>
@@ -4710,7 +4708,7 @@ Then we transform the coordinates to a planar CRS (EPSG:3857) suitable for dista
 <span id="cb70-6"><a href="#cb70-6" aria-hidden="true" tabindex="-1"></a>                 ), </span>
 <span id="cb70-7"><a href="#cb70-7" aria-hidden="true" tabindex="-1"></a>                 <span class="at">struct =</span> <span class="st">&quot;SPEXP&quot;</span>, </span>
 <span id="cb70-8"><a href="#cb70-8" aria-hidden="true" tabindex="-1"></a>                 <span class="at">data =</span> dat_Roger,</span>
-<span id="cb70-9"><a href="#cb70-9" aria-hidden="true" tabindex="-1"></a>                 <span class="at">dist =</span> <span class="fu">list</span>(<span class="at">Site =</span> dist_matrix_euclid2),</span>
+<span id="cb70-9"><a href="#cb70-9" aria-hidden="true" tabindex="-1"></a>                 <span class="at">dist =</span> <span class="fu">list</span>(<span class="at">effect_id =</span> dist_matrix_euclid2),</span>
 <span id="cb70-10"><a href="#cb70-10" aria-hidden="true" tabindex="-1"></a>                 <span class="at">test =</span> <span class="st">&quot;t&quot;</span>,</span>
 <span id="cb70-11"><a href="#cb70-11" aria-hidden="true" tabindex="-1"></a>                 <span class="at">method =</span> <span class="st">&quot;REML&quot;</span>,</span>
 <span id="cb70-12"><a href="#cb70-12" aria-hidden="true" tabindex="-1"></a>                 <span class="at">sparse =</span> <span class="cn">TRUE</span>,</span>
