@@ -1760,12 +1760,10 @@ metafor_p2 <- ggplot(tbl_var, aes(x = label, y = estimate)) +
 
 metafor_eg1_1 <- metafor_p1 / metafor_p2
 
-ggsave(metafor_eg1_1, file = "metafor_moura2021")
-
 metafor_eg1_1
 ```
 
-![moura_metafor](figs/tutorial/metafor_moura.jpg){width="80%"}
+![moura_metafor](figs/tutorial/metafor_moura2021.png){width="80%"}
 
 ##### brms
 
@@ -1828,15 +1826,26 @@ brms_p2 <- ggplot(random_effects_samples_brms, aes(x = .value, y = .variable)) +
     color = "#528B8B"
   ) +
   geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
-　scale_x_continuous(breaks = seq(0, 0.08, 0.02), limits = c(0, 0.08)) + 
+　# scale_x_continuous(breaks = seq(0, 0.08, 0.02), limits = c(0, 0.08)) + 
   labs(
     # title = "Posterior distributions of random effects - brms",
     y = "Random effects (variance)"
   ) +
   theme_classic() 
+
+
+brms_eg1_1 <- brms_p1 / brms_p2
+
+ggsave(file = "brms_moura2021.png",
+       plot = brms_eg1_1,
+       width = 8,
+       height = 7,
+       dpi = 300)
+
+metafor_eg1_1
 ```
 
-![moura_brms](figs/tutorial/brms_moura.jpg){width="80%"}
+![moura_brms](figs/tutorial/brms_moura2021.png){width="80%"}
 :::
 
 ### 2. Lim et al. (2014)
