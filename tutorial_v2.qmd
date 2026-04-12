@@ -3084,7 +3084,6 @@ confint(sp_eg1_gau_tmb)
 
 :::
 
-
 #### Visualisations
 
 ::: panel-tabset
@@ -3144,16 +3143,13 @@ metafor_sp_eg1
 
 ```
 
-![metafor spatial MA eg.1](figs/tutorial/metafor_sp_eg1){width="80%"}
+![metafor spatial MA eg.1](figs/tutorial/metafor_sp_eg1.png){width="80%"}
 
 
 ##### brms
 
 ```{r}
-#| rval: FALSE
-
-sp_eg1_exp_brms <- readRDS(here("Rdata", "tutorial_v2", "sp_eg1_exp_brms.rds"))
-summary(sp_eg1_exp_brms)
+#| eval: FALSE
 
 get_variables_dynamic <- function(model, pattern) {
   variables <- get_variables(model)
