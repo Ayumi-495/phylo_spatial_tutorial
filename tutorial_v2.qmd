@@ -25,7 +25,7 @@ format:
     toc-float: false
     toc-title: "**CONTENTS**"
     output-file: "index.html"
-    embed-resources: true
+    embed-resources: false
     code-tools: 
       source: false
     number-sections: false
@@ -2602,10 +2602,12 @@ dat_Roger <- dat_Roger |>
 names(dat_Roger)
 ```
 
-::: panel-tabset
+
 #### Exponential kernel
 
 The exponential kernel assumes that the similarity between two effect sizes decreases smoothly as the geographic distance between their locations increases. As a result, nearby sites are more strongly correlated, whereas correlation declines exponentially with distance and becomes negligible for sites that are far apart. This can provide a simple way to represent spatial autocorrelation without requiring a hard distance threshold.
+
+::: panel-tabset
 
 ##### metafor
 Here, we treat each effect size as associated with a sampling location.
@@ -2901,11 +2903,11 @@ In all three implementations, sampling error is treated as known through the rep
 
 All three models, `metafor`, `brms`, and `glmmTMB`, give a consistent output. There is strong spatial autocorrelation in effect sizes. Nearby locations tend to show much more similar Hedges’ d values than would be expected from sampling error alone. This means that a substantial fraction of the apparent heterogeneity in the dataset is structured geographically rather than being random noise. The estimated spatial range is large, on the order of hundreds of kilometres, indicating that the spatial pattern is driven by broad scale geographic gradients rather than by very local site effects. Although the exact range is uncertain, all models agree that spatial dependence extends over long distances. After accounting for this spatial structure, the overall mean effect ($\beta_0$) remains negative, around −0.3 to −0.4 across all three packges. This shows that the global negative effect is not an artefact of spatial clustering.
 
-##### Figures
-
-TBU
+:::
 
 #### Squared-exponential kernel (Gaussian process)
+
+::: panel-tabset
 
 ##### metafor
 
@@ -3080,10 +3082,232 @@ sp_eg1_gau_tmb$fit$par
 confint(sp_eg1_gau_tmb)
 ```
 
-#### Figures
-
-TBU
 :::
+
+
+#### Visualisations
+
+::: panel-tabset
+
+##### metafor
+
+```{r}
+#| eval: FALSE
+
+ ma_sp1_exp0_mf <- readRDS(here("Rdata", "tutorial_v2", "sp_eg1_exp_mf.rds"))
+metafor_sp_p1 <- orchaRd::orchard_plot(ma_sp1_exp0_mf, 
+                           group = "effect_id",
+                           xlab = "Effect size",
+                           angle = 45) + 
+  scale_x_discrete(labels = c("Overall effect")) +
+  scale_color_manual(values = "#CDAD00") +
+  scale_fill_manual(values = "#FFD700") + 
+  theme_classic()
+
+## random effect
+ci_var <- confint(ma_sp1_exp0_mf, level = 0.95) 
+ 
+
+tbl2 <- tibble::as_tibble(ci_var, rownames = "term")
+# A tibble: 5 × 4
+# term    estimate  ci.lb ci.ub
+# <chr>      <dbl>  <dbl> <dbl>
+#   1 sigma^2    0.793 0.726  0.868
+# 2 sigma      0.891 0.852  0.932
+# 3 tau^2      1.23  1.01   1.50 
+# 4 tau        1.11  1.01   1.22 
+# 5 rho        0.174 0.0174 0.857
+
+tbl_var2 <- tbl2 %>% 
+  filter(term %in% c("tau^2","sigma^2")) %>% 
+  mutate(term = factor(term, levels = c("tau^2","sigma^2")))
+
+s_metafor_p1var <- ggplot(tbl_var2, aes(x = estimate, y = term)) +
+  geom_point(size = 3, color = "#528B8B") +
+  geom_errorbar(aes(xmin = ci.lb, xmax = ci.ub), height = 0.25, color = "#528B8B") +
+  # scale_x_continuous(limits = c(0.0, 1.80)) + 
+  labs(x = "Variance with with 95% CI", y = NULL) +
+  theme_classic(base_size = 12)
+
+tbl_rho2 <- tbl2 %>% 
+  filter(term == "rho")
+
+s_metafor_p1rho <- ggplot(tbl_rho2, aes(x = estimate, y = term)) +
+  geom_point(size = 3, color = "#CD6090") +
+  geom_errorbar(aes(xmin = ci.lb, xmax = ci.ub), 
+                height = 0.25, color = "#CD6090") +
+  labs(x = "rho with 95% CI", y = NULL) +
+  theme_classic(base_size = 12)
+
+metafor_sp_eg1 <- metafor_sp_p1 / (s_metafor_p1var+s_metafor_p1rho)
+metafor_sp_eg1
+
+```
+
+![metafor spatial MA eg.1](figs/tutorial/metafor_sp_eg1){width="80%"}
+
+
+##### brms
+
+```{r}
+#| rval: FALSE
+
+sp_eg1_exp_brms <- readRDS(here("Rdata", "tutorial_v2", "sp_eg1_exp_brms.rds"))
+summary(sp_eg1_exp_brms)
+
+get_variables_dynamic <- function(model, pattern) {
+  variables <- get_variables(model)
+  variables[grep(pattern, variables)]
+}
+
+get_variables(sp_eg1_exp_brms)
+
+rename_vars_exp4 <- function(variable) {
+  variable <- as.character(variable)
+
+  # fixed
+  variable <- gsub("^b_Intercept$", "Overall effect", variable)
+
+  # residual SD (sigma in brms)
+  variable <- gsub("^sigma$", "Residual SD", variable)
+
+  # GP SD
+  variable <- gsub("^sdgp_gpx_kmy_km$", "SD of gp_x", variable)
+
+  # GP length-scale
+  variable <- gsub("^lscale_gpx_kmy_km$", "lscale", variable)
+
+  variable
+}
+
+### fixed effect ----
+visualize_fixed_effects_exp4 <- function(model) {
+  fixed_effect_vars <- get_variables_dynamic(model, "^b_")
+  if (length(fixed_effect_vars) == 0) {
+    message("No fixed effects found")
+    return(NULL)
+  }
+ 
+  tryCatch({
+    fixed_effects_samples <- model %>%
+      spread_draws(!!!syms(fixed_effect_vars)) %>%
+      tidyr::pivot_longer(
+        cols      = dplyr::all_of(fixed_effect_vars),
+        names_to  = ".variable",
+        values_to = ".value"
+      ) %>%
+      dplyr::mutate(.variable = rename_vars_exp4(.variable))
+   
+    ggplot(fixed_effects_samples, aes(x = .value, y = .variable)) +
+      ggdist::stat_halfeye(
+        normalize      = "xy",
+        point_interval = "mean_qi",
+        fill           = "#FFD700",
+        color          = "#CDAD00"
+      ) +
+      geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
+      labs(y = "Fixed effects", x = "Posterior values") +
+      theme_classic()
+  }, error = function(e) {
+    message("Error in visualize_fixed_effects_exp4: ", e$message)
+    return(NULL)
+  })
+}
+
+### random effect ----
+sd_to_var <- function(df) {
+  df %>%
+    dplyr::mutate(
+      .value    = (.value)^2,
+      .variable = gsub("^SD of ", "Var of ", .variable)
+    )
+}
+
+#### random effect (Var) ----
+visualize_random_and_gp_var_exp4 <- function(model) {
+ 
+  re_vars <- get_variables_dynamic(model, "^(sigma|sdgp_)")
+ 
+  if (length(re_vars) == 0) {
+    message("No random or GP SD parameters found")
+    return(NULL)
+  }
+ 
+  tryCatch({
+    samples <- model %>%
+      spread_draws(!!!syms(re_vars)) %>%
+      tidyr::pivot_longer(
+        cols      = dplyr::all_of(re_vars),
+        names_to  = ".variable",
+        values_to = ".value"
+      ) %>%
+      dplyr::mutate(.variable = rename_vars_exp4(.variable)) %>%
+      sd_to_var()
+   
+    ggplot(samples, aes(x = .value, y = .variable)) +
+      ggdist::stat_halfeye(
+        normalize      = "xy",
+        point_interval = "mean_qi",
+        fill           = "#B0E2FF",
+        color          = "#4F94CD"
+      ) +
+      geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
+      labs(
+        y = "Random and GP effects (variance)",
+        x = "Posterior values (variance)"
+      ) +
+      # scale_x_continuous(limits = c(0.7, 2.0)) + 
+      theme_classic()
+   
+  }, error = function(e) {
+    message("Error in visualize_random_and_gp_var_exp4: ", e$message)
+    return(NULL)
+  })
+}
+
+visualize_gp_lscale_exp4 <- function(model) {
+  gp_ls_vars <- get_variables_dynamic(model, "^lscale_")
+  if (length(gp_ls_vars) == 0) {
+    message("No GP length-scale parameters found")
+    return(NULL)
+  }
+ 
+  tryCatch({
+    gp_ls_samples <- model %>%
+      spread_draws(!!!syms(gp_ls_vars)) %>%
+      tidyr::pivot_longer(
+        cols      = dplyr::all_of(gp_ls_vars),
+        names_to  = ".variable",
+        values_to = ".value"
+      ) %>%
+      dplyr::mutate(.variable = rename_vars_exp4(.variable))
+   
+    ggplot(gp_ls_samples, aes(x = .value, y = .variable)) +
+      ggdist::stat_halfeye(
+        normalize      = "xy",
+        point_interval = "mean_qi",
+        fill           = "#CD6090",
+        color          = "#8B3A62"
+      ) +
+      geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
+      labs(y = "lscale", x = "Posterior values") +
+      theme_classic()
+  }, error = function(e) {
+    message("Error in visualize_gp_lscale_exp4: ", e$message)
+    return(NULL)
+  })
+}
+
+s_brms_p1  <- visualize_fixed_effects_exp4(sp_eg1_exp_brms)
+s_metafor_p1sd <- visualize_random_and_gp_var_exp4(sp_eg1_exp_brms)
+s_metafor_p1lscale <- visualize_gp_lscale_exp4(sp_eg1_exp_brms)
+brms_sp2.1 <- s_brms_p1 / (s_metafor_p1sd + s_metafor_p1lscale)
+brms_sp2.1
+
+```
+![brms spatial MA eg.1](figs/tutorial/brms_sp2_eg1.png){width="80%"}
+
+::: 
 
 ### 2. Scholer et al. (2021)
 
