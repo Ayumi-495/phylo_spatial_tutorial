@@ -1836,13 +1836,7 @@ brms_p2 <- ggplot(random_effects_samples_brms, aes(x = .value, y = .variable)) +
 
 brms_eg1_1 <- brms_p1 / brms_p2
 
-ggsave(file = "brms_moura2021.png",
-       plot = brms_eg1_1,
-       width = 8,
-       height = 7,
-       dpi = 300)
-
-metafor_eg1_1
+brms_eg1_1
 ```
 
 ![moura_brms](figs/tutorial/brms_moura2021.png){width="80%"}
@@ -3407,8 +3401,10 @@ dat_scholer2020$site_id <- as.character(dat_scholer2020$site_id)
 
 ```
 
-::: panel-tabset
+
 #### Exponential kernel
+
+::: panel-tabset
 
 We initially included `site_id` as a random effect, but the model yielded a zero estimate for it. As a result, we removed it from the following models.
 
@@ -3566,7 +3562,11 @@ The spatial term was smaller in magnitude, with `metafor` estimating $\tau^2$ \a
 
 This implies that average adult survival was positive on the logit scale, while also varying appreciably among studies and locations. The spatial component suggests that geographically proximate populations may show somewhat similar survival values, although the exact scale of that dependence is not estimated very precisely in this example.
 
+:::
+
 #### Squared-exponential kernel (gaussian process)
+
+::: panel-tabset
 
 ##### metafor
 
@@ -3710,19 +3710,231 @@ TBU
 
 The Gaussian-process kernel gave us the identical results to exponential kernel model except for `rho` and `lscale`. The `metafor` and `brms` implementations gave very similar substantive results. In both models, the estimated intercept was about 0.65, with broadly overlapping 95% CI and CrI. Variation among individual effect sizes was estimated at approximately 0.48 on the standard deviation scale, and between-study heterogeneity was also nearly identical across packages at about 0.68. The spatial term was smaller in magnitude, with `metafor` estimating \tau \approx 0.14 and `brms` estimating the Gaussian process standard deviation at about 0.16 (sdgp\^2 = 0.026). However, the distance-scale parameter of spatial correlation remained weakly identified, with wide uncertainty in both implementations.
 
-#### Figures
-
-TBU
 :::
 
-# Software and package versions
+#### Visualisations
+
+::: panel-tabset
+
+##### metafor
+```{r}
+#| eval: FALSE
+
+metafor_sp_p1 <- orchaRd::orchard_plot(sp_exp_metafor_eg2, 
+                           group = "ref",
+                           xlab = "Effect size",
+                           angle = 45) + 
+  scale_x_discrete(labels = c("Overall effect")) +
+  scale_color_manual(values = "#CDAD00") +
+  scale_fill_manual(values = "#FFD700") + 
+  theme_classic()
+
+## random effect
+ci_var <- confint(sp_exp_metafor_eg2, level = 0.95) 
+ 
+
+tbl2 <- tibble::as_tibble(ci_var, rownames = "term")
+
+
+tbl_var2 <- tbl2 %>% 
+  filter(term %in% c("sigma^2.1", "sigma^2.2", "tau^2")) %>% 
+  mutate(term = factor(term, levels = c("sigma^2.1", "sigma^2.2", "tau^2")))
+
+s_metafor_p1var <- ggplot(tbl_var2, aes(x = estimate, y = term)) +
+  geom_point(size = 3, color = "#528B8B") +
+  geom_errorbar(aes(xmin = ci.lb, xmax = ci.ub), height = 0.25, color = "#528B8B") +
+  labs(x = "Variance with with 95% CI", y = NULL) +
+  theme_classic(base_size = 12)
+
+tbl_rho2 <- tbl2 %>% 
+  filter(term == "rho")
+
+s_metafor_p1rho <- ggplot(tbl_rho2, aes(x = estimate, y = term)) +
+  geom_point(size = 3, color = "#CD6090") +
+  geom_errorbar(aes(xmin = ci.lb, xmax = ci.ub), 
+                height = 0.25, color = "#CD6090") +
+  labs(x = "rho with 95% CI", y = NULL) +
+  theme_classic(base_size = 12)
+
+metafor_sp_eg2 <- metafor_sp_p1 / (s_metafor_p1var + s_metafor_p1rho)
+metafor_sp_eg2
+
+```
+
+![metafor spatial MA eg.1](figs/tutorial/metafor_expspatial_MA_1.png){width="80%"}
+
+
+##### brms
 
 ```{r}
-#| echo: false
+#| eval: FALSE
+
+sp_eg2_exp_brms <- readRDS(here("Rdata", "tutorial_v2", "sp_exp_brms_eg2.rds"))
+get_variables_dynamic <- function(model, pattern) {
+  variables <- get_variables(model)
+  variables[grep(pattern, variables)]
+}
+
+get_variables(sp_eg2_exp_brms)
+
+rename_vars_exp4 <- function(variable) {
+  variable <- as.character(variable)
+
+  # fixed
+  variable <- gsub("^b_Intercept$", "Overall effect", variable)
+
+  # residual SD (sigma in brms)
+  variable <- gsub("^sigma$", "Residual SD", variable)
+
+  # GP SD
+  variable <- gsub("^sdgp_gpx_kmy_km$", "SD of gp_x", variable)
+
+  # GP length-scale
+  variable <- gsub("^lscale_gpx_kmy_km$", "lscale", variable)
+
+  variable
+}
+
+### fixed effect ----
+visualize_fixed_effects_exp4 <- function(model) {
+  fixed_effect_vars <- get_variables_dynamic(model, "^b_")
+  if (length(fixed_effect_vars) == 0) {
+    message("No fixed effects found")
+    return(NULL)
+  }
+ 
+  tryCatch({
+    fixed_effects_samples <- model %>%
+      spread_draws(!!!syms(fixed_effect_vars)) %>%
+      tidyr::pivot_longer(
+        cols      = dplyr::all_of(fixed_effect_vars),
+        names_to  = ".variable",
+        values_to = ".value"
+      ) %>%
+      dplyr::mutate(.variable = rename_vars_exp4(.variable))
+   
+    ggplot(fixed_effects_samples, aes(x = .value, y = .variable)) +
+      ggdist::stat_halfeye(
+        normalize      = "xy",
+        point_interval = "mean_qi",
+        fill           = "#FFD700",
+        color          = "#CDAD00"
+      ) +
+      geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
+      labs(y = "Fixed effects", x = "Posterior values") +
+      theme_classic()
+  }, error = function(e) {
+    message("Error in visualize_fixed_effects_exp4: ", e$message)
+    return(NULL)
+  })
+}
+
+### random effect ----
+sd_to_var <- function(df) {
+  df %>%
+    dplyr::mutate(
+      .value    = (.value)^2,
+      .variable = gsub("^SD of ", "Var of ", .variable)
+    )
+}
+
+#### random effect (Var) ----
+visualize_random_and_gp_var_exp4 <- function(model) {
+ 
+  re_vars <- get_variables_dynamic(model, "^(sigma|sdgp_)")
+ 
+  if (length(re_vars) == 0) {
+    message("No random or GP SD parameters found")
+    return(NULL)
+  }
+ 
+  tryCatch({
+    samples <- model %>%
+      spread_draws(!!!syms(re_vars)) %>%
+      tidyr::pivot_longer(
+        cols      = dplyr::all_of(re_vars),
+        names_to  = ".variable",
+        values_to = ".value"
+      ) %>%
+      dplyr::mutate(.variable = rename_vars_exp4(.variable)) %>%
+      sd_to_var()
+   
+    ggplot(samples, aes(x = .value, y = .variable)) +
+      ggdist::stat_halfeye(
+        normalize      = "xy",
+        point_interval = "mean_qi",
+        fill           = "#B0E2FF",
+        color          = "#4F94CD"
+      ) +
+      geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
+      labs(
+        y = "Random and GP effects (variance)",
+        x = "Posterior values (variance)"
+      ) +
+      # scale_x_continuous(limits = c(0.7, 2.0)) + 
+      theme_classic()
+   
+  }, error = function(e) {
+    message("Error in visualize_random_and_gp_var_exp4: ", e$message)
+    return(NULL)
+  })
+}
+
+visualize_gp_lscale_exp4 <- function(model) {
+  gp_ls_vars <- get_variables_dynamic(model, "^lscale_")
+  if (length(gp_ls_vars) == 0) {
+    message("No GP length-scale parameters found")
+    return(NULL)
+  }
+ 
+  tryCatch({
+    gp_ls_samples <- model %>%
+      spread_draws(!!!syms(gp_ls_vars)) %>%
+      tidyr::pivot_longer(
+        cols      = dplyr::all_of(gp_ls_vars),
+        names_to  = ".variable",
+        values_to = ".value"
+      ) %>%
+      dplyr::mutate(.variable = rename_vars_exp4(.variable))
+   
+    ggplot(gp_ls_samples, aes(x = .value, y = .variable)) +
+      ggdist::stat_halfeye(
+        normalize      = "xy",
+        point_interval = "mean_qi",
+        fill           = "#CD6090",
+        color          = "#8B3A62"
+      ) +
+      geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
+      labs(y = "lscale", x = "Posterior values") +
+      theme_classic()
+  }, error = function(e) {
+    message("Error in visualize_gp_lscale_exp4: ", e$message)
+    return(NULL)
+  })
+}
+
+s_brms_p1  <- visualize_fixed_effects_exp4(sp_eg2_exp_brms)
+s_metafor_p1sd <- visualize_random_and_gp_var_exp4(sp_eg2_exp_brms)
+s_metafor_p1lscale <- visualize_gp_lscale_exp4(sp_eg2_exp_brms)
+brms_sp2.1 <- s_brms_p1 / (s_metafor_p1sd + s_metafor_p1lscale)
+brms_sp2.1
+
+```
+![brms spatial MA eg.1](figs/tutorial/brms_sp2.1.png){width="80%"}
+
+::: 
+# Software and package versions
+
+<details>
+<summary>Click to view version info</summary>
+
+```{r}
 
 sessionInfo()
 
 ```
+
+</details>
 
 # References
 
