@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="dcterms.date" content="2026-04-12">
+<meta name="dcterms.date" content="2026-04-19">
 
 <title>TUTORIAL: A unified framework for phylogenetic and spatial meta-analysis</title>
 <style>
@@ -147,7 +147,7 @@ window.Quarto = {
       <div>
       <div class="quarto-title-meta-heading">Published</div>
       <div class="quarto-title-meta-contents">
-        <p class="date">April 12, 2026</p>
+        <p class="date">April 19, 2026</p>
       </div>
     </div>
     
@@ -1179,7 +1179,7 @@ PHIIC = 49.73 </code></pre>
 <p>In practice, this require three steps:</p>
 <p><em>1. Treating each effect size as a unique random-effect level</em></p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="co"># random effects in glmmTMB are defined over factor levels. By converting the effect-size identifier into a factor, each effect size (i) is assigned its own random effect (e_i), which will repredsent its sampling error - this is what allows the model to attach the correlation variance (v_i) to each observation</span></span>
+<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="co"># random effects in glmmTMB are defined over factor levels. By converting the effect-size identifier into a factor, each effect size (i) is assigned its own random effect (e_i), which will represent its sampling error - this is what allows the model to attach the correlation variance (v_i) to each observation</span></span>
 <span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>dat_moura2021<span class="sc">$</span>effect.size.id <span class="ot">&lt;-</span> <span class="fu">as.factor</span>(dat_moura2021<span class="sc">$</span>effect.size.id)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
@@ -1768,6 +1768,20 @@ PHIIC = 49.73 </code></pre>
 <figcaption>moura_brms</figcaption>
 </figure>
 </div>
+<!-- ##### glmmTMB -->
+<!-- Now, we can make the orchard plot using `orchaRd` package (more detailed information: [here](https://daniel1noble.github.io/orchaRd/#new-converting-glmmtmb-models-for-use-with-orchard)) -->
+<!-- ```{r} -->
+<!-- #| eval: FALSE -->
+<!-- tmb_rma <- glmmTMB_to_rma( -->
+<!--   phylo_eg1_tmb, -->
+<!--   yi = "zr", -->
+<!--   vi = "zr_vi", -->
+<!--   data = dat_moura2021, -->
+<!--   measure = "GEN" -->
+<!-- ) -->
+<!-- class(fish_tmb_rma) -->
+<!-- phylo_eg1_tmb -->
+<!-- ``` -->
 </div>
 </div>
 </div>
@@ -2473,8 +2487,8 @@ Then we transform the coordinates to a planar CRS (EPSG:3857) suitable for dista
 <span id="cb68-19"><a href="#cb68-19" aria-hidden="true" tabindex="-1"></a>dat_Roger<span class="sc">$</span>effect_id <span class="ot">&lt;-</span> <span class="fu">seq_len</span>(<span class="fu">nrow</span>(dat_Roger))</span>
 <span id="cb68-20"><a href="#cb68-20" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb68-21"><a href="#cb68-21" aria-hidden="true" tabindex="-1"></a>dat_Roger<span class="sc">$</span>effect_id <span class="ot">&lt;-</span> <span class="fu">factor</span>(</span>
-<span id="cb68-22"><a href="#cb68-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.character</span>(dat_Roger<span class="sc">$</span>effect_id),</span>
-<span id="cb68-23"><a href="#cb68-23" aria-hidden="true" tabindex="-1"></a>  <span class="at">levels =</span> <span class="fu">mixedsort</span>(<span class="fu">unique</span>(<span class="fu">as.character</span>(dat_Roger<span class="sc">$</span>effect_id)))</span>
+<span id="cb68-22"><a href="#cb68-22" aria-hidden="true" tabindex="-1"></a>  dat_Roger<span class="sc">$</span>effect_id,</span>
+<span id="cb68-23"><a href="#cb68-23" aria-hidden="true" tabindex="-1"></a>  <span class="at">levels =</span> <span class="fu">sort</span>(<span class="fu">unique</span>(dat_Roger<span class="sc">$</span>effect_id))</span>
 <span id="cb68-24"><a href="#cb68-24" aria-hidden="true" tabindex="-1"></a>  )</span>
 <span id="cb68-25"><a href="#cb68-25" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb68-26"><a href="#cb68-26" aria-hidden="true" tabindex="-1"></a><span class="co"># row and column names</span></span>
@@ -2863,7 +2877,7 @@ Then we transform the coordinates to a planar CRS (EPSG:3857) suitable for dista
 <span id="cb75-8"><a href="#cb75-8" aria-hidden="true" tabindex="-1"></a>  sp_eg1_gau_tmb <span class="ot">&lt;-</span> <span class="fu">glmmTMB</span>(d_Hedges <span class="sc">~</span> <span class="dv">1</span> </span>
 <span id="cb75-9"><a href="#cb75-9" aria-hidden="true" tabindex="-1"></a>                            <span class="sc">+</span> <span class="fu">equalto</span>(<span class="dv">0</span><span class="sc">+</span>effect_id<span class="sc">|</span>const, VCV)</span>
 <span id="cb75-10"><a href="#cb75-10" aria-hidden="true" tabindex="-1"></a>                            <span class="co"># + (1|site_id)</span></span>
-<span id="cb75-11"><a href="#cb75-11" aria-hidden="true" tabindex="-1"></a>                            <span class="sc">+</span> <span class="fu">exp</span>(pos<span class="sc">+</span><span class="dv">0</span><span class="sc">|</span>const),</span>
+<span id="cb75-11"><a href="#cb75-11" aria-hidden="true" tabindex="-1"></a>                            <span class="sc">+</span> <span class="fu">gau</span>(pos<span class="sc">+</span><span class="dv">0</span><span class="sc">|</span>const),</span>
 <span id="cb75-12"><a href="#cb75-12" aria-hidden="true" tabindex="-1"></a>                            <span class="at">data =</span> dat_Roger, </span>
 <span id="cb75-13"><a href="#cb75-13" aria-hidden="true" tabindex="-1"></a>                            <span class="at">REML=</span><span class="cn">TRUE</span>)</span>
 <span id="cb75-14"><a href="#cb75-14" aria-hidden="true" tabindex="-1"></a>)</span>
@@ -2872,65 +2886,68 @@ Then we transform the coordinates to a planar CRS (EPSG:3857) suitable for dista
 <span id="cb75-17"><a href="#cb75-17" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb75-18"><a href="#cb75-18" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(sp_eg1_gau_tmb)　</span>
 <span id="cb75-19"><a href="#cb75-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Family: gaussian  ( identity )</span></span>
-<span id="cb75-20"><a href="#cb75-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Formula:          d_Hedges ~ 1 + equalto(0 + effect_id | const, VCV) + exp(pos +      0 | const)</span></span>
+<span id="cb75-20"><a href="#cb75-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Formula:          d_Hedges ~ 1 + equalto(0 + effect_id | const, VCV) + gau(pos +      0 | const)</span></span>
 <span id="cb75-21"><a href="#cb75-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Data: dat_Roger</span></span>
 <span id="cb75-22"><a href="#cb75-22" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
-<span id="cb75-23"><a href="#cb75-23" aria-hidden="true" tabindex="-1"></a><span class="co"># AIC       BIC    logLik -2*log(L)  df.resid </span></span>
-<span id="cb75-24"><a href="#cb75-24" aria-hidden="true" tabindex="-1"></a><span class="co"># 8084.7    8107.8   -4038.4    8076.7      2357 </span></span>
+<span id="cb75-23"><a href="#cb75-23" aria-hidden="true" tabindex="-1"></a><span class="co">#       AIC       BIC    logLik -2*log(L)  df.resid </span></span>
+<span id="cb75-24"><a href="#cb75-24" aria-hidden="true" tabindex="-1"></a><span class="co">#    8084.6    8107.6   -4038.3    8076.6      2357 </span></span>
 <span id="cb75-25"><a href="#cb75-25" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
 <span id="cb75-26"><a href="#cb75-26" aria-hidden="true" tabindex="-1"></a><span class="co"># Random effects:</span></span>
-<span id="cb75-27"><a href="#cb75-27" aria-hidden="true" tabindex="-1"></a><span class="co">#   </span></span>
-<span id="cb75-28"><a href="#cb75-28" aria-hidden="true" tabindex="-1"></a><span class="co">#   Conditional model:</span></span>
-<span id="cb75-29"><a href="#cb75-29" aria-hidden="true" tabindex="-1"></a><span class="co">#   Groups   Name                                     Variance  Std.Dev. Corr                    </span></span>
-<span id="cb75-30"><a href="#cb75-30" aria-hidden="true" tabindex="-1"></a><span class="co"># const    effect_id1                                0.202208 0.44968                          </span></span>
-<span id="cb75-31"><a href="#cb75-31" aria-hidden="true" tabindex="-1"></a><span class="co"># effect_id2                                0.166676 0.40826  0.00                    </span></span>
-<span id="cb75-32"><a href="#cb75-32" aria-hidden="true" tabindex="-1"></a><span class="co"># effect_id3                                0.225770 0.47515  0.00 0.00               </span></span>
-<span id="cb75-33"><a href="#cb75-33" aria-hidden="true" tabindex="-1"></a><span class="co"># effect_id4                                0.197994 0.44497  0.00 0.00 0.00          </span></span>
-<span id="cb75-34"><a href="#cb75-34" aria-hidden="true" tabindex="-1"></a><span class="co"># effect_id5                                3.676968 1.91754  0.00 0.00 0.00 0.00     </span></span>
-<span id="cb75-35"><a href="#cb75-35" aria-hidden="true" tabindex="-1"></a><span class="co"># effect_id6                                0.315616 0.56180  0.00 0.00 0.00 0.00 0.00</span></span>
-<span id="cb75-36"><a href="#cb75-36" aria-hidden="true" tabindex="-1"></a><span class="co"># effect_id7                                0.305460 0.55268  0.00 0.00 0.00 0.00 0.00</span></span>
-<span id="cb75-37"><a href="#cb75-37" aria-hidden="true" tabindex="-1"></a><span class="co"># effect_id8                                0.313426 0.55984  0.00 0.00 0.00 0.00 0.00</span></span>
-<span id="cb75-38"><a href="#cb75-38" aria-hidden="true" tabindex="-1"></a><span class="co"># effect_id9                                0.413540 0.64307  0.00 0.00 0.00 0.00 0.00</span></span>
-<span id="cb75-39"><a href="#cb75-39" aria-hidden="true" tabindex="-1"></a><span class="co"># effect_id10                               0.325726 0.57072  0.00 0.00 0.00 0.00 0.00</span></span>
-<span id="cb75-40"><a href="#cb75-40" aria-hidden="true" tabindex="-1"></a><span class="co"># ...                                      ...       ...      ...  ...  ...  ...  ... </span></span>
-<span id="cb75-41"><a href="#cb75-41" aria-hidden="true" tabindex="-1"></a><span class="co"># const.1  pos(16262.6644099893,-5204.51951303405)   1.232997 1.11040                          </span></span>
-<span id="cb75-42"><a href="#cb75-42" aria-hidden="true" tabindex="-1"></a><span class="co"># pos(16280.4755285163,-5116.14629455727)   1.232997 1.11040  0.00                    </span></span>
-<span id="cb75-43"><a href="#cb75-43" aria-hidden="true" tabindex="-1"></a><span class="co"># pos(-7965.96086752978,-5019.4733863405)   1.232997 1.11040  0.00 0.00               </span></span>
-<span id="cb75-44"><a href="#cb75-44" aria-hidden="true" tabindex="-1"></a><span class="co"># pos(-7959.34359171906,-4693.06364429579)  1.232997 1.11040  0.00 0.00 0.00          </span></span>
-<span id="cb75-45"><a href="#cb75-45" aria-hidden="true" tabindex="-1"></a><span class="co"># pos(-7960.45678662699,-4691.63535918108)  1.232997 1.11040  0.00 0.00 0.00 0.00     </span></span>
-<span id="cb75-46"><a href="#cb75-46" aria-hidden="true" tabindex="-1"></a><span class="co"># pos(-7096.61753807119,-4685.92422115392)  1.232997 1.11040  0.00 0.00 0.00 0.00 0.00</span></span>
-<span id="cb75-47"><a href="#cb75-47" aria-hidden="true" tabindex="-1"></a><span class="co"># pos(-7992.73943895704,-4607.717759142)    1.232997 1.11040  0.00 0.00 0.00 0.00 0.00</span></span>
-<span id="cb75-48"><a href="#cb75-48" aria-hidden="true" tabindex="-1"></a><span class="co"># pos(-7903.68384632242,-4579.4258128701)   1.232997 1.11040  0.00 0.00 0.00 0.00 0.00</span></span>
-<span id="cb75-49"><a href="#cb75-49" aria-hidden="true" tabindex="-1"></a><span class="co"># pos(16237.0609271069,-4578.0132445546)    1.232997 1.11040  0.00 0.00 0.00 0.00 0.00</span></span>
-<span id="cb75-50"><a href="#cb75-50" aria-hidden="true" tabindex="-1"></a><span class="co"># pos(16304.594788628,-4572.36489569299)    1.232997 1.11040  0.00 0.00 0.00 0.00 0.00</span></span>
-<span id="cb75-51"><a href="#cb75-51" aria-hidden="true" tabindex="-1"></a><span class="co"># ...                                      ...       ...      ...  ...  ...  ...  ... </span></span>
-<span id="cb75-52"><a href="#cb75-52" aria-hidden="true" tabindex="-1"></a><span class="co"># Residual                                           0.793492 0.89078                          </span></span>
-<span id="cb75-53"><a href="#cb75-53" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
-<span id="cb75-54"><a href="#cb75-54" aria-hidden="true" tabindex="-1"></a><span class="co"># 0.00                   </span></span>
-<span id="cb75-55"><a href="#cb75-55" aria-hidden="true" tabindex="-1"></a><span class="co"># 0.00 0.00              </span></span>
-<span id="cb75-56"><a href="#cb75-56" aria-hidden="true" tabindex="-1"></a><span class="co"># 0.00 0.00 0.00         </span></span>
-<span id="cb75-57"><a href="#cb75-57" aria-hidden="true" tabindex="-1"></a><span class="co"># 0.00 0.00 0.00 0.00    </span></span>
-<span id="cb75-58"><a href="#cb75-58" aria-hidden="true" tabindex="-1"></a><span class="co"># ...  ...  ...  ...  ...</span></span>
-<span id="cb75-59"><a href="#cb75-59" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
-<span id="cb75-60"><a href="#cb75-60" aria-hidden="true" tabindex="-1"></a><span class="co"># 0.00                   </span></span>
-<span id="cb75-61"><a href="#cb75-61" aria-hidden="true" tabindex="-1"></a><span class="co"># 0.00 0.00              </span></span>
-<span id="cb75-62"><a href="#cb75-62" aria-hidden="true" tabindex="-1"></a><span class="co"># 0.00 0.00 0.00         </span></span>
-<span id="cb75-63"><a href="#cb75-63" aria-hidden="true" tabindex="-1"></a><span class="co"># 0.00 0.00 0.00 0.00    </span></span>
-<span id="cb75-64"><a href="#cb75-64" aria-hidden="true" tabindex="-1"></a><span class="co"># ...  ...  ...  ...  ...</span></span>
-<span id="cb75-65"><a href="#cb75-65" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
-<span id="cb75-66"><a href="#cb75-66" aria-hidden="true" tabindex="-1"></a><span class="co"># Number of obs: 2361, groups:  const, 1</span></span>
-<span id="cb75-67"><a href="#cb75-67" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
-<span id="cb75-68"><a href="#cb75-68" aria-hidden="true" tabindex="-1"></a><span class="co"># Dispersion estimate for gaussian family (sigma^2): 0.793 </span></span>
-<span id="cb75-69"><a href="#cb75-69" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
-<span id="cb75-70"><a href="#cb75-70" aria-hidden="true" tabindex="-1"></a><span class="co"># Conditional model:</span></span>
-<span id="cb75-71"><a href="#cb75-71" aria-hidden="true" tabindex="-1"></a><span class="co">#   Estimate Std. Error z value Pr(&gt;|z|)    </span></span>
-<span id="cb75-72"><a href="#cb75-72" aria-hidden="true" tabindex="-1"></a><span class="co"># (Intercept) -0.33493    0.06444  -5.197 2.02e-07 ***</span></span>
-<span id="cb75-73"><a href="#cb75-73" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb75-74"><a href="#cb75-74" aria-hidden="true" tabindex="-1"></a>sp_eg1_gau_tmb<span class="sc">$</span>fit<span class="sc">$</span>par</span>
-<span id="cb75-75"><a href="#cb75-75" aria-hidden="true" tabindex="-1"></a><span class="co"># betadisp      theta      theta </span></span>
-<span id="cb75-76"><a href="#cb75-76" aria-hidden="true" tabindex="-1"></a><span class="co"># -0.1156562  0.1047238 -1.7463695 </span></span>
-<span id="cb75-77"><a href="#cb75-77" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb75-78"><a href="#cb75-78" aria-hidden="true" tabindex="-1"></a><span class="fu">confint</span>(sp_eg1_gau_tmb)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb75-27"><a href="#cb75-27" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
+<span id="cb75-28"><a href="#cb75-28" aria-hidden="true" tabindex="-1"></a><span class="co"># Conditional model:</span></span>
+<span id="cb75-29"><a href="#cb75-29" aria-hidden="true" tabindex="-1"></a><span class="co">#  Groups   Name                                     Variance  Std.Dev. Corr                    </span></span>
+<span id="cb75-30"><a href="#cb75-30" aria-hidden="true" tabindex="-1"></a><span class="co">#  const    effect_id1                                0.202208 0.44968                          </span></span>
+<span id="cb75-31"><a href="#cb75-31" aria-hidden="true" tabindex="-1"></a><span class="co">#           effect_id2                                0.166676 0.40826  0.00                    </span></span>
+<span id="cb75-32"><a href="#cb75-32" aria-hidden="true" tabindex="-1"></a><span class="co">#           effect_id3                                0.225770 0.47515  0.00 0.00               </span></span>
+<span id="cb75-33"><a href="#cb75-33" aria-hidden="true" tabindex="-1"></a><span class="co">#           effect_id4                                0.197994 0.44497  0.00 0.00 0.00          </span></span>
+<span id="cb75-34"><a href="#cb75-34" aria-hidden="true" tabindex="-1"></a><span class="co">#           effect_id5                                3.676968 1.91754  0.00 0.00 0.00 0.00     </span></span>
+<span id="cb75-35"><a href="#cb75-35" aria-hidden="true" tabindex="-1"></a><span class="co">#           effect_id6                                0.315616 0.56180  0.00 0.00 0.00 0.00 0.00</span></span>
+<span id="cb75-36"><a href="#cb75-36" aria-hidden="true" tabindex="-1"></a><span class="co">#           effect_id7                                0.305460 0.55268  0.00 0.00 0.00 0.00 0.00</span></span>
+<span id="cb75-37"><a href="#cb75-37" aria-hidden="true" tabindex="-1"></a><span class="co">#           effect_id8                                0.313426 0.55984  0.00 0.00 0.00 0.00 0.00</span></span>
+<span id="cb75-38"><a href="#cb75-38" aria-hidden="true" tabindex="-1"></a><span class="co">#           effect_id9                                0.413540 0.64307  0.00 0.00 0.00 0.00 0.00</span></span>
+<span id="cb75-39"><a href="#cb75-39" aria-hidden="true" tabindex="-1"></a><span class="co">#           effect_id10                               0.325726 0.57072  0.00 0.00 0.00 0.00 0.00</span></span>
+<span id="cb75-40"><a href="#cb75-40" aria-hidden="true" tabindex="-1"></a><span class="co">#           ...                                      ...       ...      ...  ...  ...  ...  ... </span></span>
+<span id="cb75-41"><a href="#cb75-41" aria-hidden="true" tabindex="-1"></a><span class="co">#  const.1  pos(16262.6644099893,-5204.51951303405)   1.236050 1.11178                          </span></span>
+<span id="cb75-42"><a href="#cb75-42" aria-hidden="true" tabindex="-1"></a><span class="co">#           pos(16280.4755285163,-5116.14629455727)   1.236050 1.11178  0.00                    </span></span>
+<span id="cb75-43"><a href="#cb75-43" aria-hidden="true" tabindex="-1"></a><span class="co">#           pos(-7965.96086752978,-5019.4733863405)   1.236050 1.11178  0.00 0.00               </span></span>
+<span id="cb75-44"><a href="#cb75-44" aria-hidden="true" tabindex="-1"></a><span class="co">#           pos(-7959.34359171906,-4693.06364429579)  1.236050 1.11178  0.00 0.00 0.00          </span></span>
+<span id="cb75-45"><a href="#cb75-45" aria-hidden="true" tabindex="-1"></a><span class="co">#           pos(-7960.45678662699,-4691.63535918108)  1.236050 1.11178  0.00 0.00 0.00 0.00     </span></span>
+<span id="cb75-46"><a href="#cb75-46" aria-hidden="true" tabindex="-1"></a><span class="co">#           pos(-7096.61753807119,-4685.92422115392)  1.236050 1.11178  0.00 0.00 0.00 0.00 0.00</span></span>
+<span id="cb75-47"><a href="#cb75-47" aria-hidden="true" tabindex="-1"></a><span class="co">#           pos(-7992.73943895704,-4607.717759142)    1.236050 1.11178  0.00 0.00 0.00 0.00 0.00</span></span>
+<span id="cb75-48"><a href="#cb75-48" aria-hidden="true" tabindex="-1"></a><span class="co">#           pos(-7903.68384632242,-4579.4258128701)   1.236050 1.11178  0.00 0.00 0.00 0.00 0.00</span></span>
+<span id="cb75-49"><a href="#cb75-49" aria-hidden="true" tabindex="-1"></a><span class="co">#           pos(16237.0609271069,-4578.0132445546)    1.236050 1.11178  0.00 0.00 0.00 0.00 0.00</span></span>
+<span id="cb75-50"><a href="#cb75-50" aria-hidden="true" tabindex="-1"></a><span class="co">#           pos(16304.594788628,-4572.36489569299)    1.236050 1.11178  0.00 0.00 0.00 0.00 0.00</span></span>
+<span id="cb75-51"><a href="#cb75-51" aria-hidden="true" tabindex="-1"></a><span class="co">#           ...                                      ...       ...      ...  ...  ...  ...  ... </span></span>
+<span id="cb75-52"><a href="#cb75-52" aria-hidden="true" tabindex="-1"></a><span class="co">#  Residual                                           0.793988 0.89106   0.00                   </span></span>
+<span id="cb75-53"><a href="#cb75-53" aria-hidden="true" tabindex="-1"></a><span class="co">#  0.00 0.00              </span></span>
+<span id="cb75-54"><a href="#cb75-54" aria-hidden="true" tabindex="-1"></a><span class="co">#  0.00 0.00 0.00         </span></span>
+<span id="cb75-55"><a href="#cb75-55" aria-hidden="true" tabindex="-1"></a><span class="co">#  0.00 0.00 0.00 0.00    </span></span>
+<span id="cb75-56"><a href="#cb75-56" aria-hidden="true" tabindex="-1"></a><span class="co">#  ...  ...  ...  ...  ...</span></span>
+<span id="cb75-57"><a href="#cb75-57" aria-hidden="true" tabindex="-1"></a><span class="co">#  0.00                   </span></span>
+<span id="cb75-58"><a href="#cb75-58" aria-hidden="true" tabindex="-1"></a><span class="co">#  0.00 0.00              </span></span>
+<span id="cb75-59"><a href="#cb75-59" aria-hidden="true" tabindex="-1"></a><span class="co">#  0.00 0.00 0.00         </span></span>
+<span id="cb75-60"><a href="#cb75-60" aria-hidden="true" tabindex="-1"></a><span class="co">#  0.00 0.00 0.00 0.00    </span></span>
+<span id="cb75-61"><a href="#cb75-61" aria-hidden="true" tabindex="-1"></a><span class="co">#  ...  ...  ...  ...  ...</span></span>
+<span id="cb75-62"><a href="#cb75-62" aria-hidden="true" tabindex="-1"></a><span class="co">#                         </span></span>
+<span id="cb75-63"><a href="#cb75-63" aria-hidden="true" tabindex="-1"></a><span class="co"># Number of obs: 2361, groups:  const, 1</span></span>
+<span id="cb75-64"><a href="#cb75-64" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
+<span id="cb75-65"><a href="#cb75-65" aria-hidden="true" tabindex="-1"></a><span class="co"># Dispersion estimate for gaussian family (sigma^2): 0.794 </span></span>
+<span id="cb75-66"><a href="#cb75-66" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
+<span id="cb75-67"><a href="#cb75-67" aria-hidden="true" tabindex="-1"></a><span class="co"># Conditional model:</span></span>
+<span id="cb75-68"><a href="#cb75-68" aria-hidden="true" tabindex="-1"></a><span class="co">#             Estimate Std. Error z value Pr(&gt;|z|)    </span></span>
+<span id="cb75-69"><a href="#cb75-69" aria-hidden="true" tabindex="-1"></a><span class="co"># (Intercept) -0.33676    0.06479  -5.197 2.02e-07 ***</span></span>
+<span id="cb75-70"><a href="#cb75-70" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb75-71"><a href="#cb75-71" aria-hidden="true" tabindex="-1"></a>sp_eg1_gau_tmb<span class="sc">$</span>fit<span class="sc">$</span>par</span>
+<span id="cb75-72"><a href="#cb75-72" aria-hidden="true" tabindex="-1"></a><span class="co"># betadisp      theta      theta </span></span>
+<span id="cb75-73"><a href="#cb75-73" aria-hidden="true" tabindex="-1"></a><span class="co"># -0.1153437  0.1059605 -0.8393711</span></span>
+<span id="cb75-74"><a href="#cb75-74" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb75-75"><a href="#cb75-75" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(<span class="fu">confint</span>(sp_eg1_gau_tmb), <span class="dv">10</span>) </span>
+<span id="cb75-76"><a href="#cb75-76" aria-hidden="true" tabindex="-1"></a><span class="fu">sigma</span>(sp_eg1_gau_tmb) </span>
+<span id="cb75-77"><a href="#cb75-77" aria-hidden="true" tabindex="-1"></a><span class="co"># 0.8910599</span></span>
+<span id="cb75-78"><a href="#cb75-78" aria-hidden="true" tabindex="-1"></a>sp_eg1_gau_tmb_varcor <span class="ot">&lt;-</span> <span class="fu">VarCorr</span>(sp_eg1_gau_tmb)<span class="sc">$</span>cond</span>
+<span id="cb75-79"><a href="#cb75-79" aria-hidden="true" tabindex="-1"></a><span class="fu">exp</span>(sp_eg1_gau_tmb<span class="sc">$</span>fit<span class="sc">$</span>par)</span>
+<span id="cb75-80"><a href="#cb75-80" aria-hidden="true" tabindex="-1"></a><span class="co">#  betadisp     theta     theta </span></span>
+<span id="cb75-81"><a href="#cb75-81" aria-hidden="true" tabindex="-1"></a><span class="co"># 0.8910599 1.1117780 0.4319821 </span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </div>
@@ -3391,10 +3408,87 @@ Then we transform the coordinates to a planar CRS (EPSG:3857) suitable for dista
 </div>
 </div>
 <div id="tabset-11-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-11-3-tab">
-<p>TBU</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb82"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb82-1"><a href="#cb82-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(dist_matrix_euclid2) <span class="ot">&lt;-</span> dat_scholer2020<span class="sc">$</span>effect_id</span>
+<span id="cb82-2"><a href="#cb82-2" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(dist_matrix_euclid2) <span class="ot">&lt;-</span> dat_scholer2020<span class="sc">$</span>effect_id</span>
+<span id="cb82-3"><a href="#cb82-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb82-4"><a href="#cb82-4" aria-hidden="true" tabindex="-1"></a>VCV <span class="ot">&lt;-</span> <span class="fu">diag</span>(dat_scholer2020<span class="sc">$</span>vi)</span>
+<span id="cb82-5"><a href="#cb82-5" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(VCV) <span class="ot">&lt;-</span> <span class="fu">colnames</span>(VCV) <span class="ot">&lt;-</span> <span class="fu">levels</span>(dat_scholer2020<span class="sc">$</span>effect_id)</span>
+<span id="cb82-6"><a href="#cb82-6" aria-hidden="true" tabindex="-1"></a>dat_scholer2020<span class="sc">$</span>pos <span class="ot">&lt;-</span> <span class="fu">numFactor</span>(dat_scholer2020<span class="sc">$</span>x_km, dat_scholer2020<span class="sc">$</span>y_km)</span>
+<span id="cb82-7"><a href="#cb82-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb82-8"><a href="#cb82-8" aria-hidden="true" tabindex="-1"></a>sp_exp_tmb_eg2 <span class="ot">&lt;-</span> <span class="fu">glmmTMB</span>(</span>
+<span id="cb82-9"><a href="#cb82-9" aria-hidden="true" tabindex="-1"></a>  logit_survival <span class="sc">~</span> <span class="dv">1</span> <span class="sc">+</span></span>
+<span id="cb82-10"><a href="#cb82-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">equalto</span>(<span class="dv">0</span> <span class="sc">+</span> effect_id <span class="sc">|</span> const, VCV) <span class="sc">+</span></span>
+<span id="cb82-11"><a href="#cb82-11" aria-hidden="true" tabindex="-1"></a>    (<span class="dv">1</span> <span class="sc">|</span> ref) <span class="sc">+</span></span>
+<span id="cb82-12"><a href="#cb82-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">exp</span>(pos <span class="sc">+</span> <span class="dv">0</span> <span class="sc">|</span> const),</span>
+<span id="cb82-13"><a href="#cb82-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> dat_scholer2020,</span>
+<span id="cb82-14"><a href="#cb82-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">family =</span> <span class="fu">gaussian</span>(),</span>
+<span id="cb82-15"><a href="#cb82-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">REML =</span> <span class="cn">TRUE</span></span>
+<span id="cb82-16"><a href="#cb82-16" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb82-17"><a href="#cb82-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb82-18"><a href="#cb82-18" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(sp_exp_tmb_eg2)</span>
+<span id="cb82-19"><a href="#cb82-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Warning message:</span></span>
+<span id="cb82-20"><a href="#cb82-20" aria-hidden="true" tabindex="-1"></a><span class="co"># In finalizeTMB(TMBStruc, obj, fit, h, data.tmb.old) :</span></span>
+<span id="cb82-21"><a href="#cb82-21" aria-hidden="true" tabindex="-1"></a><span class="co">#   Model convergence problem; non-positive-definite Hessian matrix. See vignette('troubleshooting')</span></span>
+<span id="cb82-22"><a href="#cb82-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb82-23"><a href="#cb82-23" aria-hidden="true" tabindex="-1"></a><span class="co">#  Family: gaussian  ( identity )</span></span>
+<span id="cb82-24"><a href="#cb82-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Formula: logit_survival ~ 1 + equalto(0 + effect_id | const, VCV) + (1 | ref) + exp(pos + 0 | const)</span></span>
+<span id="cb82-25"><a href="#cb82-25" aria-hidden="true" tabindex="-1"></a><span class="co"># Data: dat_scholer2020</span></span>
+<span id="cb82-26"><a href="#cb82-26" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
+<span id="cb82-27"><a href="#cb82-27" aria-hidden="true" tabindex="-1"></a><span class="co">#       AIC       BIC    logLik -2*log(L)  df.resid </span></span>
+<span id="cb82-28"><a href="#cb82-28" aria-hidden="true" tabindex="-1"></a><span class="co">#        NA        NA        NA        NA       944 </span></span>
+<span id="cb82-29"><a href="#cb82-29" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
+<span id="cb82-30"><a href="#cb82-30" aria-hidden="true" tabindex="-1"></a><span class="co"># Random effects:</span></span>
+<span id="cb82-31"><a href="#cb82-31" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
+<span id="cb82-32"><a href="#cb82-32" aria-hidden="true" tabindex="-1"></a><span class="co"># Conditional model:</span></span>
+<span id="cb82-33"><a href="#cb82-33" aria-hidden="true" tabindex="-1"></a><span class="co">#  Groups   Name                                     Variance  Std.Dev.  Corr                    </span></span>
+<span id="cb82-34"><a href="#cb82-34" aria-hidden="true" tabindex="-1"></a><span class="co">#  const    effect_id1                               3.600e-03 6.000e-02                         </span></span>
+<span id="cb82-35"><a href="#cb82-35" aria-hidden="true" tabindex="-1"></a><span class="co">#           effect_id2                               1.000e-02 1.000e-01 0.00                    </span></span>
+<span id="cb82-36"><a href="#cb82-36" aria-hidden="true" tabindex="-1"></a><span class="co">#           effect_id3                               9.610e-04 3.100e-02 0.00 0.00               </span></span>
+<span id="cb82-37"><a href="#cb82-37" aria-hidden="true" tabindex="-1"></a><span class="co">#           effect_id4                               5.290e-04 2.300e-02 0.00 0.00 0.00          </span></span>
+<span id="cb82-38"><a href="#cb82-38" aria-hidden="true" tabindex="-1"></a><span class="co">#           effect_id5                               2.500e-03 5.000e-02 0.00 0.00 0.00 0.00     </span></span>
+<span id="cb82-39"><a href="#cb82-39" aria-hidden="true" tabindex="-1"></a><span class="co">#           effect_id6                               6.250e-04 2.500e-02 0.00 0.00 0.00 0.00 0.00</span></span>
+<span id="cb82-40"><a href="#cb82-40" aria-hidden="true" tabindex="-1"></a><span class="co">#           effect_id7                               6.400e-05 8.000e-03 0.00 0.00 0.00 0.00 0.00</span></span>
+<span id="cb82-41"><a href="#cb82-41" aria-hidden="true" tabindex="-1"></a><span class="co">#           effect_id8                               3.600e-05 6.000e-03 0.00 0.00 0.00 0.00 0.00</span></span>
+<span id="cb82-42"><a href="#cb82-42" aria-hidden="true" tabindex="-1"></a><span class="co">#           effect_id9                               1.600e-03 4.000e-02 0.00 0.00 0.00 0.00 0.00</span></span>
+<span id="cb82-43"><a href="#cb82-43" aria-hidden="true" tabindex="-1"></a><span class="co">#           effect_id10                              8.100e-03 9.000e-02 0.00 0.00 0.00 0.00 0.00</span></span>
+<span id="cb82-44"><a href="#cb82-44" aria-hidden="true" tabindex="-1"></a><span class="co">#           ...                                      ...       ...       ...  ...  ...  ...  ... </span></span>
+<span id="cb82-45"><a href="#cb82-45" aria-hidden="true" tabindex="-1"></a><span class="co">#  ref      (Intercept)                              4.764e-01 6.902e-01                         </span></span>
+<span id="cb82-46"><a href="#cb82-46" aria-hidden="true" tabindex="-1"></a><span class="co">#  const.1  pos(-8204.24647146426,-5175.97074920631) 7.404e-10 2.721e-05                         </span></span>
+<span id="cb82-47"><a href="#cb82-47" aria-hidden="true" tabindex="-1"></a><span class="co">#           pos(-7937.0796935604,-5012.34166384752)  7.404e-10 2.721e-05 0.00                    </span></span>
+<span id="cb82-48"><a href="#cb82-48" aria-hidden="true" tabindex="-1"></a><span class="co">#           pos(-6456.53046600987,-4245.72066044159) 7.404e-10 2.721e-05 0.00 0.00               </span></span>
+<span id="cb82-49"><a href="#cb82-49" aria-hidden="true" tabindex="-1"></a><span class="co">#           pos(-8048.39918435368,-4218.3732871734)  7.404e-10 2.721e-05 0.00 0.00 0.00          </span></span>
+<span id="cb82-50"><a href="#cb82-50" aria-hidden="true" tabindex="-1"></a><span class="co">#           pos(2037.14668151691,-4042.23749967617)  7.404e-10 2.721e-05 0.00 0.00 0.00 0.00     </span></span>
+<span id="cb82-51"><a href="#cb82-51" aria-hidden="true" tabindex="-1"></a><span class="co">#           pos(2103.93837599287,-4042.23749967617)  7.404e-10 2.721e-05 0.00 0.00 0.00 0.00 0.00</span></span>
+<span id="cb82-52"><a href="#cb82-52" aria-hidden="true" tabindex="-1"></a><span class="co">#           pos(2304.31345942076,-4028.80202613441)  7.404e-10 2.721e-05 0.00 0.00 0.00 0.00 0.00</span></span>
+<span id="cb82-53"><a href="#cb82-53" aria-hidden="true" tabindex="-1"></a><span class="co">#           pos(2849.7789643078,-4028.80202613441)   7.404e-10 2.721e-05 0.00 0.00 0.00 0.00 0.00</span></span>
+<span id="cb82-54"><a href="#cb82-54" aria-hidden="true" tabindex="-1"></a><span class="co">#           pos(2092.80642691354,-4015.38236007316)  7.404e-10 2.721e-05 0.00 0.00 0.00 0.00 0.00</span></span>
+<span id="cb82-55"><a href="#cb82-55" aria-hidden="true" tabindex="-1"></a><span class="co">#           pos(2471.29269561067,-3961.86021744575)  7.404e-10 2.721e-05 0.00 0.00 0.00 0.00 0.00</span></span>
+<span id="cb82-56"><a href="#cb82-56" aria-hidden="true" tabindex="-1"></a><span class="co">#           ...                                      ...       ...       ...  ...  ...  ...  ... </span></span>
+<span id="cb82-57"><a href="#cb82-57" aria-hidden="true" tabindex="-1"></a><span class="co">#  Residual                                          2.306e-01 4.802e-01 </span></span>
+<span id="cb82-58"><a href="#cb82-58" aria-hidden="true" tabindex="-1"></a><span class="co">#  0.00                   </span></span>
+<span id="cb82-59"><a href="#cb82-59" aria-hidden="true" tabindex="-1"></a><span class="co">#  0.00 0.00              </span></span>
+<span id="cb82-60"><a href="#cb82-60" aria-hidden="true" tabindex="-1"></a><span class="co">#  0.00 0.00 0.00         </span></span>
+<span id="cb82-61"><a href="#cb82-61" aria-hidden="true" tabindex="-1"></a><span class="co">#  0.00 0.00 0.00 0.00    </span></span>
+<span id="cb82-62"><a href="#cb82-62" aria-hidden="true" tabindex="-1"></a><span class="co">#  ...  ...  ...  ...  ...</span></span>
+<span id="cb82-63"><a href="#cb82-63" aria-hidden="true" tabindex="-1"></a><span class="co">#  0.00                   </span></span>
+<span id="cb82-64"><a href="#cb82-64" aria-hidden="true" tabindex="-1"></a><span class="co">#  0.00 0.00              </span></span>
+<span id="cb82-65"><a href="#cb82-65" aria-hidden="true" tabindex="-1"></a><span class="co">#  0.00 0.00 0.00         </span></span>
+<span id="cb82-66"><a href="#cb82-66" aria-hidden="true" tabindex="-1"></a><span class="co">#  0.00 0.00 0.00 0.00    </span></span>
+<span id="cb82-67"><a href="#cb82-67" aria-hidden="true" tabindex="-1"></a><span class="co">#  ...  ...  ...  ...  ...</span></span>
+<span id="cb82-68"><a href="#cb82-68" aria-hidden="true" tabindex="-1"></a><span class="co">#                         </span></span>
+<span id="cb82-69"><a href="#cb82-69" aria-hidden="true" tabindex="-1"></a><span class="co"># Number of obs: 949, groups:  const, 1; ref, 205</span></span>
+<span id="cb82-70"><a href="#cb82-70" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
+<span id="cb82-71"><a href="#cb82-71" aria-hidden="true" tabindex="-1"></a><span class="co"># Dispersion estimate for gaussian family (sigma^2): 0.231 </span></span>
+<span id="cb82-72"><a href="#cb82-72" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
+<span id="cb82-73"><a href="#cb82-73" aria-hidden="true" tabindex="-1"></a><span class="co"># Conditional model:</span></span>
+<span id="cb82-74"><a href="#cb82-74" aria-hidden="true" tabindex="-1"></a><span class="co">#             Estimate Std. Error z value Pr(&gt;|z|)    </span></span>
+<span id="cb82-75"><a href="#cb82-75" aria-hidden="true" tabindex="-1"></a><span class="co"># (Intercept)  0.66869    0.05644   11.85   &lt;2e-16 ***</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
 <p>The <code>metafor</code> and <code>brms</code> implementations produced very similar substantive results. In both models, the estimated intercept was about 0.65, with broadly overlapping uncertainty intervals. Among-study heterogeneity was also highly consistent across packages: <code>metafor</code> estimated a study-level variance of 0.45, while <code>brms</code> estimated standard deviation as 0.68 (var = 0.462). At the effect-size level, <code>metafor</code> estimated a variance of 0.23. In the analogous <code>brms</code> model, the residual standard deviation (<code>sigma</code>) was 0.48, giving a closely comparable estimate of effect-size-level variation.</p>
 <p>The spatial term was smaller in magnitude, with <code>metafor</code> estimating <span class="math inline">\(\tau^2\)</span> and <code>brms</code> estimating <code>sdgp</code> at about 0.18 (sdgp^2 = 0.032). However, the spatial range parameter was very imprecisely estimated in both implementations, suggesting limited information about the exact distance scale of spatial autocorrelation.</p>
 <p>This implies that average adult survival was positive on the logit scale, while also varying appreciably among studies and locations. The spatial component suggests that geographically proximate populations may show somewhat similar survival values, although the exact scale of that dependence is not estimated very precisely in this example.</p>
+<p>In <code>glmmTMB</code>, however, the model produced a non-positive Hessian warning, indicating that the model did not converge properly. Inspection of the fitted variance components and diagnostic output suggested that the main instability was associated with the spatial random-effect term. Specifically, the estimated variance of spatial effect was extremely small.effectively collapsing to the boundary of the parameter space. This pattern suggests that, for these data and under this exact model specification, the spatial random effect was only weakly informed by the data and could not be estimated reliably in glmmTMB. Accordingly, we treat this fit as non-converged and do not interpret the spatial component substantively. Importantly, this should not be taken as strong evidence that spatial structure is absent in the data. Rather, it indicates that the spatial-effect parameter was not stably identifiable in this implementation. More broadly, this result suggests caution when comparing spatial-effect estimates across modelling frameworks, because even if analogous models fitted in <code>metafor</code> or <code>brms</code> return estimates or appear to converge numerically, those spatial parameters may still be weakly identified and poorly defined. In such cases, interpretation of the spatial component should depend not only on whether a model returns an estimate, but also on whether the corresponding uncertainty interval is reasonably bounded and interpretable.</p>
 </div>
 </div>
 </div>
@@ -3406,131 +3500,131 @@ Then we transform the coordinates to a planar CRS (EPSG:3857) suitable for dista
 <div class="tab-content">
 <div id="tabset-12-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-12-1-tab">
 <div class="cell">
-<div class="sourceCode cell-code" id="cb82"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb82-1"><a href="#cb82-1" aria-hidden="true" tabindex="-1"></a>sp_gau_metafor_eg2 <span class="ot">&lt;-</span> <span class="fu">rma.mv</span>(</span>
-<span id="cb82-2"><a href="#cb82-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">yi =</span> logit_survival,</span>
-<span id="cb82-3"><a href="#cb82-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">V  =</span> vi,                      </span>
-<span id="cb82-4"><a href="#cb82-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">random =</span> <span class="fu">list</span>(</span>
-<span id="cb82-5"><a href="#cb82-5" aria-hidden="true" tabindex="-1"></a>    <span class="sc">~</span> <span class="dv">1</span> <span class="sc">|</span> effect_id,          </span>
-<span id="cb82-6"><a href="#cb82-6" aria-hidden="true" tabindex="-1"></a>    <span class="sc">~</span> <span class="dv">1</span> <span class="sc">|</span> ref,                   </span>
-<span id="cb82-7"><a href="#cb82-7" aria-hidden="true" tabindex="-1"></a>    <span class="sc">~</span> site_id <span class="sc">|</span> const           </span>
-<span id="cb82-8"><a href="#cb82-8" aria-hidden="true" tabindex="-1"></a>  ),</span>
-<span id="cb82-9"><a href="#cb82-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">struct =</span> <span class="st">"SPGAU"</span>,</span>
-<span id="cb82-10"><a href="#cb82-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> dat_scholer2020,</span>
-<span id="cb82-11"><a href="#cb82-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">dist =</span> <span class="fu">list</span>(<span class="at">site =</span> dist_site), </span>
-<span id="cb82-12"><a href="#cb82-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">method =</span> <span class="st">"REML"</span>,</span>
-<span id="cb82-13"><a href="#cb82-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">test =</span> <span class="st">"t"</span>,</span>
-<span id="cb82-14"><a href="#cb82-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">sparse =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb82-15"><a href="#cb82-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">verbose =</span> <span class="cn">TRUE</span></span>
-<span id="cb82-16"><a href="#cb82-16" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb82-17"><a href="#cb82-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb82-18"><a href="#cb82-18" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(sp_gau_metafor_eg2)</span>
-<span id="cb82-19"><a href="#cb82-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Multivariate Meta-Analysis Model (k = 949; method: REML)</span></span>
-<span id="cb82-20"><a href="#cb82-20" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
-<span id="cb82-21"><a href="#cb82-21" aria-hidden="true" tabindex="-1"></a><span class="co">#    logLik   Deviance        AIC        BIC       AICc   </span></span>
-<span id="cb82-22"><a href="#cb82-22" aria-hidden="true" tabindex="-1"></a><span class="co"># -824.5113  1649.0225  1659.0225  1683.2943  1659.0862   </span></span>
-<span id="cb82-23"><a href="#cb82-23" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
-<span id="cb82-24"><a href="#cb82-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Variance Components:</span></span>
-<span id="cb82-25"><a href="#cb82-25" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
-<span id="cb82-26"><a href="#cb82-26" aria-hidden="true" tabindex="-1"></a><span class="co">#             estim    sqrt  nlvls  fixed     factor </span></span>
-<span id="cb82-27"><a href="#cb82-27" aria-hidden="true" tabindex="-1"></a><span class="co"># sigma^2.1  0.2297  0.4793    949     no  effect_id </span></span>
-<span id="cb82-28"><a href="#cb82-28" aria-hidden="true" tabindex="-1"></a><span class="co"># sigma^2.2  0.4578  0.6766    205     no        ref </span></span>
-<span id="cb82-29"><a href="#cb82-29" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
-<span id="cb82-30"><a href="#cb82-30" aria-hidden="true" tabindex="-1"></a><span class="co"># outer factor: const    (nlvls = 1)</span></span>
-<span id="cb82-31"><a href="#cb82-31" aria-hidden="true" tabindex="-1"></a><span class="co"># inner term:   ~site_id (nlvls = 454)</span></span>
-<span id="cb82-32"><a href="#cb82-32" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
-<span id="cb82-33"><a href="#cb82-33" aria-hidden="true" tabindex="-1"></a><span class="co">#                estim    sqrt  fixed </span></span>
-<span id="cb82-34"><a href="#cb82-34" aria-hidden="true" tabindex="-1"></a><span class="co"># tau^2         0.0202  0.1420     no </span></span>
-<span id="cb82-35"><a href="#cb82-35" aria-hidden="true" tabindex="-1"></a><span class="co"># rho        4713.8765             no </span></span>
-<span id="cb82-36"><a href="#cb82-36" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
-<span id="cb82-37"><a href="#cb82-37" aria-hidden="true" tabindex="-1"></a><span class="co"># Test for Heterogeneity:</span></span>
-<span id="cb82-38"><a href="#cb82-38" aria-hidden="true" tabindex="-1"></a><span class="co"># Q(df = 948) = 974007.4599, p-val &lt; .0001</span></span>
-<span id="cb82-39"><a href="#cb82-39" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
-<span id="cb82-40"><a href="#cb82-40" aria-hidden="true" tabindex="-1"></a><span class="co"># Model Results:</span></span>
-<span id="cb82-41"><a href="#cb82-41" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
-<span id="cb82-42"><a href="#cb82-42" aria-hidden="true" tabindex="-1"></a><span class="co"># estimate      se    tval   df    pval   ci.lb   ci.ub      </span></span>
-<span id="cb82-43"><a href="#cb82-43" aria-hidden="true" tabindex="-1"></a><span class="co">#   0.6466  0.0830  7.7876  948  &lt;.0001  0.4837  0.8096  *** </span></span>
-<span id="cb82-44"><a href="#cb82-44" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb82-45"><a href="#cb82-45" aria-hidden="true" tabindex="-1"></a><span class="fu">confint</span>(sp_gau_metafor_eg2)</span>
-<span id="cb82-46"><a href="#cb82-46" aria-hidden="true" tabindex="-1"></a><span class="co">#           estimate  ci.lb  ci.ub </span></span>
-<span id="cb82-47"><a href="#cb82-47" aria-hidden="true" tabindex="-1"></a><span class="co"># sigma^2.1   0.2297 0.2069 0.2559 </span></span>
-<span id="cb82-48"><a href="#cb82-48" aria-hidden="true" tabindex="-1"></a><span class="co"># sigma.1     0.4793 0.4548 0.5059 </span></span>
-<span id="cb82-49"><a href="#cb82-49" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
-<span id="cb82-50"><a href="#cb82-50" aria-hidden="true" tabindex="-1"></a><span class="co">#           estimate  ci.lb  ci.ub </span></span>
-<span id="cb82-51"><a href="#cb82-51" aria-hidden="true" tabindex="-1"></a><span class="co"># sigma^2.2   0.4578 0.3435 0.6054 </span></span>
-<span id="cb82-52"><a href="#cb82-52" aria-hidden="true" tabindex="-1"></a><span class="co"># sigma.2     0.6766 0.5861 0.7781 </span></span>
-<span id="cb82-53"><a href="#cb82-53" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
-<span id="cb82-54"><a href="#cb82-54" aria-hidden="true" tabindex="-1"></a><span class="co">#       estimate  ci.lb    ci.ub </span></span>
-<span id="cb82-55"><a href="#cb82-55" aria-hidden="true" tabindex="-1"></a><span class="co"># tau^2   0.0202 0.0000 &gt;10.0000 </span></span>
-<span id="cb82-56"><a href="#cb82-56" aria-hidden="true" tabindex="-1"></a><span class="co"># tau     0.1420 0.0000  &gt;3.1623 </span></span>
-<span id="cb82-57"><a href="#cb82-57" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
-<span id="cb82-58"><a href="#cb82-58" aria-hidden="true" tabindex="-1"></a><span class="co">#      estimate     ci.lb       ci.ub </span></span>
-<span id="cb82-59"><a href="#cb82-59" aria-hidden="true" tabindex="-1"></a><span class="co"># rho 4713.8765 &lt;471.3877 &gt;47138.7654 </span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb83"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb83-1"><a href="#cb83-1" aria-hidden="true" tabindex="-1"></a>sp_gau_metafor_eg2 <span class="ot">&lt;-</span> <span class="fu">rma.mv</span>(</span>
+<span id="cb83-2"><a href="#cb83-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">yi =</span> logit_survival,</span>
+<span id="cb83-3"><a href="#cb83-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">V  =</span> vi,                      </span>
+<span id="cb83-4"><a href="#cb83-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">random =</span> <span class="fu">list</span>(</span>
+<span id="cb83-5"><a href="#cb83-5" aria-hidden="true" tabindex="-1"></a>    <span class="sc">~</span> <span class="dv">1</span> <span class="sc">|</span> effect_id,          </span>
+<span id="cb83-6"><a href="#cb83-6" aria-hidden="true" tabindex="-1"></a>    <span class="sc">~</span> <span class="dv">1</span> <span class="sc">|</span> ref,                   </span>
+<span id="cb83-7"><a href="#cb83-7" aria-hidden="true" tabindex="-1"></a>    <span class="sc">~</span> site_id <span class="sc">|</span> const           </span>
+<span id="cb83-8"><a href="#cb83-8" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb83-9"><a href="#cb83-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">struct =</span> <span class="st">"SPGAU"</span>,</span>
+<span id="cb83-10"><a href="#cb83-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> dat_scholer2020,</span>
+<span id="cb83-11"><a href="#cb83-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">dist =</span> <span class="fu">list</span>(<span class="at">site =</span> dist_site), </span>
+<span id="cb83-12"><a href="#cb83-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">method =</span> <span class="st">"REML"</span>,</span>
+<span id="cb83-13"><a href="#cb83-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">test =</span> <span class="st">"t"</span>,</span>
+<span id="cb83-14"><a href="#cb83-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">sparse =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb83-15"><a href="#cb83-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">verbose =</span> <span class="cn">TRUE</span></span>
+<span id="cb83-16"><a href="#cb83-16" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb83-17"><a href="#cb83-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb83-18"><a href="#cb83-18" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(sp_gau_metafor_eg2)</span>
+<span id="cb83-19"><a href="#cb83-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Multivariate Meta-Analysis Model (k = 949; method: REML)</span></span>
+<span id="cb83-20"><a href="#cb83-20" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
+<span id="cb83-21"><a href="#cb83-21" aria-hidden="true" tabindex="-1"></a><span class="co">#    logLik   Deviance        AIC        BIC       AICc   </span></span>
+<span id="cb83-22"><a href="#cb83-22" aria-hidden="true" tabindex="-1"></a><span class="co"># -824.5113  1649.0225  1659.0225  1683.2943  1659.0862   </span></span>
+<span id="cb83-23"><a href="#cb83-23" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
+<span id="cb83-24"><a href="#cb83-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Variance Components:</span></span>
+<span id="cb83-25"><a href="#cb83-25" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
+<span id="cb83-26"><a href="#cb83-26" aria-hidden="true" tabindex="-1"></a><span class="co">#             estim    sqrt  nlvls  fixed     factor </span></span>
+<span id="cb83-27"><a href="#cb83-27" aria-hidden="true" tabindex="-1"></a><span class="co"># sigma^2.1  0.2297  0.4793    949     no  effect_id </span></span>
+<span id="cb83-28"><a href="#cb83-28" aria-hidden="true" tabindex="-1"></a><span class="co"># sigma^2.2  0.4578  0.6766    205     no        ref </span></span>
+<span id="cb83-29"><a href="#cb83-29" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
+<span id="cb83-30"><a href="#cb83-30" aria-hidden="true" tabindex="-1"></a><span class="co"># outer factor: const    (nlvls = 1)</span></span>
+<span id="cb83-31"><a href="#cb83-31" aria-hidden="true" tabindex="-1"></a><span class="co"># inner term:   ~site_id (nlvls = 454)</span></span>
+<span id="cb83-32"><a href="#cb83-32" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
+<span id="cb83-33"><a href="#cb83-33" aria-hidden="true" tabindex="-1"></a><span class="co">#                estim    sqrt  fixed </span></span>
+<span id="cb83-34"><a href="#cb83-34" aria-hidden="true" tabindex="-1"></a><span class="co"># tau^2         0.0202  0.1420     no </span></span>
+<span id="cb83-35"><a href="#cb83-35" aria-hidden="true" tabindex="-1"></a><span class="co"># rho        4713.8765             no </span></span>
+<span id="cb83-36"><a href="#cb83-36" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
+<span id="cb83-37"><a href="#cb83-37" aria-hidden="true" tabindex="-1"></a><span class="co"># Test for Heterogeneity:</span></span>
+<span id="cb83-38"><a href="#cb83-38" aria-hidden="true" tabindex="-1"></a><span class="co"># Q(df = 948) = 974007.4599, p-val &lt; .0001</span></span>
+<span id="cb83-39"><a href="#cb83-39" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
+<span id="cb83-40"><a href="#cb83-40" aria-hidden="true" tabindex="-1"></a><span class="co"># Model Results:</span></span>
+<span id="cb83-41"><a href="#cb83-41" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
+<span id="cb83-42"><a href="#cb83-42" aria-hidden="true" tabindex="-1"></a><span class="co"># estimate      se    tval   df    pval   ci.lb   ci.ub      </span></span>
+<span id="cb83-43"><a href="#cb83-43" aria-hidden="true" tabindex="-1"></a><span class="co">#   0.6466  0.0830  7.7876  948  &lt;.0001  0.4837  0.8096  *** </span></span>
+<span id="cb83-44"><a href="#cb83-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb83-45"><a href="#cb83-45" aria-hidden="true" tabindex="-1"></a><span class="fu">confint</span>(sp_gau_metafor_eg2)</span>
+<span id="cb83-46"><a href="#cb83-46" aria-hidden="true" tabindex="-1"></a><span class="co">#           estimate  ci.lb  ci.ub </span></span>
+<span id="cb83-47"><a href="#cb83-47" aria-hidden="true" tabindex="-1"></a><span class="co"># sigma^2.1   0.2297 0.2069 0.2559 </span></span>
+<span id="cb83-48"><a href="#cb83-48" aria-hidden="true" tabindex="-1"></a><span class="co"># sigma.1     0.4793 0.4548 0.5059 </span></span>
+<span id="cb83-49"><a href="#cb83-49" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
+<span id="cb83-50"><a href="#cb83-50" aria-hidden="true" tabindex="-1"></a><span class="co">#           estimate  ci.lb  ci.ub </span></span>
+<span id="cb83-51"><a href="#cb83-51" aria-hidden="true" tabindex="-1"></a><span class="co"># sigma^2.2   0.4578 0.3435 0.6054 </span></span>
+<span id="cb83-52"><a href="#cb83-52" aria-hidden="true" tabindex="-1"></a><span class="co"># sigma.2     0.6766 0.5861 0.7781 </span></span>
+<span id="cb83-53"><a href="#cb83-53" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
+<span id="cb83-54"><a href="#cb83-54" aria-hidden="true" tabindex="-1"></a><span class="co">#       estimate  ci.lb    ci.ub </span></span>
+<span id="cb83-55"><a href="#cb83-55" aria-hidden="true" tabindex="-1"></a><span class="co"># tau^2   0.0202 0.0000 &gt;10.0000 </span></span>
+<span id="cb83-56"><a href="#cb83-56" aria-hidden="true" tabindex="-1"></a><span class="co"># tau     0.1420 0.0000  &gt;3.1623 </span></span>
+<span id="cb83-57"><a href="#cb83-57" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
+<span id="cb83-58"><a href="#cb83-58" aria-hidden="true" tabindex="-1"></a><span class="co">#      estimate     ci.lb       ci.ub </span></span>
+<span id="cb83-59"><a href="#cb83-59" aria-hidden="true" tabindex="-1"></a><span class="co"># rho 4713.8765 &lt;471.3877 &gt;47138.7654 </span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 <div id="tabset-12-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-12-2-tab">
 <div class="cell">
-<div class="sourceCode cell-code" id="cb83"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb83-1"><a href="#cb83-1" aria-hidden="true" tabindex="-1"></a>fit_gp_brms <span class="ot">&lt;-</span> <span class="fu">bf</span>(logit_survival <span class="sc">~</span> <span class="dv">1</span> <span class="sc">+</span></span>
-<span id="cb83-2"><a href="#cb83-2" aria-hidden="true" tabindex="-1"></a>                    (<span class="dv">1</span><span class="sc">|</span>ref) <span class="sc">+</span> <span class="co"># this is site-level random effect</span></span>
-<span id="cb83-3"><a href="#cb83-3" aria-hidden="true" tabindex="-1"></a>                    (<span class="dv">1</span><span class="sc">|</span><span class="fu">gr</span>(effect_id, <span class="at">cov =</span> vcv)) <span class="sc">+</span> <span class="co"># this is m (sampling error)</span></span>
-<span id="cb83-4"><a href="#cb83-4" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">gp</span>(x_km, y_km, </span>
-<span id="cb83-5"><a href="#cb83-5" aria-hidden="true" tabindex="-1"></a>                       <span class="at">cov =</span> <span class="st">"exp_quad"</span>,</span>
-<span id="cb83-6"><a href="#cb83-6" aria-hidden="true" tabindex="-1"></a>                       <span class="at">scale =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb83-7"><a href="#cb83-7" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb83-8"><a href="#cb83-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb83-9"><a href="#cb83-9" aria-hidden="true" tabindex="-1"></a><span class="co"># generate default priors</span></span>
-<span id="cb83-10"><a href="#cb83-10" aria-hidden="true" tabindex="-1"></a>prior <span class="ot">&lt;-</span> <span class="fu">default_prior</span>(fit_gp_brms, </span>
-<span id="cb83-11"><a href="#cb83-11" aria-hidden="true" tabindex="-1"></a>                       <span class="at">data =</span> dat_scholer2020, </span>
-<span id="cb83-12"><a href="#cb83-12" aria-hidden="true" tabindex="-1"></a>                       <span class="at">data2 =</span> <span class="fu">list</span>(<span class="at">vcv =</span> vcv),</span>
-<span id="cb83-13"><a href="#cb83-13" aria-hidden="true" tabindex="-1"></a>                       <span class="at">family =</span> <span class="fu">gaussian</span>())</span>
-<span id="cb83-14"><a href="#cb83-14" aria-hidden="true" tabindex="-1"></a>prior<span class="sc">$</span>prior[<span class="dv">5</span>] <span class="ot">=</span> <span class="st">"constant(1)"</span> <span class="co"># meta-analysis assumes sampling variance is known so fixing this to 1</span></span>
-<span id="cb83-15"><a href="#cb83-15" aria-hidden="true" tabindex="-1"></a>prior</span>
-<span id="cb83-16"><a href="#cb83-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb83-17"><a href="#cb83-17" aria-hidden="true" tabindex="-1"></a>sp_gau_brms_eg2 <span class="ot">&lt;-</span> <span class="fu">brm</span>(</span>
-<span id="cb83-18"><a href="#cb83-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">formula =</span> fit_gp_brms,</span>
-<span id="cb83-19"><a href="#cb83-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> dat_scholer2020,</span>
-<span id="cb83-20"><a href="#cb83-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">data2 =</span> <span class="fu">list</span>(<span class="at">vcv =</span> vcv),</span>
-<span id="cb83-21"><a href="#cb83-21" aria-hidden="true" tabindex="-1"></a>  <span class="at">prior =</span> prior,</span>
-<span id="cb83-22"><a href="#cb83-22" aria-hidden="true" tabindex="-1"></a>  <span class="at">iter =</span> <span class="dv">8000</span>, </span>
-<span id="cb83-23"><a href="#cb83-23" aria-hidden="true" tabindex="-1"></a>  <span class="at">warmup =</span> <span class="dv">4000</span>,  </span>
-<span id="cb83-24"><a href="#cb83-24" aria-hidden="true" tabindex="-1"></a>  <span class="at">chains =</span> num_chains,</span>
-<span id="cb83-25"><a href="#cb83-25" aria-hidden="true" tabindex="-1"></a>  <span class="at">backend =</span> <span class="st">"cmdstanr"</span>,</span>
-<span id="cb83-26"><a href="#cb83-26" aria-hidden="true" tabindex="-1"></a>  <span class="at">threads =</span> <span class="fu">threading</span>(threads_per_chain), </span>
-<span id="cb83-27"><a href="#cb83-27" aria-hidden="true" tabindex="-1"></a>  <span class="at">control =</span> <span class="fu">list</span>(<span class="at">adapt_delta =</span> <span class="fl">0.95</span>, <span class="at">max_treedepth =</span> <span class="dv">15</span>)</span>
-<span id="cb83-28"><a href="#cb83-28" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb83-29"><a href="#cb83-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb83-30"><a href="#cb83-30" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(sp_gau_brms_eg2)</span>
-<span id="cb83-31"><a href="#cb83-31" aria-hidden="true" tabindex="-1"></a><span class="co">#  Family: gaussian </span></span>
-<span id="cb83-32"><a href="#cb83-32" aria-hidden="true" tabindex="-1"></a><span class="co">#   Links: mu = identity </span></span>
-<span id="cb83-33"><a href="#cb83-33" aria-hidden="true" tabindex="-1"></a><span class="co"># Formula: logit_survival ~ 1 + (1 | ref) + (1 | gr(effect_id, cov = vcv)) + gp(x_km, y_km, cov = "exp_quad", scale = FALSE) </span></span>
-<span id="cb83-34"><a href="#cb83-34" aria-hidden="true" tabindex="-1"></a><span class="co">#    Data: dat_scholer2020 (Number of observations: 949) </span></span>
-<span id="cb83-35"><a href="#cb83-35" aria-hidden="true" tabindex="-1"></a><span class="co">#   Draws: 2 chains, each with iter = 8000; warmup = 4000; thin = 1;</span></span>
-<span id="cb83-36"><a href="#cb83-36" aria-hidden="true" tabindex="-1"></a><span class="co">#          total post-warmup draws = 8000</span></span>
-<span id="cb83-37"><a href="#cb83-37" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
-<span id="cb83-38"><a href="#cb83-38" aria-hidden="true" tabindex="-1"></a><span class="co"># Gaussian Process Hyperparameters:</span></span>
-<span id="cb83-39"><a href="#cb83-39" aria-hidden="true" tabindex="-1"></a><span class="co">#                    Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS</span></span>
-<span id="cb83-40"><a href="#cb83-40" aria-hidden="true" tabindex="-1"></a><span class="co"># sdgp(gpx_kmy_km)       0.16      0.11     0.02     0.42 1.00      836      969</span></span>
-<span id="cb83-41"><a href="#cb83-41" aria-hidden="true" tabindex="-1"></a><span class="co"># lscale(gpx_kmy_km)  3465.74  13257.32   365.32 19298.85 1.00      242      525</span></span>
-<span id="cb83-42"><a href="#cb83-42" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
-<span id="cb83-43"><a href="#cb83-43" aria-hidden="true" tabindex="-1"></a><span class="co"># Multilevel Hyperparameters:</span></span>
-<span id="cb83-44"><a href="#cb83-44" aria-hidden="true" tabindex="-1"></a><span class="co"># ~effect_id (Number of levels: 949) </span></span>
-<span id="cb83-45"><a href="#cb83-45" aria-hidden="true" tabindex="-1"></a><span class="co">#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS</span></span>
-<span id="cb83-46"><a href="#cb83-46" aria-hidden="true" tabindex="-1"></a><span class="co"># sd(Intercept)     1.00      0.00     1.00     1.00   NA       NA       NA</span></span>
-<span id="cb83-47"><a href="#cb83-47" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
-<span id="cb83-48"><a href="#cb83-48" aria-hidden="true" tabindex="-1"></a><span class="co"># ~ref (Number of levels: 205) </span></span>
-<span id="cb83-49"><a href="#cb83-49" aria-hidden="true" tabindex="-1"></a><span class="co">#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS</span></span>
-<span id="cb83-50"><a href="#cb83-50" aria-hidden="true" tabindex="-1"></a><span class="co"># sd(Intercept)     0.68      0.05     0.58     0.78 1.00     2069     3664</span></span>
-<span id="cb83-51"><a href="#cb83-51" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
-<span id="cb83-52"><a href="#cb83-52" aria-hidden="true" tabindex="-1"></a><span class="co"># Regression Coefficients:</span></span>
-<span id="cb83-53"><a href="#cb83-53" aria-hidden="true" tabindex="-1"></a><span class="co">#           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS</span></span>
-<span id="cb83-54"><a href="#cb83-54" aria-hidden="true" tabindex="-1"></a><span class="co"># Intercept     0.65      0.10     0.47     0.82 1.00     2347     1774</span></span>
-<span id="cb83-55"><a href="#cb83-55" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
-<span id="cb83-56"><a href="#cb83-56" aria-hidden="true" tabindex="-1"></a><span class="co"># Further Distributional Parameters:</span></span>
-<span id="cb83-57"><a href="#cb83-57" aria-hidden="true" tabindex="-1"></a><span class="co">#       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS</span></span>
-<span id="cb83-58"><a href="#cb83-58" aria-hidden="true" tabindex="-1"></a><span class="co"># sigma     0.48      0.01     0.45     0.51 1.00     4263     5271</span></span>
-<span id="cb83-59"><a href="#cb83-59" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
-<span id="cb83-60"><a href="#cb83-60" aria-hidden="true" tabindex="-1"></a><span class="co"># Draws were sampled using sample(hmc). For each parameter, Bulk_ESS</span></span>
-<span id="cb83-61"><a href="#cb83-61" aria-hidden="true" tabindex="-1"></a><span class="co"># and Tail_ESS are effective sample size measures, and Rhat is the potential</span></span>
-<span id="cb83-62"><a href="#cb83-62" aria-hidden="true" tabindex="-1"></a><span class="co"># scale reduction factor on split chains (at convergence, Rhat = 1).</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb84"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb84-1"><a href="#cb84-1" aria-hidden="true" tabindex="-1"></a>fit_gp_brms <span class="ot">&lt;-</span> <span class="fu">bf</span>(logit_survival <span class="sc">~</span> <span class="dv">1</span> <span class="sc">+</span></span>
+<span id="cb84-2"><a href="#cb84-2" aria-hidden="true" tabindex="-1"></a>                    (<span class="dv">1</span><span class="sc">|</span>ref) <span class="sc">+</span> <span class="co"># this is site-level random effect</span></span>
+<span id="cb84-3"><a href="#cb84-3" aria-hidden="true" tabindex="-1"></a>                    (<span class="dv">1</span><span class="sc">|</span><span class="fu">gr</span>(effect_id, <span class="at">cov =</span> vcv)) <span class="sc">+</span> <span class="co"># this is m (sampling error)</span></span>
+<span id="cb84-4"><a href="#cb84-4" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">gp</span>(x_km, y_km, </span>
+<span id="cb84-5"><a href="#cb84-5" aria-hidden="true" tabindex="-1"></a>                       <span class="at">cov =</span> <span class="st">"exp_quad"</span>,</span>
+<span id="cb84-6"><a href="#cb84-6" aria-hidden="true" tabindex="-1"></a>                       <span class="at">scale =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb84-7"><a href="#cb84-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb84-8"><a href="#cb84-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-9"><a href="#cb84-9" aria-hidden="true" tabindex="-1"></a><span class="co"># generate default priors</span></span>
+<span id="cb84-10"><a href="#cb84-10" aria-hidden="true" tabindex="-1"></a>prior <span class="ot">&lt;-</span> <span class="fu">default_prior</span>(fit_gp_brms, </span>
+<span id="cb84-11"><a href="#cb84-11" aria-hidden="true" tabindex="-1"></a>                       <span class="at">data =</span> dat_scholer2020, </span>
+<span id="cb84-12"><a href="#cb84-12" aria-hidden="true" tabindex="-1"></a>                       <span class="at">data2 =</span> <span class="fu">list</span>(<span class="at">vcv =</span> vcv),</span>
+<span id="cb84-13"><a href="#cb84-13" aria-hidden="true" tabindex="-1"></a>                       <span class="at">family =</span> <span class="fu">gaussian</span>())</span>
+<span id="cb84-14"><a href="#cb84-14" aria-hidden="true" tabindex="-1"></a>prior<span class="sc">$</span>prior[<span class="dv">5</span>] <span class="ot">=</span> <span class="st">"constant(1)"</span> <span class="co"># meta-analysis assumes sampling variance is known so fixing this to 1</span></span>
+<span id="cb84-15"><a href="#cb84-15" aria-hidden="true" tabindex="-1"></a>prior</span>
+<span id="cb84-16"><a href="#cb84-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-17"><a href="#cb84-17" aria-hidden="true" tabindex="-1"></a>sp_gau_brms_eg2 <span class="ot">&lt;-</span> <span class="fu">brm</span>(</span>
+<span id="cb84-18"><a href="#cb84-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">formula =</span> fit_gp_brms,</span>
+<span id="cb84-19"><a href="#cb84-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> dat_scholer2020,</span>
+<span id="cb84-20"><a href="#cb84-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">data2 =</span> <span class="fu">list</span>(<span class="at">vcv =</span> vcv),</span>
+<span id="cb84-21"><a href="#cb84-21" aria-hidden="true" tabindex="-1"></a>  <span class="at">prior =</span> prior,</span>
+<span id="cb84-22"><a href="#cb84-22" aria-hidden="true" tabindex="-1"></a>  <span class="at">iter =</span> <span class="dv">8000</span>, </span>
+<span id="cb84-23"><a href="#cb84-23" aria-hidden="true" tabindex="-1"></a>  <span class="at">warmup =</span> <span class="dv">4000</span>,  </span>
+<span id="cb84-24"><a href="#cb84-24" aria-hidden="true" tabindex="-1"></a>  <span class="at">chains =</span> num_chains,</span>
+<span id="cb84-25"><a href="#cb84-25" aria-hidden="true" tabindex="-1"></a>  <span class="at">backend =</span> <span class="st">"cmdstanr"</span>,</span>
+<span id="cb84-26"><a href="#cb84-26" aria-hidden="true" tabindex="-1"></a>  <span class="at">threads =</span> <span class="fu">threading</span>(threads_per_chain), </span>
+<span id="cb84-27"><a href="#cb84-27" aria-hidden="true" tabindex="-1"></a>  <span class="at">control =</span> <span class="fu">list</span>(<span class="at">adapt_delta =</span> <span class="fl">0.95</span>, <span class="at">max_treedepth =</span> <span class="dv">15</span>)</span>
+<span id="cb84-28"><a href="#cb84-28" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb84-29"><a href="#cb84-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-30"><a href="#cb84-30" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(sp_gau_brms_eg2)</span>
+<span id="cb84-31"><a href="#cb84-31" aria-hidden="true" tabindex="-1"></a><span class="co">#  Family: gaussian </span></span>
+<span id="cb84-32"><a href="#cb84-32" aria-hidden="true" tabindex="-1"></a><span class="co">#   Links: mu = identity </span></span>
+<span id="cb84-33"><a href="#cb84-33" aria-hidden="true" tabindex="-1"></a><span class="co"># Formula: logit_survival ~ 1 + (1 | ref) + (1 | gr(effect_id, cov = vcv)) + gp(x_km, y_km, cov = "exp_quad", scale = FALSE) </span></span>
+<span id="cb84-34"><a href="#cb84-34" aria-hidden="true" tabindex="-1"></a><span class="co">#    Data: dat_scholer2020 (Number of observations: 949) </span></span>
+<span id="cb84-35"><a href="#cb84-35" aria-hidden="true" tabindex="-1"></a><span class="co">#   Draws: 2 chains, each with iter = 8000; warmup = 4000; thin = 1;</span></span>
+<span id="cb84-36"><a href="#cb84-36" aria-hidden="true" tabindex="-1"></a><span class="co">#          total post-warmup draws = 8000</span></span>
+<span id="cb84-37"><a href="#cb84-37" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
+<span id="cb84-38"><a href="#cb84-38" aria-hidden="true" tabindex="-1"></a><span class="co"># Gaussian Process Hyperparameters:</span></span>
+<span id="cb84-39"><a href="#cb84-39" aria-hidden="true" tabindex="-1"></a><span class="co">#                    Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS</span></span>
+<span id="cb84-40"><a href="#cb84-40" aria-hidden="true" tabindex="-1"></a><span class="co"># sdgp(gpx_kmy_km)       0.16      0.11     0.02     0.42 1.00      836      969</span></span>
+<span id="cb84-41"><a href="#cb84-41" aria-hidden="true" tabindex="-1"></a><span class="co"># lscale(gpx_kmy_km)  3465.74  13257.32   365.32 19298.85 1.00      242      525</span></span>
+<span id="cb84-42"><a href="#cb84-42" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
+<span id="cb84-43"><a href="#cb84-43" aria-hidden="true" tabindex="-1"></a><span class="co"># Multilevel Hyperparameters:</span></span>
+<span id="cb84-44"><a href="#cb84-44" aria-hidden="true" tabindex="-1"></a><span class="co"># ~effect_id (Number of levels: 949) </span></span>
+<span id="cb84-45"><a href="#cb84-45" aria-hidden="true" tabindex="-1"></a><span class="co">#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS</span></span>
+<span id="cb84-46"><a href="#cb84-46" aria-hidden="true" tabindex="-1"></a><span class="co"># sd(Intercept)     1.00      0.00     1.00     1.00   NA       NA       NA</span></span>
+<span id="cb84-47"><a href="#cb84-47" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
+<span id="cb84-48"><a href="#cb84-48" aria-hidden="true" tabindex="-1"></a><span class="co"># ~ref (Number of levels: 205) </span></span>
+<span id="cb84-49"><a href="#cb84-49" aria-hidden="true" tabindex="-1"></a><span class="co">#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS</span></span>
+<span id="cb84-50"><a href="#cb84-50" aria-hidden="true" tabindex="-1"></a><span class="co"># sd(Intercept)     0.68      0.05     0.58     0.78 1.00     2069     3664</span></span>
+<span id="cb84-51"><a href="#cb84-51" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
+<span id="cb84-52"><a href="#cb84-52" aria-hidden="true" tabindex="-1"></a><span class="co"># Regression Coefficients:</span></span>
+<span id="cb84-53"><a href="#cb84-53" aria-hidden="true" tabindex="-1"></a><span class="co">#           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS</span></span>
+<span id="cb84-54"><a href="#cb84-54" aria-hidden="true" tabindex="-1"></a><span class="co"># Intercept     0.65      0.10     0.47     0.82 1.00     2347     1774</span></span>
+<span id="cb84-55"><a href="#cb84-55" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
+<span id="cb84-56"><a href="#cb84-56" aria-hidden="true" tabindex="-1"></a><span class="co"># Further Distributional Parameters:</span></span>
+<span id="cb84-57"><a href="#cb84-57" aria-hidden="true" tabindex="-1"></a><span class="co">#       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS</span></span>
+<span id="cb84-58"><a href="#cb84-58" aria-hidden="true" tabindex="-1"></a><span class="co"># sigma     0.48      0.01     0.45     0.51 1.00     4263     5271</span></span>
+<span id="cb84-59"><a href="#cb84-59" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
+<span id="cb84-60"><a href="#cb84-60" aria-hidden="true" tabindex="-1"></a><span class="co"># Draws were sampled using sample(hmc). For each parameter, Bulk_ESS</span></span>
+<span id="cb84-61"><a href="#cb84-61" aria-hidden="true" tabindex="-1"></a><span class="co"># and Tail_ESS are effective sample size measures, and Rhat is the potential</span></span>
+<span id="cb84-62"><a href="#cb84-62" aria-hidden="true" tabindex="-1"></a><span class="co"># scale reduction factor on split chains (at convergence, Rhat = 1).</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 <div id="tabset-12-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-12-3-tab">
@@ -3547,44 +3641,44 @@ Then we transform the coordinates to a planar CRS (EPSG:3857) suitable for dista
 <div class="tab-content">
 <div id="tabset-13-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-13-1-tab">
 <div class="cell">
-<div class="sourceCode cell-code" id="cb84"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb84-1"><a href="#cb84-1" aria-hidden="true" tabindex="-1"></a>metafor_sp_p1 <span class="ot">&lt;-</span> orchaRd<span class="sc">::</span><span class="fu">orchard_plot</span>(sp_exp_metafor_eg2, </span>
-<span id="cb84-2"><a href="#cb84-2" aria-hidden="true" tabindex="-1"></a>                           <span class="at">group =</span> <span class="st">"ref"</span>,</span>
-<span id="cb84-3"><a href="#cb84-3" aria-hidden="true" tabindex="-1"></a>                           <span class="at">xlab =</span> <span class="st">"Effect size"</span>,</span>
-<span id="cb84-4"><a href="#cb84-4" aria-hidden="true" tabindex="-1"></a>                           <span class="at">angle =</span> <span class="dv">45</span>) <span class="sc">+</span> </span>
-<span id="cb84-5"><a href="#cb84-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_discrete</span>(<span class="at">labels =</span> <span class="fu">c</span>(<span class="st">"Overall effect"</span>)) <span class="sc">+</span></span>
-<span id="cb84-6"><a href="#cb84-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">values =</span> <span class="st">"#CDAD00"</span>) <span class="sc">+</span></span>
-<span id="cb84-7"><a href="#cb84-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_manual</span>(<span class="at">values =</span> <span class="st">"#FFD700"</span>) <span class="sc">+</span> </span>
-<span id="cb84-8"><a href="#cb84-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>()</span>
-<span id="cb84-9"><a href="#cb84-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb84-10"><a href="#cb84-10" aria-hidden="true" tabindex="-1"></a><span class="do">## random effect</span></span>
-<span id="cb84-11"><a href="#cb84-11" aria-hidden="true" tabindex="-1"></a>ci_var <span class="ot">&lt;-</span> <span class="fu">confint</span>(sp_exp_metafor_eg2, <span class="at">level =</span> <span class="fl">0.95</span>) </span>
-<span id="cb84-12"><a href="#cb84-12" aria-hidden="true" tabindex="-1"></a> </span>
-<span id="cb84-13"><a href="#cb84-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb84-14"><a href="#cb84-14" aria-hidden="true" tabindex="-1"></a>tbl2 <span class="ot">&lt;-</span> tibble<span class="sc">::</span><span class="fu">as_tibble</span>(ci_var, <span class="at">rownames =</span> <span class="st">"term"</span>)</span>
-<span id="cb84-15"><a href="#cb84-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb84-16"><a href="#cb84-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb84-17"><a href="#cb84-17" aria-hidden="true" tabindex="-1"></a>tbl_var2 <span class="ot">&lt;-</span> tbl2 <span class="sc">%&gt;%</span> </span>
-<span id="cb84-18"><a href="#cb84-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(term <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"sigma^2.1"</span>, <span class="st">"sigma^2.2"</span>, <span class="st">"tau^2"</span>)) <span class="sc">%&gt;%</span> </span>
-<span id="cb84-19"><a href="#cb84-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">term =</span> <span class="fu">factor</span>(term, <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">"sigma^2.1"</span>, <span class="st">"sigma^2.2"</span>, <span class="st">"tau^2"</span>)))</span>
-<span id="cb84-20"><a href="#cb84-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb84-21"><a href="#cb84-21" aria-hidden="true" tabindex="-1"></a>s_metafor_p1var <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(tbl_var2, <span class="fu">aes</span>(<span class="at">x =</span> estimate, <span class="at">y =</span> term)) <span class="sc">+</span></span>
-<span id="cb84-22"><a href="#cb84-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="dv">3</span>, <span class="at">color =</span> <span class="st">"#528B8B"</span>) <span class="sc">+</span></span>
-<span id="cb84-23"><a href="#cb84-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_errorbar</span>(<span class="fu">aes</span>(<span class="at">xmin =</span> ci.lb, <span class="at">xmax =</span> ci.ub), <span class="at">height =</span> <span class="fl">0.25</span>, <span class="at">color =</span> <span class="st">"#528B8B"</span>) <span class="sc">+</span></span>
-<span id="cb84-24"><a href="#cb84-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Variance with with 95% CI"</span>, <span class="at">y =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
-<span id="cb84-25"><a href="#cb84-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>(<span class="at">base_size =</span> <span class="dv">12</span>)</span>
-<span id="cb84-26"><a href="#cb84-26" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb84-27"><a href="#cb84-27" aria-hidden="true" tabindex="-1"></a>tbl_rho2 <span class="ot">&lt;-</span> tbl2 <span class="sc">%&gt;%</span> </span>
-<span id="cb84-28"><a href="#cb84-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(term <span class="sc">==</span> <span class="st">"rho"</span>)</span>
-<span id="cb84-29"><a href="#cb84-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb84-30"><a href="#cb84-30" aria-hidden="true" tabindex="-1"></a>s_metafor_p1rho <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(tbl_rho2, <span class="fu">aes</span>(<span class="at">x =</span> estimate, <span class="at">y =</span> term)) <span class="sc">+</span></span>
-<span id="cb84-31"><a href="#cb84-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="dv">3</span>, <span class="at">color =</span> <span class="st">"#CD6090"</span>) <span class="sc">+</span></span>
-<span id="cb84-32"><a href="#cb84-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_errorbar</span>(<span class="fu">aes</span>(<span class="at">xmin =</span> ci.lb, <span class="at">xmax =</span> ci.ub), </span>
-<span id="cb84-33"><a href="#cb84-33" aria-hidden="true" tabindex="-1"></a>                <span class="at">height =</span> <span class="fl">0.25</span>, <span class="at">color =</span> <span class="st">"#CD6090"</span>) <span class="sc">+</span></span>
-<span id="cb84-34"><a href="#cb84-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"rho with 95% CI"</span>, <span class="at">y =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
-<span id="cb84-35"><a href="#cb84-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>(<span class="at">base_size =</span> <span class="dv">12</span>)</span>
-<span id="cb84-36"><a href="#cb84-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb84-37"><a href="#cb84-37" aria-hidden="true" tabindex="-1"></a>metafor_sp_eg2 <span class="ot">&lt;-</span> metafor_sp_p1 <span class="sc">/</span> (s_metafor_p1var <span class="sc">+</span> s_metafor_p1rho)</span>
-<span id="cb84-38"><a href="#cb84-38" aria-hidden="true" tabindex="-1"></a>metafor_sp_eg2</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb85"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb85-1"><a href="#cb85-1" aria-hidden="true" tabindex="-1"></a>metafor_sp_p1 <span class="ot">&lt;-</span> orchaRd<span class="sc">::</span><span class="fu">orchard_plot</span>(sp_exp_metafor_eg2, </span>
+<span id="cb85-2"><a href="#cb85-2" aria-hidden="true" tabindex="-1"></a>                           <span class="at">group =</span> <span class="st">"ref"</span>,</span>
+<span id="cb85-3"><a href="#cb85-3" aria-hidden="true" tabindex="-1"></a>                           <span class="at">xlab =</span> <span class="st">"Effect size"</span>,</span>
+<span id="cb85-4"><a href="#cb85-4" aria-hidden="true" tabindex="-1"></a>                           <span class="at">angle =</span> <span class="dv">45</span>) <span class="sc">+</span> </span>
+<span id="cb85-5"><a href="#cb85-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_discrete</span>(<span class="at">labels =</span> <span class="fu">c</span>(<span class="st">"Overall effect"</span>)) <span class="sc">+</span></span>
+<span id="cb85-6"><a href="#cb85-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">values =</span> <span class="st">"#CDAD00"</span>) <span class="sc">+</span></span>
+<span id="cb85-7"><a href="#cb85-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_manual</span>(<span class="at">values =</span> <span class="st">"#FFD700"</span>) <span class="sc">+</span> </span>
+<span id="cb85-8"><a href="#cb85-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>()</span>
+<span id="cb85-9"><a href="#cb85-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb85-10"><a href="#cb85-10" aria-hidden="true" tabindex="-1"></a><span class="do">## random effect</span></span>
+<span id="cb85-11"><a href="#cb85-11" aria-hidden="true" tabindex="-1"></a>ci_var <span class="ot">&lt;-</span> <span class="fu">confint</span>(sp_exp_metafor_eg2, <span class="at">level =</span> <span class="fl">0.95</span>) </span>
+<span id="cb85-12"><a href="#cb85-12" aria-hidden="true" tabindex="-1"></a> </span>
+<span id="cb85-13"><a href="#cb85-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb85-14"><a href="#cb85-14" aria-hidden="true" tabindex="-1"></a>tbl2 <span class="ot">&lt;-</span> tibble<span class="sc">::</span><span class="fu">as_tibble</span>(ci_var, <span class="at">rownames =</span> <span class="st">"term"</span>)</span>
+<span id="cb85-15"><a href="#cb85-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb85-16"><a href="#cb85-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb85-17"><a href="#cb85-17" aria-hidden="true" tabindex="-1"></a>tbl_var2 <span class="ot">&lt;-</span> tbl2 <span class="sc">%&gt;%</span> </span>
+<span id="cb85-18"><a href="#cb85-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(term <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"sigma^2.1"</span>, <span class="st">"sigma^2.2"</span>, <span class="st">"tau^2"</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb85-19"><a href="#cb85-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">term =</span> <span class="fu">factor</span>(term, <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">"sigma^2.1"</span>, <span class="st">"sigma^2.2"</span>, <span class="st">"tau^2"</span>)))</span>
+<span id="cb85-20"><a href="#cb85-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb85-21"><a href="#cb85-21" aria-hidden="true" tabindex="-1"></a>s_metafor_p1var <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(tbl_var2, <span class="fu">aes</span>(<span class="at">x =</span> estimate, <span class="at">y =</span> term)) <span class="sc">+</span></span>
+<span id="cb85-22"><a href="#cb85-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="dv">3</span>, <span class="at">color =</span> <span class="st">"#528B8B"</span>) <span class="sc">+</span></span>
+<span id="cb85-23"><a href="#cb85-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_errorbar</span>(<span class="fu">aes</span>(<span class="at">xmin =</span> ci.lb, <span class="at">xmax =</span> ci.ub), <span class="at">height =</span> <span class="fl">0.25</span>, <span class="at">color =</span> <span class="st">"#528B8B"</span>) <span class="sc">+</span></span>
+<span id="cb85-24"><a href="#cb85-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Variance with with 95% CI"</span>, <span class="at">y =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
+<span id="cb85-25"><a href="#cb85-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>(<span class="at">base_size =</span> <span class="dv">12</span>)</span>
+<span id="cb85-26"><a href="#cb85-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb85-27"><a href="#cb85-27" aria-hidden="true" tabindex="-1"></a>tbl_rho2 <span class="ot">&lt;-</span> tbl2 <span class="sc">%&gt;%</span> </span>
+<span id="cb85-28"><a href="#cb85-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(term <span class="sc">==</span> <span class="st">"rho"</span>)</span>
+<span id="cb85-29"><a href="#cb85-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb85-30"><a href="#cb85-30" aria-hidden="true" tabindex="-1"></a>s_metafor_p1rho <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(tbl_rho2, <span class="fu">aes</span>(<span class="at">x =</span> estimate, <span class="at">y =</span> term)) <span class="sc">+</span></span>
+<span id="cb85-31"><a href="#cb85-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="dv">3</span>, <span class="at">color =</span> <span class="st">"#CD6090"</span>) <span class="sc">+</span></span>
+<span id="cb85-32"><a href="#cb85-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_errorbar</span>(<span class="fu">aes</span>(<span class="at">xmin =</span> ci.lb, <span class="at">xmax =</span> ci.ub), </span>
+<span id="cb85-33"><a href="#cb85-33" aria-hidden="true" tabindex="-1"></a>                <span class="at">height =</span> <span class="fl">0.25</span>, <span class="at">color =</span> <span class="st">"#CD6090"</span>) <span class="sc">+</span></span>
+<span id="cb85-34"><a href="#cb85-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"rho with 95% CI"</span>, <span class="at">y =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
+<span id="cb85-35"><a href="#cb85-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>(<span class="at">base_size =</span> <span class="dv">12</span>)</span>
+<span id="cb85-36"><a href="#cb85-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb85-37"><a href="#cb85-37" aria-hidden="true" tabindex="-1"></a>metafor_sp_eg2 <span class="ot">&lt;-</span> metafor_sp_p1 <span class="sc">/</span> (s_metafor_p1var <span class="sc">+</span> s_metafor_p1rho)</span>
+<span id="cb85-38"><a href="#cb85-38" aria-hidden="true" tabindex="-1"></a>metafor_sp_eg2</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -3595,155 +3689,155 @@ Then we transform the coordinates to a planar CRS (EPSG:3857) suitable for dista
 </div>
 <div id="tabset-13-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-13-2-tab">
 <div class="cell">
-<div class="sourceCode cell-code" id="cb85"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb85-1"><a href="#cb85-1" aria-hidden="true" tabindex="-1"></a>sp_eg2_exp_brms <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="fu">here</span>(<span class="st">"Rdata"</span>, <span class="st">"tutorial_v2"</span>, <span class="st">"sp_exp_brms_eg2.rds"</span>))</span>
-<span id="cb85-2"><a href="#cb85-2" aria-hidden="true" tabindex="-1"></a>get_variables_dynamic <span class="ot">&lt;-</span> <span class="cf">function</span>(model, pattern) {</span>
-<span id="cb85-3"><a href="#cb85-3" aria-hidden="true" tabindex="-1"></a>  variables <span class="ot">&lt;-</span> <span class="fu">get_variables</span>(model)</span>
-<span id="cb85-4"><a href="#cb85-4" aria-hidden="true" tabindex="-1"></a>  variables[<span class="fu">grep</span>(pattern, variables)]</span>
-<span id="cb85-5"><a href="#cb85-5" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb85-6"><a href="#cb85-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb85-7"><a href="#cb85-7" aria-hidden="true" tabindex="-1"></a><span class="fu">get_variables</span>(sp_eg2_exp_brms)</span>
-<span id="cb85-8"><a href="#cb85-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb85-9"><a href="#cb85-9" aria-hidden="true" tabindex="-1"></a>rename_vars_exp4 <span class="ot">&lt;-</span> <span class="cf">function</span>(variable) {</span>
-<span id="cb85-10"><a href="#cb85-10" aria-hidden="true" tabindex="-1"></a>  variable <span class="ot">&lt;-</span> <span class="fu">as.character</span>(variable)</span>
-<span id="cb85-11"><a href="#cb85-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb85-12"><a href="#cb85-12" aria-hidden="true" tabindex="-1"></a>  <span class="co"># fixed</span></span>
-<span id="cb85-13"><a href="#cb85-13" aria-hidden="true" tabindex="-1"></a>  variable <span class="ot">&lt;-</span> <span class="fu">gsub</span>(<span class="st">"^b_Intercept$"</span>, <span class="st">"Overall effect"</span>, variable)</span>
-<span id="cb85-14"><a href="#cb85-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb85-15"><a href="#cb85-15" aria-hidden="true" tabindex="-1"></a>  <span class="co"># residual SD (sigma in brms)</span></span>
-<span id="cb85-16"><a href="#cb85-16" aria-hidden="true" tabindex="-1"></a>  variable <span class="ot">&lt;-</span> <span class="fu">gsub</span>(<span class="st">"^sigma$"</span>, <span class="st">"Residual SD"</span>, variable)</span>
-<span id="cb85-17"><a href="#cb85-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb85-18"><a href="#cb85-18" aria-hidden="true" tabindex="-1"></a>  <span class="co"># GP SD</span></span>
-<span id="cb85-19"><a href="#cb85-19" aria-hidden="true" tabindex="-1"></a>  variable <span class="ot">&lt;-</span> <span class="fu">gsub</span>(<span class="st">"^sdgp_gpx_kmy_km$"</span>, <span class="st">"SD of gp_x"</span>, variable)</span>
-<span id="cb85-20"><a href="#cb85-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb85-21"><a href="#cb85-21" aria-hidden="true" tabindex="-1"></a>  <span class="co"># GP length-scale</span></span>
-<span id="cb85-22"><a href="#cb85-22" aria-hidden="true" tabindex="-1"></a>  variable <span class="ot">&lt;-</span> <span class="fu">gsub</span>(<span class="st">"^lscale_gpx_kmy_km$"</span>, <span class="st">"lscale"</span>, variable)</span>
-<span id="cb85-23"><a href="#cb85-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb85-24"><a href="#cb85-24" aria-hidden="true" tabindex="-1"></a>  variable</span>
-<span id="cb85-25"><a href="#cb85-25" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb85-26"><a href="#cb85-26" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb85-27"><a href="#cb85-27" aria-hidden="true" tabindex="-1"></a><span class="do">### fixed effect ----</span></span>
-<span id="cb85-28"><a href="#cb85-28" aria-hidden="true" tabindex="-1"></a>visualize_fixed_effects_exp4 <span class="ot">&lt;-</span> <span class="cf">function</span>(model) {</span>
-<span id="cb85-29"><a href="#cb85-29" aria-hidden="true" tabindex="-1"></a>  fixed_effect_vars <span class="ot">&lt;-</span> <span class="fu">get_variables_dynamic</span>(model, <span class="st">"^b_"</span>)</span>
-<span id="cb85-30"><a href="#cb85-30" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(fixed_effect_vars) <span class="sc">==</span> <span class="dv">0</span>) {</span>
-<span id="cb85-31"><a href="#cb85-31" aria-hidden="true" tabindex="-1"></a>    <span class="fu">message</span>(<span class="st">"No fixed effects found"</span>)</span>
-<span id="cb85-32"><a href="#cb85-32" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="cn">NULL</span>)</span>
-<span id="cb85-33"><a href="#cb85-33" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb85-34"><a href="#cb85-34" aria-hidden="true" tabindex="-1"></a> </span>
-<span id="cb85-35"><a href="#cb85-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tryCatch</span>({</span>
-<span id="cb85-36"><a href="#cb85-36" aria-hidden="true" tabindex="-1"></a>    fixed_effects_samples <span class="ot">&lt;-</span> model <span class="sc">%&gt;%</span></span>
-<span id="cb85-37"><a href="#cb85-37" aria-hidden="true" tabindex="-1"></a>      <span class="fu">spread_draws</span>(<span class="sc">!!!</span><span class="fu">syms</span>(fixed_effect_vars)) <span class="sc">%&gt;%</span></span>
-<span id="cb85-38"><a href="#cb85-38" aria-hidden="true" tabindex="-1"></a>      tidyr<span class="sc">::</span><span class="fu">pivot_longer</span>(</span>
-<span id="cb85-39"><a href="#cb85-39" aria-hidden="true" tabindex="-1"></a>        <span class="at">cols      =</span> dplyr<span class="sc">::</span><span class="fu">all_of</span>(fixed_effect_vars),</span>
-<span id="cb85-40"><a href="#cb85-40" aria-hidden="true" tabindex="-1"></a>        <span class="at">names_to  =</span> <span class="st">".variable"</span>,</span>
-<span id="cb85-41"><a href="#cb85-41" aria-hidden="true" tabindex="-1"></a>        <span class="at">values_to =</span> <span class="st">".value"</span></span>
-<span id="cb85-42"><a href="#cb85-42" aria-hidden="true" tabindex="-1"></a>      ) <span class="sc">%&gt;%</span></span>
-<span id="cb85-43"><a href="#cb85-43" aria-hidden="true" tabindex="-1"></a>      dplyr<span class="sc">::</span><span class="fu">mutate</span>(<span class="at">.variable =</span> <span class="fu">rename_vars_exp4</span>(.variable))</span>
-<span id="cb85-44"><a href="#cb85-44" aria-hidden="true" tabindex="-1"></a>   </span>
-<span id="cb85-45"><a href="#cb85-45" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ggplot</span>(fixed_effects_samples, <span class="fu">aes</span>(<span class="at">x =</span> .value, <span class="at">y =</span> .variable)) <span class="sc">+</span></span>
-<span id="cb85-46"><a href="#cb85-46" aria-hidden="true" tabindex="-1"></a>      ggdist<span class="sc">::</span><span class="fu">stat_halfeye</span>(</span>
-<span id="cb85-47"><a href="#cb85-47" aria-hidden="true" tabindex="-1"></a>        <span class="at">normalize      =</span> <span class="st">"xy"</span>,</span>
-<span id="cb85-48"><a href="#cb85-48" aria-hidden="true" tabindex="-1"></a>        <span class="at">point_interval =</span> <span class="st">"mean_qi"</span>,</span>
-<span id="cb85-49"><a href="#cb85-49" aria-hidden="true" tabindex="-1"></a>        <span class="at">fill           =</span> <span class="st">"#FFD700"</span>,</span>
-<span id="cb85-50"><a href="#cb85-50" aria-hidden="true" tabindex="-1"></a>        <span class="at">color          =</span> <span class="st">"#CDAD00"</span></span>
-<span id="cb85-51"><a href="#cb85-51" aria-hidden="true" tabindex="-1"></a>      ) <span class="sc">+</span></span>
-<span id="cb85-52"><a href="#cb85-52" aria-hidden="true" tabindex="-1"></a>      <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="dv">0</span>, <span class="at">linetype =</span> <span class="st">"dashed"</span>, <span class="at">color =</span> <span class="st">"#005"</span>) <span class="sc">+</span></span>
-<span id="cb85-53"><a href="#cb85-53" aria-hidden="true" tabindex="-1"></a>      <span class="fu">labs</span>(<span class="at">y =</span> <span class="st">"Fixed effects"</span>, <span class="at">x =</span> <span class="st">"Posterior values"</span>) <span class="sc">+</span></span>
-<span id="cb85-54"><a href="#cb85-54" aria-hidden="true" tabindex="-1"></a>      <span class="fu">theme_classic</span>()</span>
-<span id="cb85-55"><a href="#cb85-55" aria-hidden="true" tabindex="-1"></a>  }, <span class="at">error =</span> <span class="cf">function</span>(e) {</span>
-<span id="cb85-56"><a href="#cb85-56" aria-hidden="true" tabindex="-1"></a>    <span class="fu">message</span>(<span class="st">"Error in visualize_fixed_effects_exp4: "</span>, e<span class="sc">$</span>message)</span>
-<span id="cb85-57"><a href="#cb85-57" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="cn">NULL</span>)</span>
-<span id="cb85-58"><a href="#cb85-58" aria-hidden="true" tabindex="-1"></a>  })</span>
-<span id="cb85-59"><a href="#cb85-59" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb85-60"><a href="#cb85-60" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb85-61"><a href="#cb85-61" aria-hidden="true" tabindex="-1"></a><span class="do">### random effect ----</span></span>
-<span id="cb85-62"><a href="#cb85-62" aria-hidden="true" tabindex="-1"></a>sd_to_var <span class="ot">&lt;-</span> <span class="cf">function</span>(df) {</span>
-<span id="cb85-63"><a href="#cb85-63" aria-hidden="true" tabindex="-1"></a>  df <span class="sc">%&gt;%</span></span>
-<span id="cb85-64"><a href="#cb85-64" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">mutate</span>(</span>
-<span id="cb85-65"><a href="#cb85-65" aria-hidden="true" tabindex="-1"></a>      <span class="at">.value    =</span> (.value)<span class="sc">^</span><span class="dv">2</span>,</span>
-<span id="cb85-66"><a href="#cb85-66" aria-hidden="true" tabindex="-1"></a>      <span class="at">.variable =</span> <span class="fu">gsub</span>(<span class="st">"^SD of "</span>, <span class="st">"Var of "</span>, .variable)</span>
-<span id="cb85-67"><a href="#cb85-67" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb85-68"><a href="#cb85-68" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb85-69"><a href="#cb85-69" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb85-70"><a href="#cb85-70" aria-hidden="true" tabindex="-1"></a><span class="do">#### random effect (Var) ----</span></span>
-<span id="cb85-71"><a href="#cb85-71" aria-hidden="true" tabindex="-1"></a>visualize_random_and_gp_var_exp4 <span class="ot">&lt;-</span> <span class="cf">function</span>(model) {</span>
-<span id="cb85-72"><a href="#cb85-72" aria-hidden="true" tabindex="-1"></a> </span>
-<span id="cb85-73"><a href="#cb85-73" aria-hidden="true" tabindex="-1"></a>  re_vars <span class="ot">&lt;-</span> <span class="fu">get_variables_dynamic</span>(model, <span class="st">"^(sigma|sdgp_)"</span>)</span>
-<span id="cb85-74"><a href="#cb85-74" aria-hidden="true" tabindex="-1"></a> </span>
-<span id="cb85-75"><a href="#cb85-75" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(re_vars) <span class="sc">==</span> <span class="dv">0</span>) {</span>
-<span id="cb85-76"><a href="#cb85-76" aria-hidden="true" tabindex="-1"></a>    <span class="fu">message</span>(<span class="st">"No random or GP SD parameters found"</span>)</span>
-<span id="cb85-77"><a href="#cb85-77" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="cn">NULL</span>)</span>
-<span id="cb85-78"><a href="#cb85-78" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb85-79"><a href="#cb85-79" aria-hidden="true" tabindex="-1"></a> </span>
-<span id="cb85-80"><a href="#cb85-80" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tryCatch</span>({</span>
-<span id="cb85-81"><a href="#cb85-81" aria-hidden="true" tabindex="-1"></a>    samples <span class="ot">&lt;-</span> model <span class="sc">%&gt;%</span></span>
-<span id="cb85-82"><a href="#cb85-82" aria-hidden="true" tabindex="-1"></a>      <span class="fu">spread_draws</span>(<span class="sc">!!!</span><span class="fu">syms</span>(re_vars)) <span class="sc">%&gt;%</span></span>
-<span id="cb85-83"><a href="#cb85-83" aria-hidden="true" tabindex="-1"></a>      tidyr<span class="sc">::</span><span class="fu">pivot_longer</span>(</span>
-<span id="cb85-84"><a href="#cb85-84" aria-hidden="true" tabindex="-1"></a>        <span class="at">cols      =</span> dplyr<span class="sc">::</span><span class="fu">all_of</span>(re_vars),</span>
-<span id="cb85-85"><a href="#cb85-85" aria-hidden="true" tabindex="-1"></a>        <span class="at">names_to  =</span> <span class="st">".variable"</span>,</span>
-<span id="cb85-86"><a href="#cb85-86" aria-hidden="true" tabindex="-1"></a>        <span class="at">values_to =</span> <span class="st">".value"</span></span>
-<span id="cb85-87"><a href="#cb85-87" aria-hidden="true" tabindex="-1"></a>      ) <span class="sc">%&gt;%</span></span>
-<span id="cb85-88"><a href="#cb85-88" aria-hidden="true" tabindex="-1"></a>      dplyr<span class="sc">::</span><span class="fu">mutate</span>(<span class="at">.variable =</span> <span class="fu">rename_vars_exp4</span>(.variable)) <span class="sc">%&gt;%</span></span>
-<span id="cb85-89"><a href="#cb85-89" aria-hidden="true" tabindex="-1"></a>      <span class="fu">sd_to_var</span>()</span>
-<span id="cb85-90"><a href="#cb85-90" aria-hidden="true" tabindex="-1"></a>   </span>
-<span id="cb85-91"><a href="#cb85-91" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ggplot</span>(samples, <span class="fu">aes</span>(<span class="at">x =</span> .value, <span class="at">y =</span> .variable)) <span class="sc">+</span></span>
-<span id="cb85-92"><a href="#cb85-92" aria-hidden="true" tabindex="-1"></a>      ggdist<span class="sc">::</span><span class="fu">stat_halfeye</span>(</span>
-<span id="cb85-93"><a href="#cb85-93" aria-hidden="true" tabindex="-1"></a>        <span class="at">normalize      =</span> <span class="st">"xy"</span>,</span>
-<span id="cb85-94"><a href="#cb85-94" aria-hidden="true" tabindex="-1"></a>        <span class="at">point_interval =</span> <span class="st">"mean_qi"</span>,</span>
-<span id="cb85-95"><a href="#cb85-95" aria-hidden="true" tabindex="-1"></a>        <span class="at">fill           =</span> <span class="st">"#B0E2FF"</span>,</span>
-<span id="cb85-96"><a href="#cb85-96" aria-hidden="true" tabindex="-1"></a>        <span class="at">color          =</span> <span class="st">"#4F94CD"</span></span>
-<span id="cb85-97"><a href="#cb85-97" aria-hidden="true" tabindex="-1"></a>      ) <span class="sc">+</span></span>
-<span id="cb85-98"><a href="#cb85-98" aria-hidden="true" tabindex="-1"></a>      <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="dv">0</span>, <span class="at">linetype =</span> <span class="st">"dashed"</span>, <span class="at">color =</span> <span class="st">"#005"</span>) <span class="sc">+</span></span>
-<span id="cb85-99"><a href="#cb85-99" aria-hidden="true" tabindex="-1"></a>      <span class="fu">labs</span>(</span>
-<span id="cb85-100"><a href="#cb85-100" aria-hidden="true" tabindex="-1"></a>        <span class="at">y =</span> <span class="st">"Random and GP effects (variance)"</span>,</span>
-<span id="cb85-101"><a href="#cb85-101" aria-hidden="true" tabindex="-1"></a>        <span class="at">x =</span> <span class="st">"Posterior values (variance)"</span></span>
-<span id="cb85-102"><a href="#cb85-102" aria-hidden="true" tabindex="-1"></a>      ) <span class="sc">+</span></span>
-<span id="cb85-103"><a href="#cb85-103" aria-hidden="true" tabindex="-1"></a>      <span class="co"># scale_x_continuous(limits = c(0.7, 2.0)) + </span></span>
-<span id="cb85-104"><a href="#cb85-104" aria-hidden="true" tabindex="-1"></a>      <span class="fu">theme_classic</span>()</span>
-<span id="cb85-105"><a href="#cb85-105" aria-hidden="true" tabindex="-1"></a>   </span>
-<span id="cb85-106"><a href="#cb85-106" aria-hidden="true" tabindex="-1"></a>  }, <span class="at">error =</span> <span class="cf">function</span>(e) {</span>
-<span id="cb85-107"><a href="#cb85-107" aria-hidden="true" tabindex="-1"></a>    <span class="fu">message</span>(<span class="st">"Error in visualize_random_and_gp_var_exp4: "</span>, e<span class="sc">$</span>message)</span>
-<span id="cb85-108"><a href="#cb85-108" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="cn">NULL</span>)</span>
-<span id="cb85-109"><a href="#cb85-109" aria-hidden="true" tabindex="-1"></a>  })</span>
-<span id="cb85-110"><a href="#cb85-110" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb85-111"><a href="#cb85-111" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb85-112"><a href="#cb85-112" aria-hidden="true" tabindex="-1"></a>visualize_gp_lscale_exp4 <span class="ot">&lt;-</span> <span class="cf">function</span>(model) {</span>
-<span id="cb85-113"><a href="#cb85-113" aria-hidden="true" tabindex="-1"></a>  gp_ls_vars <span class="ot">&lt;-</span> <span class="fu">get_variables_dynamic</span>(model, <span class="st">"^lscale_"</span>)</span>
-<span id="cb85-114"><a href="#cb85-114" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(gp_ls_vars) <span class="sc">==</span> <span class="dv">0</span>) {</span>
-<span id="cb85-115"><a href="#cb85-115" aria-hidden="true" tabindex="-1"></a>    <span class="fu">message</span>(<span class="st">"No GP length-scale parameters found"</span>)</span>
-<span id="cb85-116"><a href="#cb85-116" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="cn">NULL</span>)</span>
-<span id="cb85-117"><a href="#cb85-117" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb85-118"><a href="#cb85-118" aria-hidden="true" tabindex="-1"></a> </span>
-<span id="cb85-119"><a href="#cb85-119" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tryCatch</span>({</span>
-<span id="cb85-120"><a href="#cb85-120" aria-hidden="true" tabindex="-1"></a>    gp_ls_samples <span class="ot">&lt;-</span> model <span class="sc">%&gt;%</span></span>
-<span id="cb85-121"><a href="#cb85-121" aria-hidden="true" tabindex="-1"></a>      <span class="fu">spread_draws</span>(<span class="sc">!!!</span><span class="fu">syms</span>(gp_ls_vars)) <span class="sc">%&gt;%</span></span>
-<span id="cb85-122"><a href="#cb85-122" aria-hidden="true" tabindex="-1"></a>      tidyr<span class="sc">::</span><span class="fu">pivot_longer</span>(</span>
-<span id="cb85-123"><a href="#cb85-123" aria-hidden="true" tabindex="-1"></a>        <span class="at">cols      =</span> dplyr<span class="sc">::</span><span class="fu">all_of</span>(gp_ls_vars),</span>
-<span id="cb85-124"><a href="#cb85-124" aria-hidden="true" tabindex="-1"></a>        <span class="at">names_to  =</span> <span class="st">".variable"</span>,</span>
-<span id="cb85-125"><a href="#cb85-125" aria-hidden="true" tabindex="-1"></a>        <span class="at">values_to =</span> <span class="st">".value"</span></span>
-<span id="cb85-126"><a href="#cb85-126" aria-hidden="true" tabindex="-1"></a>      ) <span class="sc">%&gt;%</span></span>
-<span id="cb85-127"><a href="#cb85-127" aria-hidden="true" tabindex="-1"></a>      dplyr<span class="sc">::</span><span class="fu">mutate</span>(<span class="at">.variable =</span> <span class="fu">rename_vars_exp4</span>(.variable))</span>
-<span id="cb85-128"><a href="#cb85-128" aria-hidden="true" tabindex="-1"></a>   </span>
-<span id="cb85-129"><a href="#cb85-129" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ggplot</span>(gp_ls_samples, <span class="fu">aes</span>(<span class="at">x =</span> .value, <span class="at">y =</span> .variable)) <span class="sc">+</span></span>
-<span id="cb85-130"><a href="#cb85-130" aria-hidden="true" tabindex="-1"></a>      ggdist<span class="sc">::</span><span class="fu">stat_halfeye</span>(</span>
-<span id="cb85-131"><a href="#cb85-131" aria-hidden="true" tabindex="-1"></a>        <span class="at">normalize      =</span> <span class="st">"xy"</span>,</span>
-<span id="cb85-132"><a href="#cb85-132" aria-hidden="true" tabindex="-1"></a>        <span class="at">point_interval =</span> <span class="st">"mean_qi"</span>,</span>
-<span id="cb85-133"><a href="#cb85-133" aria-hidden="true" tabindex="-1"></a>        <span class="at">fill           =</span> <span class="st">"#CD6090"</span>,</span>
-<span id="cb85-134"><a href="#cb85-134" aria-hidden="true" tabindex="-1"></a>        <span class="at">color          =</span> <span class="st">"#8B3A62"</span></span>
-<span id="cb85-135"><a href="#cb85-135" aria-hidden="true" tabindex="-1"></a>      ) <span class="sc">+</span></span>
-<span id="cb85-136"><a href="#cb85-136" aria-hidden="true" tabindex="-1"></a>      <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="dv">0</span>, <span class="at">linetype =</span> <span class="st">"dashed"</span>, <span class="at">color =</span> <span class="st">"#005"</span>) <span class="sc">+</span></span>
-<span id="cb85-137"><a href="#cb85-137" aria-hidden="true" tabindex="-1"></a>      <span class="fu">labs</span>(<span class="at">y =</span> <span class="st">"lscale"</span>, <span class="at">x =</span> <span class="st">"Posterior values"</span>) <span class="sc">+</span></span>
-<span id="cb85-138"><a href="#cb85-138" aria-hidden="true" tabindex="-1"></a>      <span class="fu">theme_classic</span>()</span>
-<span id="cb85-139"><a href="#cb85-139" aria-hidden="true" tabindex="-1"></a>  }, <span class="at">error =</span> <span class="cf">function</span>(e) {</span>
-<span id="cb85-140"><a href="#cb85-140" aria-hidden="true" tabindex="-1"></a>    <span class="fu">message</span>(<span class="st">"Error in visualize_gp_lscale_exp4: "</span>, e<span class="sc">$</span>message)</span>
-<span id="cb85-141"><a href="#cb85-141" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="cn">NULL</span>)</span>
-<span id="cb85-142"><a href="#cb85-142" aria-hidden="true" tabindex="-1"></a>  })</span>
-<span id="cb85-143"><a href="#cb85-143" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb85-144"><a href="#cb85-144" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb85-145"><a href="#cb85-145" aria-hidden="true" tabindex="-1"></a>s_brms_p1  <span class="ot">&lt;-</span> <span class="fu">visualize_fixed_effects_exp4</span>(sp_eg2_exp_brms)</span>
-<span id="cb85-146"><a href="#cb85-146" aria-hidden="true" tabindex="-1"></a>s_metafor_p1sd <span class="ot">&lt;-</span> <span class="fu">visualize_random_and_gp_var_exp4</span>(sp_eg2_exp_brms)</span>
-<span id="cb85-147"><a href="#cb85-147" aria-hidden="true" tabindex="-1"></a>s_metafor_p1lscale <span class="ot">&lt;-</span> <span class="fu">visualize_gp_lscale_exp4</span>(sp_eg2_exp_brms)</span>
-<span id="cb85-148"><a href="#cb85-148" aria-hidden="true" tabindex="-1"></a>brms_sp2<span class="fl">.1</span> <span class="ot">&lt;-</span> s_brms_p1 <span class="sc">/</span> (s_metafor_p1sd <span class="sc">+</span> s_metafor_p1lscale)</span>
-<span id="cb85-149"><a href="#cb85-149" aria-hidden="true" tabindex="-1"></a>brms_sp2<span class="fl">.1</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb86"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb86-1"><a href="#cb86-1" aria-hidden="true" tabindex="-1"></a>sp_eg2_exp_brms <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="fu">here</span>(<span class="st">"Rdata"</span>, <span class="st">"tutorial_v2"</span>, <span class="st">"sp_exp_brms_eg2.rds"</span>))</span>
+<span id="cb86-2"><a href="#cb86-2" aria-hidden="true" tabindex="-1"></a>get_variables_dynamic <span class="ot">&lt;-</span> <span class="cf">function</span>(model, pattern) {</span>
+<span id="cb86-3"><a href="#cb86-3" aria-hidden="true" tabindex="-1"></a>  variables <span class="ot">&lt;-</span> <span class="fu">get_variables</span>(model)</span>
+<span id="cb86-4"><a href="#cb86-4" aria-hidden="true" tabindex="-1"></a>  variables[<span class="fu">grep</span>(pattern, variables)]</span>
+<span id="cb86-5"><a href="#cb86-5" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb86-6"><a href="#cb86-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb86-7"><a href="#cb86-7" aria-hidden="true" tabindex="-1"></a><span class="fu">get_variables</span>(sp_eg2_exp_brms)</span>
+<span id="cb86-8"><a href="#cb86-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb86-9"><a href="#cb86-9" aria-hidden="true" tabindex="-1"></a>rename_vars_exp4 <span class="ot">&lt;-</span> <span class="cf">function</span>(variable) {</span>
+<span id="cb86-10"><a href="#cb86-10" aria-hidden="true" tabindex="-1"></a>  variable <span class="ot">&lt;-</span> <span class="fu">as.character</span>(variable)</span>
+<span id="cb86-11"><a href="#cb86-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb86-12"><a href="#cb86-12" aria-hidden="true" tabindex="-1"></a>  <span class="co"># fixed</span></span>
+<span id="cb86-13"><a href="#cb86-13" aria-hidden="true" tabindex="-1"></a>  variable <span class="ot">&lt;-</span> <span class="fu">gsub</span>(<span class="st">"^b_Intercept$"</span>, <span class="st">"Overall effect"</span>, variable)</span>
+<span id="cb86-14"><a href="#cb86-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb86-15"><a href="#cb86-15" aria-hidden="true" tabindex="-1"></a>  <span class="co"># residual SD (sigma in brms)</span></span>
+<span id="cb86-16"><a href="#cb86-16" aria-hidden="true" tabindex="-1"></a>  variable <span class="ot">&lt;-</span> <span class="fu">gsub</span>(<span class="st">"^sigma$"</span>, <span class="st">"Residual SD"</span>, variable)</span>
+<span id="cb86-17"><a href="#cb86-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb86-18"><a href="#cb86-18" aria-hidden="true" tabindex="-1"></a>  <span class="co"># GP SD</span></span>
+<span id="cb86-19"><a href="#cb86-19" aria-hidden="true" tabindex="-1"></a>  variable <span class="ot">&lt;-</span> <span class="fu">gsub</span>(<span class="st">"^sdgp_gpx_kmy_km$"</span>, <span class="st">"SD of gp_x"</span>, variable)</span>
+<span id="cb86-20"><a href="#cb86-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb86-21"><a href="#cb86-21" aria-hidden="true" tabindex="-1"></a>  <span class="co"># GP length-scale</span></span>
+<span id="cb86-22"><a href="#cb86-22" aria-hidden="true" tabindex="-1"></a>  variable <span class="ot">&lt;-</span> <span class="fu">gsub</span>(<span class="st">"^lscale_gpx_kmy_km$"</span>, <span class="st">"lscale"</span>, variable)</span>
+<span id="cb86-23"><a href="#cb86-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb86-24"><a href="#cb86-24" aria-hidden="true" tabindex="-1"></a>  variable</span>
+<span id="cb86-25"><a href="#cb86-25" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb86-26"><a href="#cb86-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb86-27"><a href="#cb86-27" aria-hidden="true" tabindex="-1"></a><span class="do">### fixed effect ----</span></span>
+<span id="cb86-28"><a href="#cb86-28" aria-hidden="true" tabindex="-1"></a>visualize_fixed_effects_exp4 <span class="ot">&lt;-</span> <span class="cf">function</span>(model) {</span>
+<span id="cb86-29"><a href="#cb86-29" aria-hidden="true" tabindex="-1"></a>  fixed_effect_vars <span class="ot">&lt;-</span> <span class="fu">get_variables_dynamic</span>(model, <span class="st">"^b_"</span>)</span>
+<span id="cb86-30"><a href="#cb86-30" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(fixed_effect_vars) <span class="sc">==</span> <span class="dv">0</span>) {</span>
+<span id="cb86-31"><a href="#cb86-31" aria-hidden="true" tabindex="-1"></a>    <span class="fu">message</span>(<span class="st">"No fixed effects found"</span>)</span>
+<span id="cb86-32"><a href="#cb86-32" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="cn">NULL</span>)</span>
+<span id="cb86-33"><a href="#cb86-33" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb86-34"><a href="#cb86-34" aria-hidden="true" tabindex="-1"></a> </span>
+<span id="cb86-35"><a href="#cb86-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tryCatch</span>({</span>
+<span id="cb86-36"><a href="#cb86-36" aria-hidden="true" tabindex="-1"></a>    fixed_effects_samples <span class="ot">&lt;-</span> model <span class="sc">%&gt;%</span></span>
+<span id="cb86-37"><a href="#cb86-37" aria-hidden="true" tabindex="-1"></a>      <span class="fu">spread_draws</span>(<span class="sc">!!!</span><span class="fu">syms</span>(fixed_effect_vars)) <span class="sc">%&gt;%</span></span>
+<span id="cb86-38"><a href="#cb86-38" aria-hidden="true" tabindex="-1"></a>      tidyr<span class="sc">::</span><span class="fu">pivot_longer</span>(</span>
+<span id="cb86-39"><a href="#cb86-39" aria-hidden="true" tabindex="-1"></a>        <span class="at">cols      =</span> dplyr<span class="sc">::</span><span class="fu">all_of</span>(fixed_effect_vars),</span>
+<span id="cb86-40"><a href="#cb86-40" aria-hidden="true" tabindex="-1"></a>        <span class="at">names_to  =</span> <span class="st">".variable"</span>,</span>
+<span id="cb86-41"><a href="#cb86-41" aria-hidden="true" tabindex="-1"></a>        <span class="at">values_to =</span> <span class="st">".value"</span></span>
+<span id="cb86-42"><a href="#cb86-42" aria-hidden="true" tabindex="-1"></a>      ) <span class="sc">%&gt;%</span></span>
+<span id="cb86-43"><a href="#cb86-43" aria-hidden="true" tabindex="-1"></a>      dplyr<span class="sc">::</span><span class="fu">mutate</span>(<span class="at">.variable =</span> <span class="fu">rename_vars_exp4</span>(.variable))</span>
+<span id="cb86-44"><a href="#cb86-44" aria-hidden="true" tabindex="-1"></a>   </span>
+<span id="cb86-45"><a href="#cb86-45" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ggplot</span>(fixed_effects_samples, <span class="fu">aes</span>(<span class="at">x =</span> .value, <span class="at">y =</span> .variable)) <span class="sc">+</span></span>
+<span id="cb86-46"><a href="#cb86-46" aria-hidden="true" tabindex="-1"></a>      ggdist<span class="sc">::</span><span class="fu">stat_halfeye</span>(</span>
+<span id="cb86-47"><a href="#cb86-47" aria-hidden="true" tabindex="-1"></a>        <span class="at">normalize      =</span> <span class="st">"xy"</span>,</span>
+<span id="cb86-48"><a href="#cb86-48" aria-hidden="true" tabindex="-1"></a>        <span class="at">point_interval =</span> <span class="st">"mean_qi"</span>,</span>
+<span id="cb86-49"><a href="#cb86-49" aria-hidden="true" tabindex="-1"></a>        <span class="at">fill           =</span> <span class="st">"#FFD700"</span>,</span>
+<span id="cb86-50"><a href="#cb86-50" aria-hidden="true" tabindex="-1"></a>        <span class="at">color          =</span> <span class="st">"#CDAD00"</span></span>
+<span id="cb86-51"><a href="#cb86-51" aria-hidden="true" tabindex="-1"></a>      ) <span class="sc">+</span></span>
+<span id="cb86-52"><a href="#cb86-52" aria-hidden="true" tabindex="-1"></a>      <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="dv">0</span>, <span class="at">linetype =</span> <span class="st">"dashed"</span>, <span class="at">color =</span> <span class="st">"#005"</span>) <span class="sc">+</span></span>
+<span id="cb86-53"><a href="#cb86-53" aria-hidden="true" tabindex="-1"></a>      <span class="fu">labs</span>(<span class="at">y =</span> <span class="st">"Fixed effects"</span>, <span class="at">x =</span> <span class="st">"Posterior values"</span>) <span class="sc">+</span></span>
+<span id="cb86-54"><a href="#cb86-54" aria-hidden="true" tabindex="-1"></a>      <span class="fu">theme_classic</span>()</span>
+<span id="cb86-55"><a href="#cb86-55" aria-hidden="true" tabindex="-1"></a>  }, <span class="at">error =</span> <span class="cf">function</span>(e) {</span>
+<span id="cb86-56"><a href="#cb86-56" aria-hidden="true" tabindex="-1"></a>    <span class="fu">message</span>(<span class="st">"Error in visualize_fixed_effects_exp4: "</span>, e<span class="sc">$</span>message)</span>
+<span id="cb86-57"><a href="#cb86-57" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="cn">NULL</span>)</span>
+<span id="cb86-58"><a href="#cb86-58" aria-hidden="true" tabindex="-1"></a>  })</span>
+<span id="cb86-59"><a href="#cb86-59" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb86-60"><a href="#cb86-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb86-61"><a href="#cb86-61" aria-hidden="true" tabindex="-1"></a><span class="do">### random effect ----</span></span>
+<span id="cb86-62"><a href="#cb86-62" aria-hidden="true" tabindex="-1"></a>sd_to_var <span class="ot">&lt;-</span> <span class="cf">function</span>(df) {</span>
+<span id="cb86-63"><a href="#cb86-63" aria-hidden="true" tabindex="-1"></a>  df <span class="sc">%&gt;%</span></span>
+<span id="cb86-64"><a href="#cb86-64" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">mutate</span>(</span>
+<span id="cb86-65"><a href="#cb86-65" aria-hidden="true" tabindex="-1"></a>      <span class="at">.value    =</span> (.value)<span class="sc">^</span><span class="dv">2</span>,</span>
+<span id="cb86-66"><a href="#cb86-66" aria-hidden="true" tabindex="-1"></a>      <span class="at">.variable =</span> <span class="fu">gsub</span>(<span class="st">"^SD of "</span>, <span class="st">"Var of "</span>, .variable)</span>
+<span id="cb86-67"><a href="#cb86-67" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb86-68"><a href="#cb86-68" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb86-69"><a href="#cb86-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb86-70"><a href="#cb86-70" aria-hidden="true" tabindex="-1"></a><span class="do">#### random effect (Var) ----</span></span>
+<span id="cb86-71"><a href="#cb86-71" aria-hidden="true" tabindex="-1"></a>visualize_random_and_gp_var_exp4 <span class="ot">&lt;-</span> <span class="cf">function</span>(model) {</span>
+<span id="cb86-72"><a href="#cb86-72" aria-hidden="true" tabindex="-1"></a> </span>
+<span id="cb86-73"><a href="#cb86-73" aria-hidden="true" tabindex="-1"></a>  re_vars <span class="ot">&lt;-</span> <span class="fu">get_variables_dynamic</span>(model, <span class="st">"^(sigma|sdgp_)"</span>)</span>
+<span id="cb86-74"><a href="#cb86-74" aria-hidden="true" tabindex="-1"></a> </span>
+<span id="cb86-75"><a href="#cb86-75" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(re_vars) <span class="sc">==</span> <span class="dv">0</span>) {</span>
+<span id="cb86-76"><a href="#cb86-76" aria-hidden="true" tabindex="-1"></a>    <span class="fu">message</span>(<span class="st">"No random or GP SD parameters found"</span>)</span>
+<span id="cb86-77"><a href="#cb86-77" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="cn">NULL</span>)</span>
+<span id="cb86-78"><a href="#cb86-78" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb86-79"><a href="#cb86-79" aria-hidden="true" tabindex="-1"></a> </span>
+<span id="cb86-80"><a href="#cb86-80" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tryCatch</span>({</span>
+<span id="cb86-81"><a href="#cb86-81" aria-hidden="true" tabindex="-1"></a>    samples <span class="ot">&lt;-</span> model <span class="sc">%&gt;%</span></span>
+<span id="cb86-82"><a href="#cb86-82" aria-hidden="true" tabindex="-1"></a>      <span class="fu">spread_draws</span>(<span class="sc">!!!</span><span class="fu">syms</span>(re_vars)) <span class="sc">%&gt;%</span></span>
+<span id="cb86-83"><a href="#cb86-83" aria-hidden="true" tabindex="-1"></a>      tidyr<span class="sc">::</span><span class="fu">pivot_longer</span>(</span>
+<span id="cb86-84"><a href="#cb86-84" aria-hidden="true" tabindex="-1"></a>        <span class="at">cols      =</span> dplyr<span class="sc">::</span><span class="fu">all_of</span>(re_vars),</span>
+<span id="cb86-85"><a href="#cb86-85" aria-hidden="true" tabindex="-1"></a>        <span class="at">names_to  =</span> <span class="st">".variable"</span>,</span>
+<span id="cb86-86"><a href="#cb86-86" aria-hidden="true" tabindex="-1"></a>        <span class="at">values_to =</span> <span class="st">".value"</span></span>
+<span id="cb86-87"><a href="#cb86-87" aria-hidden="true" tabindex="-1"></a>      ) <span class="sc">%&gt;%</span></span>
+<span id="cb86-88"><a href="#cb86-88" aria-hidden="true" tabindex="-1"></a>      dplyr<span class="sc">::</span><span class="fu">mutate</span>(<span class="at">.variable =</span> <span class="fu">rename_vars_exp4</span>(.variable)) <span class="sc">%&gt;%</span></span>
+<span id="cb86-89"><a href="#cb86-89" aria-hidden="true" tabindex="-1"></a>      <span class="fu">sd_to_var</span>()</span>
+<span id="cb86-90"><a href="#cb86-90" aria-hidden="true" tabindex="-1"></a>   </span>
+<span id="cb86-91"><a href="#cb86-91" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ggplot</span>(samples, <span class="fu">aes</span>(<span class="at">x =</span> .value, <span class="at">y =</span> .variable)) <span class="sc">+</span></span>
+<span id="cb86-92"><a href="#cb86-92" aria-hidden="true" tabindex="-1"></a>      ggdist<span class="sc">::</span><span class="fu">stat_halfeye</span>(</span>
+<span id="cb86-93"><a href="#cb86-93" aria-hidden="true" tabindex="-1"></a>        <span class="at">normalize      =</span> <span class="st">"xy"</span>,</span>
+<span id="cb86-94"><a href="#cb86-94" aria-hidden="true" tabindex="-1"></a>        <span class="at">point_interval =</span> <span class="st">"mean_qi"</span>,</span>
+<span id="cb86-95"><a href="#cb86-95" aria-hidden="true" tabindex="-1"></a>        <span class="at">fill           =</span> <span class="st">"#B0E2FF"</span>,</span>
+<span id="cb86-96"><a href="#cb86-96" aria-hidden="true" tabindex="-1"></a>        <span class="at">color          =</span> <span class="st">"#4F94CD"</span></span>
+<span id="cb86-97"><a href="#cb86-97" aria-hidden="true" tabindex="-1"></a>      ) <span class="sc">+</span></span>
+<span id="cb86-98"><a href="#cb86-98" aria-hidden="true" tabindex="-1"></a>      <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="dv">0</span>, <span class="at">linetype =</span> <span class="st">"dashed"</span>, <span class="at">color =</span> <span class="st">"#005"</span>) <span class="sc">+</span></span>
+<span id="cb86-99"><a href="#cb86-99" aria-hidden="true" tabindex="-1"></a>      <span class="fu">labs</span>(</span>
+<span id="cb86-100"><a href="#cb86-100" aria-hidden="true" tabindex="-1"></a>        <span class="at">y =</span> <span class="st">"Random and GP effects (variance)"</span>,</span>
+<span id="cb86-101"><a href="#cb86-101" aria-hidden="true" tabindex="-1"></a>        <span class="at">x =</span> <span class="st">"Posterior values (variance)"</span></span>
+<span id="cb86-102"><a href="#cb86-102" aria-hidden="true" tabindex="-1"></a>      ) <span class="sc">+</span></span>
+<span id="cb86-103"><a href="#cb86-103" aria-hidden="true" tabindex="-1"></a>      <span class="co"># scale_x_continuous(limits = c(0.7, 2.0)) + </span></span>
+<span id="cb86-104"><a href="#cb86-104" aria-hidden="true" tabindex="-1"></a>      <span class="fu">theme_classic</span>()</span>
+<span id="cb86-105"><a href="#cb86-105" aria-hidden="true" tabindex="-1"></a>   </span>
+<span id="cb86-106"><a href="#cb86-106" aria-hidden="true" tabindex="-1"></a>  }, <span class="at">error =</span> <span class="cf">function</span>(e) {</span>
+<span id="cb86-107"><a href="#cb86-107" aria-hidden="true" tabindex="-1"></a>    <span class="fu">message</span>(<span class="st">"Error in visualize_random_and_gp_var_exp4: "</span>, e<span class="sc">$</span>message)</span>
+<span id="cb86-108"><a href="#cb86-108" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="cn">NULL</span>)</span>
+<span id="cb86-109"><a href="#cb86-109" aria-hidden="true" tabindex="-1"></a>  })</span>
+<span id="cb86-110"><a href="#cb86-110" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb86-111"><a href="#cb86-111" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb86-112"><a href="#cb86-112" aria-hidden="true" tabindex="-1"></a>visualize_gp_lscale_exp4 <span class="ot">&lt;-</span> <span class="cf">function</span>(model) {</span>
+<span id="cb86-113"><a href="#cb86-113" aria-hidden="true" tabindex="-1"></a>  gp_ls_vars <span class="ot">&lt;-</span> <span class="fu">get_variables_dynamic</span>(model, <span class="st">"^lscale_"</span>)</span>
+<span id="cb86-114"><a href="#cb86-114" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(gp_ls_vars) <span class="sc">==</span> <span class="dv">0</span>) {</span>
+<span id="cb86-115"><a href="#cb86-115" aria-hidden="true" tabindex="-1"></a>    <span class="fu">message</span>(<span class="st">"No GP length-scale parameters found"</span>)</span>
+<span id="cb86-116"><a href="#cb86-116" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="cn">NULL</span>)</span>
+<span id="cb86-117"><a href="#cb86-117" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb86-118"><a href="#cb86-118" aria-hidden="true" tabindex="-1"></a> </span>
+<span id="cb86-119"><a href="#cb86-119" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tryCatch</span>({</span>
+<span id="cb86-120"><a href="#cb86-120" aria-hidden="true" tabindex="-1"></a>    gp_ls_samples <span class="ot">&lt;-</span> model <span class="sc">%&gt;%</span></span>
+<span id="cb86-121"><a href="#cb86-121" aria-hidden="true" tabindex="-1"></a>      <span class="fu">spread_draws</span>(<span class="sc">!!!</span><span class="fu">syms</span>(gp_ls_vars)) <span class="sc">%&gt;%</span></span>
+<span id="cb86-122"><a href="#cb86-122" aria-hidden="true" tabindex="-1"></a>      tidyr<span class="sc">::</span><span class="fu">pivot_longer</span>(</span>
+<span id="cb86-123"><a href="#cb86-123" aria-hidden="true" tabindex="-1"></a>        <span class="at">cols      =</span> dplyr<span class="sc">::</span><span class="fu">all_of</span>(gp_ls_vars),</span>
+<span id="cb86-124"><a href="#cb86-124" aria-hidden="true" tabindex="-1"></a>        <span class="at">names_to  =</span> <span class="st">".variable"</span>,</span>
+<span id="cb86-125"><a href="#cb86-125" aria-hidden="true" tabindex="-1"></a>        <span class="at">values_to =</span> <span class="st">".value"</span></span>
+<span id="cb86-126"><a href="#cb86-126" aria-hidden="true" tabindex="-1"></a>      ) <span class="sc">%&gt;%</span></span>
+<span id="cb86-127"><a href="#cb86-127" aria-hidden="true" tabindex="-1"></a>      dplyr<span class="sc">::</span><span class="fu">mutate</span>(<span class="at">.variable =</span> <span class="fu">rename_vars_exp4</span>(.variable))</span>
+<span id="cb86-128"><a href="#cb86-128" aria-hidden="true" tabindex="-1"></a>   </span>
+<span id="cb86-129"><a href="#cb86-129" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ggplot</span>(gp_ls_samples, <span class="fu">aes</span>(<span class="at">x =</span> .value, <span class="at">y =</span> .variable)) <span class="sc">+</span></span>
+<span id="cb86-130"><a href="#cb86-130" aria-hidden="true" tabindex="-1"></a>      ggdist<span class="sc">::</span><span class="fu">stat_halfeye</span>(</span>
+<span id="cb86-131"><a href="#cb86-131" aria-hidden="true" tabindex="-1"></a>        <span class="at">normalize      =</span> <span class="st">"xy"</span>,</span>
+<span id="cb86-132"><a href="#cb86-132" aria-hidden="true" tabindex="-1"></a>        <span class="at">point_interval =</span> <span class="st">"mean_qi"</span>,</span>
+<span id="cb86-133"><a href="#cb86-133" aria-hidden="true" tabindex="-1"></a>        <span class="at">fill           =</span> <span class="st">"#CD6090"</span>,</span>
+<span id="cb86-134"><a href="#cb86-134" aria-hidden="true" tabindex="-1"></a>        <span class="at">color          =</span> <span class="st">"#8B3A62"</span></span>
+<span id="cb86-135"><a href="#cb86-135" aria-hidden="true" tabindex="-1"></a>      ) <span class="sc">+</span></span>
+<span id="cb86-136"><a href="#cb86-136" aria-hidden="true" tabindex="-1"></a>      <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="dv">0</span>, <span class="at">linetype =</span> <span class="st">"dashed"</span>, <span class="at">color =</span> <span class="st">"#005"</span>) <span class="sc">+</span></span>
+<span id="cb86-137"><a href="#cb86-137" aria-hidden="true" tabindex="-1"></a>      <span class="fu">labs</span>(<span class="at">y =</span> <span class="st">"lscale"</span>, <span class="at">x =</span> <span class="st">"Posterior values"</span>) <span class="sc">+</span></span>
+<span id="cb86-138"><a href="#cb86-138" aria-hidden="true" tabindex="-1"></a>      <span class="fu">theme_classic</span>()</span>
+<span id="cb86-139"><a href="#cb86-139" aria-hidden="true" tabindex="-1"></a>  }, <span class="at">error =</span> <span class="cf">function</span>(e) {</span>
+<span id="cb86-140"><a href="#cb86-140" aria-hidden="true" tabindex="-1"></a>    <span class="fu">message</span>(<span class="st">"Error in visualize_gp_lscale_exp4: "</span>, e<span class="sc">$</span>message)</span>
+<span id="cb86-141"><a href="#cb86-141" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="cn">NULL</span>)</span>
+<span id="cb86-142"><a href="#cb86-142" aria-hidden="true" tabindex="-1"></a>  })</span>
+<span id="cb86-143"><a href="#cb86-143" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb86-144"><a href="#cb86-144" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb86-145"><a href="#cb86-145" aria-hidden="true" tabindex="-1"></a>s_brms_p1  <span class="ot">&lt;-</span> <span class="fu">visualize_fixed_effects_exp4</span>(sp_eg2_exp_brms)</span>
+<span id="cb86-146"><a href="#cb86-146" aria-hidden="true" tabindex="-1"></a>s_metafor_p1sd <span class="ot">&lt;-</span> <span class="fu">visualize_random_and_gp_var_exp4</span>(sp_eg2_exp_brms)</span>
+<span id="cb86-147"><a href="#cb86-147" aria-hidden="true" tabindex="-1"></a>s_metafor_p1lscale <span class="ot">&lt;-</span> <span class="fu">visualize_gp_lscale_exp4</span>(sp_eg2_exp_brms)</span>
+<span id="cb86-148"><a href="#cb86-148" aria-hidden="true" tabindex="-1"></a>brms_sp2<span class="fl">.1</span> <span class="ot">&lt;-</span> s_brms_p1 <span class="sc">/</span> (s_metafor_p1sd <span class="sc">+</span> s_metafor_p1lscale)</span>
+<span id="cb86-149"><a href="#cb86-149" aria-hidden="true" tabindex="-1"></a>brms_sp2<span class="fl">.1</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -3765,7 +3859,7 @@ Then we transform the coordinates to a planar CRS (EPSG:3857) suitable for dista
 Click to view version info
 </summary>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb86"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb86-1"><a href="#cb86-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb87"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb87-1"><a href="#cb87-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>R version 4.5.2 (2025-10-31)
 Platform: aarch64-apple-darwin20
@@ -3787,12 +3881,12 @@ attached base packages:
 other attached packages:
  [1] phytools_2.5-2      maps_3.4.3          gtools_3.9.5       
  [4] sf_1.0-24           rotl_3.1.0          glmmTMB_1.1.14     
- [7] janitor_2.2.1       magrittr_2.0.4      orchaRd_2.1.3      
+ [7] janitor_2.2.1       magrittr_2.0.5      orchaRd_2.0        
 [10] posterior_1.6.1     tidybayes_3.0.7     bayesplot_1.15.0   
 [13] MCMCglmm_2.36       coda_0.19-4.1       patchwork_1.3.2    
 [16] ape_5.8-1           here_1.0.2          crayon_1.5.3       
-[19] lubridate_1.9.4     forcats_1.0.1       stringr_1.6.0      
-[22] dplyr_1.1.4         purrr_1.2.0         readr_2.1.6        
+[19] lubridate_1.9.5     forcats_1.0.1       stringr_1.6.0      
+[22] dplyr_1.2.1         purrr_1.2.2         readr_2.2.0        
 [25] tidyr_1.3.2         tibble_3.3.1        ggplot2_4.0.2      
 [28] tidyverse_2.0.0     metafor_4.8-0       numDeriv_2016.8-1.1
 [31] metadat_1.4-0       Matrix_1.7-4        brms_2.23.0        
@@ -3800,20 +3894,20 @@ other attached packages:
 
 loaded via a namespace (and not attached):
   [1] mathjaxr_2.0-0          RColorBrewer_1.1-3      tensorA_0.36.2.1       
-  [4] rstudioapi_0.17.1       jsonlite_2.0.0          estimability_1.5.1     
-  [7] farver_2.1.2            nloptr_2.2.1            rmarkdown_2.30         
- [10] vctrs_0.7.1             minqa_1.2.8             htmltools_0.5.9        
+  [4] rstudioapi_0.18.0       jsonlite_2.0.0          estimability_1.5.1     
+  [7] farver_2.1.2            nloptr_2.2.1            rmarkdown_2.31         
+ [10] vctrs_0.7.3             minqa_1.2.8             htmltools_0.5.9        
  [13] progress_1.2.3          distributional_0.5.0    curl_7.0.0             
  [16] DEoptim_2.2-8           KernSmooth_2.23-26      htmlwidgets_1.6.4      
- [19] sandwich_3.1-1          emmeans_2.0.1           zoo_1.8-15             
+ [19] sandwich_3.1-1          emmeans_2.0.3           zoo_1.8-15             
  [22] TMB_1.9.19              igraph_2.2.1            lifecycle_1.0.5        
  [25] iterators_1.0.14        pkgconfig_2.0.3         R6_2.6.1               
  [28] fastmap_1.2.0           rbibutils_2.4           snakecase_0.11.1       
  [31] digest_0.6.39           rprojroot_2.1.1         clusterGeneration_1.3.8
- [34] timechange_0.3.0        httr_1.4.7              abind_1.4-8            
+ [34] timechange_0.4.0        httr_1.4.8              abind_1.4-8            
  [37] mgcv_1.9-3              compiler_4.5.2          proxy_0.4-29           
  [40] withr_3.0.2             doParallel_1.0.17       S7_0.2.1               
- [43] backports_1.5.0         optimParallel_1.0-2     DBI_1.2.3              
+ [43] backports_1.5.1         optimParallel_1.0-2     DBI_1.3.0              
  [46] MASS_7.3-65             scatterplot3d_0.3-44    classInt_0.4-11        
  [49] corpcor_1.6.10          loo_2.9.0               tools_4.5.2            
  [52] units_1.0-0             rncl_0.8.8              otel_0.2.0             
@@ -3823,16 +3917,16 @@ loaded via a namespace (and not attached):
  [64] class_7.3-23            hms_1.1.4               foreach_1.5.2          
  [67] pillar_1.11.1           ggdist_3.3.3            splines_4.5.2          
  [70] lattice_0.22-7          tidyselect_1.2.1        knitr_1.51             
- [73] reformulas_0.4.3.1      arrayhelpers_1.1-0      xfun_0.55              
+ [73] reformulas_0.4.3.1      arrayhelpers_1.1-0      xfun_0.57              
  [76] expm_1.0-0              bridgesampling_1.2-1    matrixStats_1.5.0      
  [79] stringi_1.8.7           yaml_2.3.12             pacman_0.5.1           
  [82] boot_1.3-32             evaluate_1.0.5          codetools_0.2-20       
- [85] cli_3.6.5               RcppParallel_5.1.11-1   xtable_1.8-4           
+ [85] cli_3.6.6               RcppParallel_5.1.11-1   xtable_1.8-4           
  [88] Rdpack_2.6.4            svUnit_1.0.8            XML_3.99-0.20          
  [91] parallel_4.5.2          rstantools_2.5.0        prettyunits_1.2.0      
  [94] cubature_2.1.4-1        Brobdingnag_1.2-9       phangorn_2.12.1        
- [97] lme4_1.1-38             mvtnorm_1.3-3           scales_1.4.0           
-[100] e1071_1.7-17            combinat_0.0-8          rlang_1.1.7            
+ [97] lme4_1.1-38             mvtnorm_1.3-6           scales_1.4.0           
+[100] e1071_1.7-17            combinat_0.0-8          rlang_1.2.0            
 [103] fastmatch_1.1-6         mnormt_2.1.1           </code></pre>
 </div>
 </div>
