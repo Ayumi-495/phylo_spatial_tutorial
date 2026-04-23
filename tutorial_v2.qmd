@@ -1,7 +1,7 @@
 ---
 title: "TUTORIAL: A unified framework for phylogenetic and spatial meta-analysis"
 subtitle: "concepts, implementation, and practical guidance"
-date: "`r Sys.Date()`"
+date: today
 title-block-banner: "#778899"
 title-block-banner-color: "#FFFAFA"
 authors:
@@ -1699,7 +1699,7 @@ Traditionally, forest plots have bee used to report the pooled estimate and conf
 
 Although orchard plots provide an effective summary of model-based estimates, they are not designed to display variance-component decomposition. We therefore construct custom visualisations in `ggplot2` to present the pooled effect size alongside the estimated variance components.
 
-Here, we present how to make figures from `metafor` and `brms` using meta-analysis model outputs.
+Here, we present how to make figures from `metafor`, `brms`, and `glmmTMB` using meta-analysis model outputs.
 
 ::: panel-tabset
 ##### metafor
@@ -1841,29 +1841,44 @@ brms_eg1_1
 
 ![moura_brms](figs/tutorial/brms_moura2021.png){width="80%"}
 
-<!-- ##### glmmTMB -->
+##### glmmTMB
 
-<!-- Now, we can make the orchard plot using `orchaRd` package (more detailed information: [here](https://daniel1noble.github.io/orchaRd/#new-converting-glmmtmb-models-for-use-with-orchard)) -->
+Now, we can make the orchard plot using `orchaRd` package (more detailed information: [here](https://daniel1noble.github.io/orchaRd/#new-converting-glmmtmb-models-for-use-with-orchard))
 
-<!-- ```{r} -->
-<!-- #| eval: FALSE -->
+```{r}
+#| eval: FALSE
 
-<!-- tmb_rma <- glmmTMB_to_rma( -->
-<!--   phylo_eg1_tmb, -->
-<!--   yi = "zr", -->
-<!--   vi = "zr_vi", -->
-<!--   data = dat_moura2021, -->
-<!--   measure = "GEN" -->
-<!-- ) -->
+tmb_rma <- glmmTMB_to_rma(
+  phylo_eg1_tmb,
+  yi = "yi",
+  vi = "vi",
+  data = dat_moura2021,
+  measure = "GEN"
+)
 
-<!-- class(fish_tmb_rma) -->
+class(tmb_rma)
+# [1] "rma.mv" "rma"  
 
-<!-- phylo_eg1_tmb -->
+eg1_tmb <- orchaRd::mod_results(
+  tmb_rma,
+  mod = "1",
+  group = "study.id"
+)
 
+tmb_p1 <- orchaRd::orchard_plot(eg1_tmb,
+        xlab = "effect size (Zr)",
+        angle = 45,
+        g = FALSE
+        ) + 
+        scale_x_discrete(labels = c("Overall effect")) +
+        scale_color_manual(values = "#CDAD00") +
+        scale_fill_manual(values = "#FFD700") + 
+        theme_classic()
 
-<!-- ``` -->
+tmb_p1
+```
 
-
+![glmmtmb_overall](figs/tutorial/tmb_eg1_1.png){width="80%"}
 
 :::
 
@@ -2481,7 +2496,39 @@ brms_eg2 <- brms_p1 / brms_p2
 
 ```
 
-![lim_brms](figs/tutorial/brms_eg2_phylo.png){width="80%"}
+![Lim_brms](figs/tutorial/brms_eg2_phylo.png){width="80%"}
+
+##### glmmTMB
+```{r}
+#| eval: FALSE
+
+tmb_mr <- glmmTMB_to_rma(
+  phylo_eg2_tmb_mr,
+  yi = "yi",
+  vi = "vi",
+  data = dat_lim2014,
+  measure = "GEN"
+)
+
+class(tmb_mr)
+# [1] "rma.mv" "rma"  
+
+phylo_eg2_tmb_fig <- orchaRd::mod_results(
+  tmb_mr,
+  mod = "environment",
+  group = "id"
+)
+
+tmb_p2 <- orchaRd::orchard_plot(phylo_eg2_tmb_fig,
+        xlab = "effect size (Zr)",
+        angle = 45,
+        g = FALSE
+        ) +
+  theme_classic()
+
+tmb_p2
+```
+![Lim_glmmtmb](figs/tutorial/tmb_eg2_mr.png){width="80%"}
 :::
 
 # Spatial meta-analysis
