@@ -2683,7 +2683,7 @@ In `metafor`, the spatial process is introduced by specifying `struct = "SPEXP"`
 dat_Roger$const <- 1  # add constant for spatial models
 ```
 
-Here, `const` is a dummy outer factor set to a constant so that all effect sizes are allowed to be spatially correlated. If the outer term were instead set to a grouping variable, such as study ID, spatial correlation would be modelled only within groups, yielding a block-diagonal structure. The spatial random field is parameterised by (1) $\tau^2$, the marginal variance of the spatial process, and (2) $\rho$, the range or scale parameter controlling how quickly correlation decays with distance under the chosen kernel. Let $d_{ij}$ be the distance between locations $i$ and $j$. The spatial random effects satisfy $\mathrm{Cov}(u_i,u_j)=\tau^2,\mathrm{cor}{\rho}(d{ij})$, where $\mathrm{cor}{\rho}(d{ij})$ is the kernel-specific correlation function. Distances can either be supplied directly via the `dist` argument or computed internally from coordinates with `~ x_km + y_km | const`; the two approaches are equivalent when they imply the same Euclidean distance matrix.
+Here, `const` is a dummy outer factor set to a constant so that all locations are allowed to be spatially correlated. If the outer term were instead a grouping variable, such as study ID, spatial correlation would be modelled only within groups, yielding a block-diagonal structure. For `SPEXP`, the spatial random effects have covariance $\mathrm{Cov}(u_i,u_j)=\tau^2\exp(-d_{ij}/\rho)$, where $\tau^2$ is the marginal spatial variance and $\rho$ is the distance at which the correlation declines to $\exp(-1)$. Distances can be supplied through `dist` or computed from coordinates; the two approaches are equivalent only when they use the same locations, distance metric, and distance units.
 
 ```{r}
 #| eval: false
@@ -2787,7 +2787,7 @@ Both `metafor` models (use distance matrix or coordinates directly or Euclidean 
 
 ##### brms
 
-In `brms`, the covariance function of the Gaussian process is controlled by the `cov` argument. To use an exponential kernel, set `cov = "exponential"`. Note that scale determines whether the input predictors are rescaled (by default, to make the maximum Euclidean distance equal to 1). If the coordinates are already expressed in meaningful units such as kilometres, and you want the GP length-scale parameter to be interpretable in those units, it is advisable to use s`cale = FALSE`.
+In `brms`, the covariance function of the Gaussian process is controlled by the `cov` argument. To use an exponential kernel, set `cov = "exponential"`. The `scale` argument determines whether the input predictors are rescaled. Set `scale = FALSE` when the coordinates are already expressed in meaningful distance units and the Gaussian-process length scale should retain those units.
 
 ```{r}
 #| eval: false
@@ -2959,7 +2959,7 @@ The first is the spatial variance ($\rho^2$), which quantifies how much of the b
 
 The second is the range of spatial correlation, which describes how quickly this similarity decays with distance. Short ranges imply that only very nearby locations are correlated, while long ranges indicate broad scale spatial trends.
 
-It is important to note that `metafor` and `brms` use different parametrisations for this range. In `metafor`, correlation is expressed as $exp(− \rho * distance)$, whereas in `brms` it is $exp(− distance / lscale)$. When distances are measured in kilometres, these are approximately related by $\rho \approx 1 / lscale$. The numerical values therefore should not be compared directly across packages.
+For the exponential kernel, both `metafor` and `brms` use a distance-scale parameter: correlation is $\exp(-d/\rho)$ in `metafor` and $\exp(-d/\mathrm{lscale})$ in `brms`. When both models use the same coordinates, distance metric, distance units, and no coordinate rescaling, $\rho$ and `lscale` have the same interpretation. Numerical differences can still arise from priors and from differences in the remaining model structure, including unstructured heterogeneity and residual variance.
 
 Because range parameters are often weakly identified, their uncertainty is typically large. Interpretation should focus more on whether spatial structure exists and on its approximate scale rather than on the exact numeric estimate.
 
