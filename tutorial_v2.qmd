@@ -1501,43 +1501,37 @@ exp(phylo_eg1.1_tmb$fit$par)
 
 #### Ornstein-Uhlenbeck
 
-We next fit a phylogenetic meta-analysis model under an Ornstein-Uhlenbeck (OU) model of trait evolution. The OU model is useful here because it implies that correlation between species declines with phylogenetic distance, and this decay can be represented using an exponential correlation function.
-
-Under an OU model, the phylogenetic covariance between species $i$ and $j$ can be written as
+We next examine an exponential correlation structure over phylogenetic distance. For an ultrametric tree with meaningful branch lengths, this correlation has the same mathematical form as the stationary Ornstein-Uhlenbeck (OU) correlation:
 
 $$
-\operatorname{Cov}_{ij} = \sigma^2 \exp(-\alpha d_{ij}),
+\operatorname{Cor}_{ij} = \exp(-\alpha d_{ij}),
 $$
 
-where $d_{ij}$ is the phylogenetic distance between species $i$ and $j$, $\sigma^2$ is the trait variance, and $\alpha$ controls how quickly correlation decays with distance. Larger values of $\alpha$ imply faster decay of phylogenetic correlation, corresponding to a stronger pull towards a species-specific optimum.
-
-This has the same functional form as the exponential correlation structure often used in distance-based models:
+where $d_{ij}$ is the patristic distance between species $i$ and $j$, and $\alpha$ controls the decay of correlation with phylogenetic distance. The `SPEXP` structure in `metafor` is parameterised as
 
 $$
-\operatorname{Cov}_{ij} = \sigma^2 \exp(-\rho d_{ij}),
+\operatorname{Cor}_{ij} = \exp(-d_{ij}/\rho),
 $$
 
-which allows the OU model to be fitted by exploiting this equivalence.
+so $\alpha = 1/\rho$ when both parameters refer to the same distance units. Larger values of $\alpha$, or smaller values of $\rho$, imply faster decay.
 
-Let $\mathbf{A}$ be the Brownian motion phylogenetic correlation matrix derived from the tree, where each entry represents phylogenetic similarity based on shared branch length. We then define a distance matrix $\mathbf{D}$ as
+This equivalence is between correlation structures. A better fit of the exponential structure does not by itself show that the biological trait evolved under an OU process or towards species-specific optima. In this example, `compute.brlen()` supplies Grafen branch lengths because the source tree provides topology rather than dated branch lengths. The fitted decay parameter is therefore expressed in constructed branch-length units and should not be interpreted as a rate per unit of evolutionary time.
 
-$$
-\mathbf{D} = \mathbf{I} - \mathbf{A},
-$$
+For an ultrametric tree of height $h$, the normalised patristic distance is $d_{ij}/(2h)$. It is also equal to $1-A_{ij}$, where $A_{ij}$ is the Brownian-motion correlation between species $i$ and $j$. We calculate the patristic distance directly below, which avoids confusing an all-ones matrix with the identity matrix.
 
-where $\mathbf{I}$ is the identity matrix. The entries of $\mathbf{D}$ represent phylogenetic distances between species, scaled between 0 and 1. Closely related species have smaller distances, whereas distantly related species have larger distances.
-
-We fit the OU phylogenetic model using a two-stage procedure. First, we estimate the rate at which phylogenetic correlation decays with distance by fitting a meta-analysis model with an exponential correlation structure, using $\mathbf{D}$ as the phylogenetic distance matrix. Second, we use this fitted decay structure to construct an OU based phylogenetic correlation matrix for the final meta-analysis or meta-regression model. This provides a practical way to incorporate OU style phylogenetic dependence within the standard multilevel meta-analytic framework implemented in `metafor`.
-
+We first fit a meta-analysis model with an exponential correlation structure, using the normalised phylogenetic distance matrix $\mathbf{D}$:
 We first fit a meta-analysis model with an exponential correlation structure, using $\mathbf{D}$ as the phylogenetic distance matrix:
 
 ```{r}
 #| eval: false
 
-# create phylogenetic distance matrix
+# create a normalised patristic-distance matrix
 dat_moura2021$const <- 1
-I  <- matrix(1, nrow = length(tree$tip.label), ncol = length(tree$tip.label))
-D <- I-A
+tree_height <- max(node.depth.edgelength(tree))
+D <- cophenetic.phylo(tree) / (2 * tree_height)
+
+# for an ultrametric tree, this equals 1 minus the BM correlation matrix
+stopifnot(isTRUE(all.equal(D, 1 - A, tolerance = 1e-10)))
 
 D[1:5, 1:5]
 
@@ -1588,20 +1582,24 @@ summary(phy_ou_meta)
 # Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 ```
 
-This model estimates the exponential decay parameter governing how quickly phylogenetic correlation declines with distance. Using this fitted decay parameter, we then construct an OU based phylogenetic correlation matrix as
+The fitted value of $\rho$ is the distance at which the correlation equals $\exp(-1) \approx 0.37$. We can construct the corresponding correlation matrix as
 
 $$
-\mathbf{A}_{OU} = \exp(-\alpha \mathbf{D}).
+\mathbf{A}_{\mathrm{exp}} = \exp(-\mathbf{D}/\rho).
 $$
 
-This matrix represents the phylogenetic correlation structure implied by the fitted OU model. We then refit the meta-analysis, supplying $\mathbf{A}_{OU}$ as a fixed phylogenetic correlation matrix:
+This matrix can be supplied to software that accepts a fixed correlation matrix. The resulting refit reproduces the likelihood for the estimated correlation structure, but its AIC omits the parameter used to estimate $\rho$. We therefore use the AIC from the direct `SPEXP` model, not the fixed-matrix refit, when comparing it with the Brownian-motion model.
 
 ```{r}
 #| eval: false
 
-rho <- phy_ou_meta$rho  #[1] 0.01820382
-alpha <- 1/rho # 54.93351
-A_OU <- exp(-alpha*D)
+rho <- phy_ou_meta$rho```{r}
+#| eval: false
+
+rho <- phy_ou_meta$rho  # 0.01820382
+alpha_normalised <- 1 / rho  # 54.93351 per normalised-distance unit
+alpha_branch_length <- alpha_normalised / (2 * tree_height)
+A_OU <- exp(-D / rho)
 
 phy_ou_meta1 <- rma.mv(yi, vi,
      random = list(~ 1 | study.id, 
@@ -1685,11 +1683,11 @@ summary(phy_ou_meta_reg2)
 # temporally.pooledyes    0.0293  0.0215  1.3641  1826  0.1727  -0.0128  0.0713   
 ```
 
-The OU phylogenetic model fitted the data substantially better than the BM model (AIC = 330.76 vs 345.35), indicating that phylogenetic similarity in assortative mating strength decays rapidly with evolutionary distance. In other words, closely related species tend to resemble one another in mate size correlation, but this resemblance weakens quickly as phylogenetic distance increases. This pattern is consistent with an OU process in which species are pulled towards their own lineage-specific optima, rather than retaining strong similarity over deep evolutionary time-scales.
+The directly fitted exponential-distance model had a lower AIC than the Brownian-motion model (332.76 versus 345.35; $\Delta$AIC = 12.59). This comparison supports the exponential correlation structure as a better description of these data among the fitted models. It does not distinguish an OU evolutionary process from other processes that generate rapidly decaying phylogenetic correlation.
 
-Although the pooled effect size (meta-analysis) and moderator effect(meta-regression) was similar under both models, the uncertainty around this estimate was slightly smaller under OU, as reflected by the narrower confidence interval and smaller standard error. Under the OU model, species-level variation was captured almost entirely by the OU-structured phylogenetic term, whereas the BM model partitioned this variation between phylogenetic and non-phylogenetic species effects. Together, these results suggest that assortative mating strength shows only limited deep phylogenetic inertia and is instead dominated by relatively shallow phylogenetic resemblance and species-specific variation.
+The pooled estimate and the moderator estimate were similar under the two correlation structures, whereas their uncertainty and the allocation of species-level variance differed. These differences show that the assumed phylogenetic correlation structure can affect variance decomposition and confidence intervals even when the pooled estimate changes little. Because the example uses one topology with Grafen branch lengths, neither the fitted decay scale nor the model comparison supports a biological claim about lineage-specific optima or an evolutionary rate.
 
-Note: We cannot currently fit this OU model directly in `brms` or `glmmTMB`.
+Note: the fixed correlation matrix can be used in `brms` or `glmmTMB`, but these implementations do not estimate $\rho$ jointly with the other model parameters in the workflow shown here.
 
 #### Visualisations
 
