@@ -794,7 +794,7 @@ dat_moura2021 <- dat.moura2021$dat
 # duplicate the column with species name - additional column is needed for adding phylogenetic correlation matrix and non-phylogenetic random effect separately.
 dat_moura2021$species.id.phy <- dat_moura2021$species.id
 
-# add a column to be used as an ID of effect sizes to specify random errors in the meta-analytic model
+# add an ID for estimating unstructured effect-size-level heterogeneity
 dat_moura2021$effect.size.id <- 1:nrow(dat_moura2021)
 
 # convert ID of effect sizes to a factor (categorical) variable
@@ -836,6 +836,35 @@ n_levels # shows how many levels each categorical variable has
 ```
 
 The dataset contains 1,828 effect sizes (`effect.size.id`) drawn from 457 independent studies (`study.id`) and 341 animal species (`species.id.phy`). This provides replication at both the study and species levels, which is generally important for estimating random-effects variance components. There is, however, no universal rule for what constitutes sufficient replication, because this depends on the number of levels, the distribution of observations across levels, and the magnitudes of the variance components. As a general guide, variance components are more likely to be estimable when each random effect has multiple levels and when at least some levels contribute repeated observations. In the present dataset, the relatively large number of species particularly supports the inclusion of species-level random effects, including both non-phylogenetic (`species.id`) and phylogenetic (`species.id.phy`) terms.
+
+### Sampling covariance and heterogeneity describe different sources of dependence
+
+Let $\mathbf{y}$ denote the observed effect sizes and $\boldsymbol{\theta}$ their underlying true effects. Sampling error is represented by
+
+$
+\mathbf{y} \mid \boldsymbol{\theta} \sim \mathcal{N}(\boldsymbol{\theta}, \mathbf{V}),
+$
+
+where the diagonal elements of $\mathbf{V}$ are the sampling variances. Off-diagonal elements are sampling covariances. They can arise when effect sizes share a control group, participants, measurements, or other information used in their calculation. Supplying only `vi` is equivalent to using a diagonal $\mathbf{V}$ and therefore assumes independent sampling errors.
+
+Random effects describe variation and dependence among the true effects, not sampling error. For example, a study-level random intercept allows true effects from the same study to be more similar, and an effect-size-level random intercept estimates additional unstructured heterogeneity. Neither term reconstructs the sampling covariance caused by a shared control group. A full $\mathbf{V}$ and random effects may therefore be required in the same model.
+
+When the primary data provide the information required to calculate the covariances, supply the resulting matrix directly:
+
+```{r}
+#| eval: false
+
+# V contains the sampling variances on the diagonal and known or
+# design-based sampling covariances off the diagonal
+fit <- rma.mv(
+  yi = yi,
+  V = V,
+  random = list(~ 1 | study.id, ~ 1 | effect.size.id),
+  data = dat
+)
+```
+
+When the exact covariances are unavailable, an assumed within-study sampling-error correlation can be varied in a sensitivity analysis. For example, `metafor::vcalc()` can construct candidate matrices for specified correlations. These assumed correlations must be justified and should not be confused with the fitted range parameters in phylogenetic or spatial correlation structures.
 
 Let's move on to compute the phylogenetic correlation matrix. A matching tree is supplied as a data object in the `metadat` package, so we just load it and can compute the matrix without additional checking and processing
 
@@ -1338,7 +1367,7 @@ summary(phylo_eg1.1_meta_BM)
 
 For studies without temporal pooling, the intercept $\beta_0$ represents the estimated mean effect size and was 0.356 (95% CI 0.099, 0.613) on the Fisher's Z scale. Relative to this baseline, temporally pooled studies tended to show slightly larger effect sizes on average, but the uncertainty interval overlapped zero ($\beta_{\text{temporally.pooled}_{\text{yes}}}$ = 0.040, 95% CI = \[-0.004, 0.083\]).
 
-Importantly, this inference is made while accounting for non-independence among effect sizes arising from shared studies, repeated measurements, species identity, and phylogenetic relatedness. Thus, the moderator effect reflects systematic differences associated with temporal pooling rather than confounding hierarchical structure.
+The model allows true effects to covary through study, species, and phylogenetic random effects. This changes the estimated uncertainty but does not by itself control confounding by unmeasured moderators. Because this example supplies only `vi`, it also assumes that sampling errors are independent after conditioning on the model.
 
 ```{r}
 #| eval: false
