@@ -66,13 +66,6 @@ In this online tutorial, we demonstrate how to conduct phylogenetic and spatial 
 # Setup
 
 ```{r}
-#| eval: false
-
-rm(list = ls())  # remove all objects from the workspace to start from a clean session and avoid using stale variables.
-gc()  # trigger garbage collection to free memory and reduce RAM usage after clearing the workspace.
-```
-
-```{r}
 
 # install.packages("pacman") # if not already installed
 pacman::p_load(brms, metafor, metadat, tidyverse, crayon, here, ape, patchwork, dplyr, tidyr, MCMCglmm, bayesplot, tidybayes, posterior, orchaRd,purrr, stringr, readr, magrittr, janitor, glmmTMB, rotl, sf, gtools)
@@ -1212,7 +1205,7 @@ system.time(
                          (1|species.id) +
                          propto(0 + species.id.phy|g, A), 
                        data = dat_moura2021,
-                       REML = T)
+                       REML = TRUE)
 　　　　　　　)
 
 ```
@@ -1473,7 +1466,7 @@ system.time(
         (1|species.id.phy) +
         propto(0 + species.id.phy|g, A),
       data = dat_moura2021,
-      REML = T)
+      REML = TRUE)
     )
 head(confint(phylo_eg1.1_tmb), 10)
 #                                                                             2.5 %     97.5 %   Estimate
@@ -2106,7 +2099,7 @@ phylo_eg2_tmb_ma <- glmmTMB(yi ~ 1 +
                             (1| species) +
                           propto(0 + phy|g, A),
                           data = dat_lim2014,
-                          REML = T)
+                          REML = TRUE)
 
 summary(phylo_eg2_tmb_ma)
 # Family: gaussian  ( identity )
@@ -2293,7 +2286,7 @@ phylo_eg2_tmb_mr <- glmmTMB(yi ~ 1 + environment +
                              (1| species) +
                              propto(0 + phy|g, A),
                            data = dat_lim2014,
-                           REML = T)
+                           REML = TRUE)
 
 summary(phylo_eg2_tmb_mr)
 #  Family: gaussian  ( identity )
