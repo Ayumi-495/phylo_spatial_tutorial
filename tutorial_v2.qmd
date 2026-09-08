@@ -189,7 +189,7 @@ Phylogenetic trees often contain more species than required for a given analysis
 
 tree_pruned  <- drop.tip(tree,setdiff(tree$tip.label, species_data))
 
-lwngth(tree_pruned$tip.label) # check how many species left on the pruned tree
+length(tree_pruned$tip.label) # check how many species left on the pruned tree
 plot(tree_pruned) # check the pruned tree
 
 ```
@@ -1050,12 +1050,14 @@ fit_phylo_eg1.1_brms_ma <-  bf(yi ~ 1 +
                                (1 | gr(effect.size.id, cov = vcv))
                              )
 
-prior_brms1.1 <- default_prior(fit_phylo_eg1.1_brms, 
-                      data = dat_moura2021, 
-                      data2 = list(A = A, vcv = vcv), 
-                      family = gaussian())
-
-prior_ma$prior[3] = "constant(1)"
+prior_brms1.1 <- c(
+  default_prior(fit_phylo_eg1.1_brms_ma,
+                data = dat_moura2021,
+                data2 = list(A = A, vcv = vcv),
+                family = gaussian()),
+  set_prior("constant(1)", class = "sd", group = "effect.size.id"),
+  replace = TRUE
+)
 
 phylo_eg1.1_brms_ma <- brm(
     formula = fit_phylo_eg1.1_brms_ma,
@@ -1071,7 +1073,7 @@ phylo_eg1.1_brms_ma <- brm(
     control = list(adapt_delta = 0.98, max_treedepth = 18)
     )
 
-summary(phylo_eg1.1_brms)
+summary(phylo_eg1.1_brms_ma)
 # Family: gaussian 
 #   Links: mu = identity 
 # Formula: yi ~ 1 + (1 | study.id) + (1 | species.id) + (1 | gr(species.id.phy, cov = A)) + (1 | gr(effect.size.id, cov = vcv)) 
@@ -1109,34 +1111,14 @@ Nice - the outputs are very similar to the previous model using `se()`, as expec
 
 The small differences in the estimates arise because this model is fitted in a Bayesian framework.
 
-Let's calculate $I^2$ statistics to quantify the proportion of variance attributable to different sources of heterogeneity.
+An $I^2$ calculation requires an explicit choice of the variance components and denominator. That definition is not fixed in this tutorial yet, so the calculation is deferred.
 
 ```{r}
 #| eval: false
 
-fit <- phylo_eg1_brms  
-dat <- dat_moura2021
-v_harm <- 1 / mean(1/dat$vi, na.rm = TRUE)
-
-I2_total_harm  <- var_total_hetero / (var_total_hetero + v_harm)
-I2_effect_harm <- var_effect / (var_total_hetero + v_harm)
-I2_study_harm  <- var_study / (var_total_hetero + v_harm)
-I2_species_harm　<- var_species / (var_total_hetero + v_harm)
-I2_phylo_harm  <- var_phylo / (var_total_hetero + v_harm)
-
-round(rbind(
-      total  = summ_I2(I2_total_harm),
-      effect = summ_I2(I2_effect_harm),
-      study = summ_I2(I2_study_harm),
-      species = summ_I2(I2_species_harm),
-      phylo = summ_I2(I2_phylo_harm)
-    ), 3)
-#         mean q2.5.2.5% q50.50% q97.5.97.5%
-# total   0.978     0.969   0.978       0.990
-# effect  0.090     0.043   0.091       0.134
-# study   0.129     0.048   0.123       0.247
-# species 0.330     0.115   0.333       0.530
-# phylo   0.429     0.178   0.414       0.759
+# Define the chosen variance-partitioning and I2 denominator here before
+# calculating I2. The earlier code referred to undefined objects and has been
+# removed rather than imposing a definition.
 
 ```
 
@@ -1241,8 +1223,7 @@ You can see the outputs both `summary()` and `confint()`. The `confint()` output
 
 For example…
 
-```{r}
-#| eval: false
+```text
 
 (Intercept) -> overall mean
 Std.Dev.(Intercept) | study.id -> correspond to the square roots of study-level variance
@@ -1251,8 +1232,7 @@ Std.Dev.(Intercept) | species.id -> correspond to the square roots of non-phylog
 
 You see the output also includes many rows such as…
 
-```{r}
-#| eval: false
+```text
 
 Std.Dev.species.id.phyAcanthurus_leucosternon_ott388125|g.1
 Std.Dev.species.id.phyAcanthurus_nigricans_ott467313|g.1
@@ -1389,7 +1369,11 @@ prior_mr <- default_prior(fit_phylo_eg1_brms_mr,
                 data2 = list(A = A, vcv = vcv), 
                 family = gaussian())
 
-prior_mr$prior[5] = "constant(1)"
+prior_mr <- c(
+  prior_mr,
+  set_prior("constant(1)", class = "sd", group = "effect.size.id"),
+  replace = TRUE
+)
 
 system.time(
   phylo_eg1_brms_mr <- brm(
@@ -1972,7 +1956,11 @@ prior_ma <- default_prior(fit_phylo_eg2_brms_ma,
                 data2 = list(lim_vcv = lim_vcv, vcv = vcv),
                 family = gaussian())
 
-prior_ma$prior[3] = "constant(1)"
+prior_ma <- c(
+  prior_ma,
+  set_prior("constant(1)", class = "sd", group = "id"),
+  replace = TRUE
+)
 
 system.time(
   phylo_eg2_brms_ma <- brm(
@@ -2225,7 +2213,11 @@ prior_mr <- default_prior(fit_phylo_eg2_brms_mr,
                 data2 = list(lim_vcv = lim_vcv, vcv = vcv),
                 family = gaussian())
 
-prior_mr$prior[5] = "constant(1)"
+prior_mr <- c(
+  prior_mr,
+  set_prior("constant(1)", class = "sd", group = "id"),
+  replace = TRUE
+)
 
 phylo_eg2_brms_mr <- brm(
         formula = fit_phylo_eg2_brms_mr,
@@ -2805,7 +2797,11 @@ prior <- default_prior(fit_sp_eg1_exp_brms,
                            data = dat_Roger, 
                            data2 = list(vcv = vcv),
                            family = gaussian())
-prior$prior[5] = "constant(1)" # meta-analysis assumes sampling variance is known so fixing this to 1
+prior <- c(
+  prior,
+  set_prior("constant(1)", class = "sd", group = "effect_id"),
+  replace = TRUE
+) # meta-analysis assumes sampling variance is known so fixing this to 1
 prior
  #                            prior     class       coef     group resp dpar nlpar lb ub tag       source
  #          student_t(3, -0.1, 2.5) Intercept                                                     default
@@ -3038,7 +3034,11 @@ prior <- default_prior(fit_sp_eg1_gau_brms,
                        data = dat_Roger, 
                        data2 = list(vcv = vcv),
                        family = gaussian())
-prior$prior[5] = "constant(1)" # meta-analysis assumes sampling variance is known so fixing this to 1
+prior <- c(
+  prior,
+  set_prior("constant(1)", class = "sd", group = "effect_id"),
+  replace = TRUE
+) # meta-analysis assumes sampling variance is known so fixing this to 1
 prior
 
 # fitting model
@@ -3563,7 +3563,11 @@ prior <- default_prior(fit_gp_brms,
                        data = dat_scholer2020, 
                        data2 = list(vcv = vcv),
                        family = gaussian())
-prior$prior[5] = "constant(1)" # meta-analysis assumes sampling variance is known so fixing this to 1
+prior <- c(
+  prior,
+  set_prior("constant(1)", class = "sd", group = "effect_id"),
+  replace = TRUE
+) # meta-analysis assumes sampling variance is known so fixing this to 1
 prior
 
 sp_exp_brms_eg2 <- brm(
@@ -3795,7 +3799,11 @@ prior <- default_prior(fit_gp_brms,
                        data = dat_scholer2020, 
                        data2 = list(vcv = vcv),
                        family = gaussian())
-prior$prior[5] = "constant(1)" # meta-analysis assumes sampling variance is known so fixing this to 1
+prior <- c(
+  prior,
+  set_prior("constant(1)", class = "sd", group = "effect_id"),
+  replace = TRUE
+) # meta-analysis assumes sampling variance is known so fixing this to 1
 prior
 
 sp_gau_brms_eg2 <- brm(
