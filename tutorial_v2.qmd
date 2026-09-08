@@ -1350,6 +1350,12 @@ orchard_plot(res1,
 
 ```
 
+<div style="display: none">
+
+The following legacy package-specific examples have not been rerun under the
+verified study/location structure and are intentionally omitted from the
+rendered tutorial pending a separate package-comparison audit.
+
 ##### brms
 
 ```{r}
@@ -2518,84 +2524,40 @@ tmb_p2
 
 # Spatial meta-analysis
 
-## How to make spatial correlation matrix?
+## How to make a spatial distance matrix?
 
-In spatial meta-analysis, we model the residual similarity between effect sizes as a function of the pairwise spatial separation among observations. In many applications, each effect size is associated with a sampling location defined by latitude and longitude, from which pairwise geographic distances can be calculated. More generally, however, the key input is a matrix describing the pairwise separation among effect sizes, which may reflect straight-line geographic distance or other biologically meaningful measures of spatial separation, such as habitat connectivity, landscape resistance, barriers to movement, or distances among broader spatial units when exact sampling coordinates are unavailable. Depending on the spatial correlation structure assumed (for example, exponential, Gaussian, or spherical), this pairwise distance matrix is then transformed into a correlation matrix that describes the expected similarity between effect sizes based on their spatial proximity. In this context, the kernel is the mathematical function that maps pairwise distances to expected correlations, thereby specifying how quickly similarity declines with distance. In the examples below, we use pairwise distances calculated from exact sampling coordinates.
+Spatial meta-analysis models residual similarity as a function of separation among recorded coordinate locations. The required input is a distance matrix whose row and column order matches the levels of the location factor used in the model. For global data, calculate ellipsoidal great-circle distances in kilometres from longitude and latitude rather than projecting all observations to EPSG:3857.
 
-### Step 1. Prepare data:
-**Ensure each effect size has geographic coordinates, a unique identifier and projected coordinates in km**
-
-Each effect size should have geographic coordinates (latitude and longitude) indicating where the data were collected. Normally, these data would be extracted from the study and/or imputed/approximated if unreported. Because latitude and longitude are measured in degrees, we first project them to a planar coordinate reference system (CRS) and then convert the resulting coordinates to kilometres. This allows us to compute meaningful Euclidean distances.
+### Step 1. Prepare the recorded coordinate locations
 
 ```{r}
 #| eval: false
 
-library(tidyverse)
-library(sf)
+library(geosphere)
 
-toy_sites <- tibble(
-  effect_id = 1:5,
-  latitude = c(34.05, 36.16, 40.71, 34.05, 37.77),
-  longitude = c(-118.24, -115.15, -74.00, -118.25, -122.42)
-  )
-
-# convert to an sf object (WGS84 longitude / latitude)
-toy_sites_sf <- st_as_sf(
-  toy_sites, 
-  coords = c("longitude", "latitude"), 
-  crs = 4326)
-
-# project to a planar coordinate system and convert to kilometers
-# EPSG:3857 is convenient for small-scale distance calculations
-# for real analyses, consider using an appropriate local projection
-toy_sites_sf_proj <- st_transform(toy_sites_sf, crs = 3857)
-
-xy_m <- st_coordinates(toy_sites_sf_proj)
-toy_sites$x_km <- xy_m[,1] / 1000
-toy_sites$y_km <- xy_m[,2] / 1000
-toy_sites
-# A tibble: 5 × 5
-#   effect_id latitude longitude    x_km  y_km
-#       <int>    <dbl>     <dbl>   <dbl> <dbl>
-# 1         1     34.0     -118. -13162. 4036.
-# 2         2     36.2     -115. -12818. 4323.
-# 3         3     40.7      -74   -8238. 4970.
-# 4         4     34.0     -118. -13164. 4036.
-# 5         5     37.8     -122. -13628. 4547.
+toy_sites <- data.frame(
+  site_id = c("A", "B", "C"),
+  latitude = c(34.05, 36.16, 40.71),
+  longitude = c(-118.24, -115.15, -74.00)
+)
 
 ```
 
-The projected coordinates (`x_km`, `y_km`) can be negative because they represent positions relative to the origin of the coordinate system. We first assign a geographic CRS (EPSG:4326) to declare that the coordinates are in latitude and longitude.\
-Then we transform the coordinates to a planar CRS (EPSG:3857) suitable for distance calculations, and convert the resulting x and y coordinates from meters to kilometres.
-
-### Step 2. Compute pairwise *Euclidean* distance matrix
-
-Once each effect size has projected coordinates in kilometres, we can compute the Euclidean distance between all pairs of sampling locations. These distances form the basis of spatial correlation structures in spatial meta-analysis.
+### Step 2. Compute the great-circle distance matrix
 
 ```{r}
 #| eval: false
 
-# extract projected coordinates
-coords_km <- as.matrix(toy_sites[, c("x_km", "y_km")])
+coordinates_lonlat <- as.matrix(toy_sites[c("longitude", "latitude")])
+D_km <- geosphere::distm(coordinates_lonlat, fun = geosphere::distGeo) / 1000
+rownames(D_km) <- colnames(D_km) <- toy_sites$site_id
 
-# compute pairwise Euclidean distances (in km)
-D <- as.matrix(dist(coords_km))
-
-# assign row and column names using effect_id
-rownames(D) <- toy_sites$effect_id
-colnames(D) <- toy_sites$effect_id
-
-D
-#           1         2        3           4         5
-# 1    0.000000  448.0744 5012.587    1.113195  691.4604
-# 2  448.074446    0.0000 4626.263  448.929589  839.8075
-# 3 5012.586560 4626.2633    0.000 5013.680258 5406.6368
-# 4    1.113195  448.9296 5013.680    0.000000  690.7118
-# 5  691.460407  839.8075 5406.637  690.711777    0.0000
+stopifnot(identical(rownames(D_km), toy_sites$site_id))
+stopifnot(identical(colnames(D_km), toy_sites$site_id))
 
 ```
 
-Each element $D_{ij}$ is the straight-line distance (in kilometers) between effect sizes i and j.
+Each element $D_{ij}$ is the WGS84 ellipsoidal great-circle distance in kilometres between recorded coordinate locations $i$ and $j$. Identical recorded coordinates do not necessarily establish that observations came from the same exact field site.
 
 **Why this matrix matters?**
 
@@ -2611,46 +2573,37 @@ Differences in implementation and requirements between $R$ packages:
 
 ### 1. Grau-Andrés et al. (2024)
 
-The dataset comes from [Grau-Andrés et al. (2024)](https://doi.org/10.1111/geb.13858) and contains 2361 effect sizes of Hedges' d, a bias-corrected standardized mean difference. In this dataset, each Hedges’ d quantifies the direction and magnitude of the difference in plant response between sites or conditions with more intense fire regimes and those with less intense fire regimes. Positive values indicate higher plant responses under more intense fire regimes, whereas negative values indicate lower responses. Each effect size is associated with a geographic location given by latitude and longitude. These locations represent sampling sites at which the original biological measurements were collected.
-The original data provide latitude and longitude in degrees. We first project these coordinates to a planar CRS and convert them to kilometres. We then compute the pairwise Euclidean distance matrix among all effect sizes based on their projected coordinates.
+The dataset comes from [Grau-Andrés et al. (2024)](https://doi.org/10.1111/geb.13858) and contains 2,361 effect sizes of Hedges' d. We retain all effect sizes: they belong to 393 studies and 383 recorded coordinate locations. Studies and recorded coordinate locations are distinct grouping structures: some studies contain multiple recorded locations, and some recorded locations are shared by multiple studies. Identical coordinates are treated as the same recorded coordinate location, not as proof of the same exact field site.
 
 ```{r}
 #| eval: false
 
+library(geosphere)
+
 dat_Roger <- read.csv(here("data", "Roger_etal_2024", "Roger_etal_2024.csv"))
 
 dat_Roger <- dat_Roger |>
-  filter(!is.na(longitude))
-coords2 <- cbind(dat_Roger$longitude, dat_Roger$latitude)
+  filter(!is.na(latitude), !is.na(longitude))
 
-# project to a planar coordinate system and convert to kilometers
-dat_sf2 <- st_as_sf(dat_Roger, coords = c("longitude", "latitude"), crs = 4326)
-dat_sf2_proj <- st_transform(dat_sf2, crs = 3857)
+stopifnot(nrow(dat_Roger) == 2361L, all(dat_Roger$var_Hedges > 0))
+dat_Roger$effect_id <- factor(seq_len(nrow(dat_Roger)))
+dat_Roger$study_id <- factor(dat_Roger$study_id)
+dat_Roger$site_key <- sprintf("%.8f_%.8f", dat_Roger$latitude, dat_Roger$longitude)
+site_levels <- sort(unique(dat_Roger$site_key))
+dat_Roger$site_id <- factor(dat_Roger$site_key, levels = site_levels)
+dat_Roger$const <- factor("all_sites")
+stopifnot(nlevels(dat_Roger$study_id) == 393L, nlevels(dat_Roger$site_id) == 383L)
 
-coords_m <- st_coordinates(dat_sf2_proj)
-dat_Roger$x_km <- coords_m[,1] / 1000
-dat_Roger$y_km <- coords_m[,2] / 1000
+site_lookup <- unique(dat_Roger[c("site_id", "site_key", "latitude", "longitude")])
+site_lookup <- site_lookup[match(site_levels, site_lookup$site_key), ]
+coordinates_lonlat <- as.matrix(site_lookup[c("longitude", "latitude")])
+distance_km <- geosphere::distm(coordinates_lonlat, fun = geosphere::distGeo) / 1000
+rownames(distance_km) <- colnames(distance_km) <- site_levels
 
-coords_km <- cbind(dat_Roger$x_km, dat_Roger$y_km)
-dist_matrix_euclid2 <- as.matrix(dist(coords_km))
-
-
-dat_Roger$effect_id <- seq_len(nrow(dat_Roger))
-
-dat_Roger$effect_id <- factor(
-  dat_Roger$effect_id,
-  levels = sort(unique(dat_Roger$effect_id))
-  )
-
-# row and column names
-rownames(dist_matrix_euclid2) <- dat_Roger$effect_id
-colnames(dist_matrix_euclid2) <- dat_Roger$effect_id
-
-dat_Roger <- dat_Roger |>
-  group_by(latitude, longitude) |>
-  mutate(site_id = cur_group_id()) |>
-  ungroup()
-names(dat_Roger)
+stopifnot(identical(rownames(distance_km), levels(dat_Roger$site_id)))
+stopifnot(identical(colnames(distance_km), levels(dat_Roger$site_id)))
+stopifnot(isTRUE(all.equal(distance_km, t(distance_km), tolerance = 1e-10)))
+stopifnot(all(abs(diag(distance_km)) < 1e-10), all(distance_km >= 0))
 ```
 
 
@@ -2661,116 +2614,41 @@ The exponential kernel assumes that the similarity between two effect sizes decr
 ::: panel-tabset
 
 ##### metafor
-Here, we treat each effect size as associated with a sampling location.
-In `metafor`, the spatial process is introduced by specifying `struct = "SPEXP"` for a random term representing the observational units to be spatially correlated. This can be done either by supplying coordinates, for example with `random = list(…, ~ x_km + y_km | const)`, in which case pairwise Euclidean distances are computed internally, or by supplying a precomputed distance matrix with `random = list(…, ~ location_id | const)` together with `dist = list(location_id = D)`, where `location_id` indexes the rows and columns of the distance matrix.
+We use the same effect sizes, diagonal sampling variances, intercept-only fixed effect, and effect-size-level heterogeneity in all three models. `const` is a one-level outer grouping factor, so the spatial covariance is allowed across studies. The spatial random term is indexed by `site_id`, not effect ID.
 
 ```{r}
 #| eval: false
 
-dat_Roger$const <- 1  # add constant for spatial models
+unstructured_only <- rma.mv(
+  yi = d_Hedges, V = var_Hedges,
+  random = list(~ 1 | effect_id, ~ 1 | study_id),
+  data = dat_Roger, method = "REML", test = "t", sparse = TRUE
+)
+
+spatial_only <- rma.mv(
+  yi = d_Hedges, V = var_Hedges,
+  random = list(~ 1 | effect_id, ~ site_id | const),
+  struct = "SPEXP", dist = list(site_id = distance_km),
+  data = dat_Roger, method = "REML", test = "t", sparse = TRUE
+)
+
+combined <- rma.mv(
+  yi = d_Hedges, V = var_Hedges,
+  random = list(~ 1 | effect_id, ~ 1 | study_id, ~ site_id | const),
+  struct = "SPEXP", dist = list(site_id = distance_km),
+  data = dat_Roger, method = "REML", test = "t", sparse = TRUE
+)
 ```
 
-Here, `const` is a dummy outer factor set to a constant so that all effect sizes are allowed to be spatially correlated. If the outer term were instead set to a grouping variable, such as study ID, spatial correlation would be modelled only within groups, yielding a block-diagonal structure. The spatial random field is parameterised by (1) $\tau^2$, the marginal variance of the spatial process, and (2) $\rho$, the range or scale parameter controlling how quickly correlation decays with distance under the chosen kernel. Let $d_{ij}$ be the distance between locations $i$ and $j$. The spatial random effects satisfy $\mathrm{Cov}(u_i,u_j)=\tau^2,\mathrm{cor}{\rho}(d{ij})$, where $\mathrm{cor}{\rho}(d{ij})$ is the kernel-specific correlation function. Distances can either be supplied directly via the `dist` argument or computed internally from coordinates with `~ x_km + y_km | const`; the two approaches are equivalent when they imply the same Euclidean distance matrix.
+The unstructured-only model estimates study-level heterogeneity without a spatial component. The spatial-only model is deliberately restricted: without an unstructured study-level component, its spatial term must represent heterogeneity that may not be genuinely spatial. The combined model separates unstructured study-level heterogeneity from a location-level spatial component.
 
-```{r}
-#| eval: false
+| Model | Mean (95% CI) | Effect-size variance | Study variance | Spatial variance | rho (km) | AIC |
+|---|---:|---:|---:|---:|---:|---:|
+| Unstructured-only | -0.345 (-0.470, -0.221) | 0.775 | 1.242 | -- | -- | 8042.979 |
+| Spatial-only | -0.334 (-0.460, -0.208) | 0.793 | -- | 1.231 | 0.050 | 8076.949 |
+| Combined | -0.349 (-0.491, -0.206) | 0.775 | 1.167 | 0.0619 | 384.96 | 8045.604 |
 
-# Use distance matrix
-ma_sp1_exp0_mf <- rma.mv(d_Hedges, var_Hedges, 
-                 random = list(
-                   ~ 1|effect_id, 
-                   ~ effect_id|const
-                 ), 
-                 struct = "SPEXP", 
-                 data = dat_Roger,
-                 dist = list(effect_id = dist_matrix_euclid2),
-                 test = "t",
-                 method = "REML",
-                 sparse = TRUE,
-                 verbose = TRUE)
-summary(ma_sp1_exp0_mf)
-# Multivariate Meta-Analysis Model (k = 2361; method: REML)
-# 
-#     logLik    Deviance         AIC         BIC        AICc   
-# -4034.4852   8068.9704   8076.9704   8100.0360   8076.9874   
-# 
-# Variance Components:
-# 
-#             estim    sqrt  nlvls  fixed     factor 
-# sigma^2    0.7935  0.8908   2361     no  effect_id 
-# 
-# outer factor: const      (nlvls = 1)
-# inner term:   ~effect_id (nlvls = 2361)
-# 
-#             estim    sqrt  fixed 
-# tau^2      1.2330  1.1104     no 
-# rho        0.1744             no 
-# 
-# Test for Heterogeneity:
-# Q(df = 2360) = 21273.5149, p-val < .0001
-# 
-# Model Results:
-# 
-# estimate      se     tval    df    pval    ci.lb    ci.ub      
-#  -0.3349  0.0644  -5.2006  2360  <.0001  -0.4612  -0.2086  *** 
-
-
-# Use the coordinates directly (Euclidean distance)
-system.time(sp_eg1_exp_mf <- rma.mv(d_Hedges, var_Hedges, 
-                              random = list(
-                                ~ 1|effect_id,
-                                ~ x_km + y_km |const
-                              ), 
-                              struct = "SPEXP", 
-                              data = dat_Roger,
-                              sparse = TRUE,
-                              verbose = TRUE,
-                              method = "REML",
-                              test = "t"
-                              )
-            )
-
-summary(sp_eg1_exp_mf)
-# Multivariate Meta-Analysis Model (k = 2361; method: REML)
-# 
-#     logLik    Deviance         AIC         BIC        AICc   
-# -4034.4852   8068.9704   8076.9704   8100.0360   8076.9874   
-# 
-# Variance Components:
-# 
-#             estim    sqrt  nlvls  fixed     factor 
-# sigma^2    0.7935  0.8908   2361     no  effect_id 
-# 
-# outer factor: const        (nlvls = 1)
-# inner term:   ~x_km + y_km (nlvls = 383)
-# 
-#             estim    sqrt  fixed 
-# tau^2      1.2330  1.1104     no 
-# rho        0.1744             no 
-# 
-# Test for Heterogeneity:
-# Q(df = 2360) = 21273.5149, p-val < .0001
-# 
-# Model Results:
-# 
-# estimate      se     tval    df    pval    ci.lb    ci.ub      
-#  -0.3349  0.0644  -5.2006  2360  <.0001  -0.4612  -0.2086  *** 
-
-confint(sp_eg1_exp_mf)
-#         estimate  ci.lb  ci.ub 
-# sigma^2   0.7935 0.7257 0.8678 
-# sigma     0.8908 0.8519 0.9316 
-# 
-#       estimate  ci.lb  ci.ub 
-# tau^2   1.2330 1.0147 1.4976 
-# tau     1.1104 1.0073 1.2238 
-# 
-#     estimate   ci.lb  ci.ub 
-# rho   0.1744 <0.0174 0.8572 
-
-```
-
-Both `metafor` models (use distance matrix or coordinates directly or Euclidean distance) returned the same output.
+The pooled mean is similar under all three covariance specifications. In contrast, variance allocation and conclusions about spatial structure depend strongly on the model. The spatial-only model has a large spatial variance, but its extremely short `rho` is poorly resolved; it should not be read as evidence for strong broad-scale spatial autocorrelation. In the combined model, the additional spatial component is weakly identified once unstructured study-level heterogeneity is included. A profile likelihood with spatial variance fixed to zero was only 0.687 log-likelihood units below the maximum, and `rho` values of approximately 200--3,000 km gave almost indistinguishable likelihoods. Therefore, the combined estimate of about 385 km is not evidence for a well-defined spatial correlation range.
 
 ##### brms
 
@@ -2944,19 +2822,15 @@ exp(sp_eg1_exp_tmb$fit$par)
 
 ```
 
-Each model estimates two key aspects of the spatial structure.
+</div>
 
-The first is the spatial variance ($\rho^2$), which quantifies how much of the between effect size variability is organised by geography. If this variance is close to zero, spatial structure is negligible. If it is large, nearby effect sizes tend to be much more similar than distant ones.
+The `metafor` comparison estimates a spatial variance ($\tau^2$) and a scale parameter ($\rho$). For an exponential correlation, $\rho$ controls the rate at which correlation declines with distance. Neither parameter should be interpreted solely from its point estimate: profile likelihoods assess whether the data distinguish the parameter from plausible alternatives.
 
-The second is the range of spatial correlation, which describes how quickly this similarity decays with distance. Short ranges imply that only very nearby locations are correlated, while long ranges indicate broad scale spatial trends.
+Spatial variance ($\tau^2$) describes the amount of heterogeneity assigned to the spatial component. The scale parameter ($\rho$) describes how the exponential correlation changes with great-circle distance. Both parameters can be weakly identified, so their profile likelihoods, rather than their point estimates alone, should guide interpretation.
 
-It is important to note that `metafor` and `brms` use different parametrisations for this range. In `metafor`, correlation is expressed as $exp(− \rho * distance)$, whereas in `brms` it is $exp(− distance / lscale)$. When distances are measured in kilometres, these are approximately related by $\rho \approx 1 / lscale$. The numerical values therefore should not be compared directly across packages.
+The sampling-error structure is held fixed across the three models through `V = var_Hedges`, which is diagonal under the independent-sampling-error assumption used here.
 
-Because range parameters are often weakly identified, their uncertainty is typically large. Interpretation should focus more on whether spatial structure exists and on its approximate scale rather than on the exact numeric estimate.
-
-In all three implementations, sampling error is treated as known through the reported variances of Hedges’ d. In `brms` and `glmmTMB`, this is enforced explicitly by supplying the variance covariance matrix of the effect sizes, which ensures that within effect size uncertainty is not re estimated. In `metafor`, the same role is played by the `vi` argument.
-
-All three models, `metafor`, `brms`, and `glmmTMB`, give a consistent output. There is strong spatial autocorrelation in effect sizes. Nearby locations tend to show much more similar Hedges’ d values than would be expected from sampling error alone. This means that a substantial fraction of the apparent heterogeneity in the dataset is structured geographically rather than being random noise. The estimated spatial range is large, on the order of hundreds of kilometres, indicating that the spatial pattern is driven by broad scale geographic gradients rather than by very local site effects. Although the exact range is uncertain, all models agree that spatial dependence extends over long distances. After accounting for this spatial structure, the overall mean effect ($\beta_0$) remains negative, around −0.3 to −0.4 across all three packges. This shows that the global negative effect is not an artefact of spatial clustering.
+The pooled mean remains negative and similar across the three covariance specifications. This robustness does not extend to the allocation of heterogeneity or to inference about spatial structure. The spatial-only model is a restricted model, and the combined model does not establish a well-defined spatial correlation range once study-level heterogeneity is included.
 
 :::
 
