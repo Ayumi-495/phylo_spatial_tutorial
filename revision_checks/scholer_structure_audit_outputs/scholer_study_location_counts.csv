@@ -1,0 +1,206 @@
+"study_id","n_effects","n_sites"
+"Desante et al. (2015)",156,156
+"Collingham et al. (2014)",50,50
+"Johnston et al. (2016)",35,17
+"Clark et al. (2011)",18,17
+"Siriwardena et al. (1998)",18,16
+"Forsman et al. (2011)",11,11
+"Kiss et al. (2019)",5,5
+"Blakesley et al. (2010)",4,4
+"Bonnevie (2014)",4,4
+"Martin et al. (2015)",46,3
+"Arnold et al. (2016)",3,3
+"Robinson et al. (2008)",3,3
+"Schaub et al. (2006)",3,3
+"Karr et al. (1990)",17,2
+"Blake & Loiselle (2002)",4,2
+"Bulluck et al. (2013)",2,2
+"Camfield et al. (2010)",2,2
+"Dobson (1987)",2,2
+"Morganti et al. (2018)",2,2
+"Newton et al. (1993)",2,2
+"Pakanen et al. (2015)",2,2
+"Phillips et al. (2018)",2,2
+"Seamans et al. (1999)",2,2
+"Thaxter et al. (2006)",2,2
+"Stevens et al. (2013)",39,1
+"Muñoz et al. (2018)",38,1
+"Scholer et al. (2019)",37,1
+"Blake & Loiselle (2013)",35,1
+"Wolfe et al. (2014)",29,1
+"Peach et al. (2001)",28,1
+"Korfanta et al. (2012)",22,1
+"Srinivasan (2019)",20,1
+"Brawn et al. (2017)",18,1
+"Johnston et al. (1997)",17,1
+"Jullien & Clobert (2000)",17,1
+"Francis et al. (1999)",16,1
+"Francis & Wells (2003)",14,1
+"Whitaker et al. (2008)",13,1
+"Wilson et al. (2011)",8,1
+"Ruiz-Gutíerrez et al. (2012)",6,1
+"Parker et al. (2006)",5,1
+"Rogers & Meisel (2009)",5,1
+"Thomson & Estades (2012)",5,1
+"Willson (2004)",5,1
+"Payevsky et al. (1997)",4,1
+"Lloyd et al. (2014)",3,1
+"Shitikov et al. (2017)",3,1
+"Bayne & Hobson (2002)",2,1
+"Camphuysen & Gronert (2012)",2,1
+"Gardali & Nur (2006)",2,1
+"Nol et al. (2012)",2,1
+"Robertson et al. (2016)",2,1
+"Ruiz-Gutíerrez et al. (2008)",2,1
+"Serrano et al. (2005)",2,1
+"Shitikov et al. (2018)",2,1
+"Taylor et al. (2015)",2,1
+"Alonso & Arizaga (2013)",1,1
+"Altwegg & Underhill (2006)",1,1
+"Altwegg et al. (2007)",1,1
+"Altwegg et al. (2006)",1,1
+"Arizaga & García (2013)",1,1
+"Bauchau et al. (1998)",1,1
+"Becker et al. (2018)",1,1
+"Bennetts et al. (1999)",1,1
+"Bijlsma et al. (2012)",1,1
+"Boano & Cucco (1991)",1,1
+"Boano & Silvano (2015)",1,1
+"Boano et al. (1993)",1,1
+"Boano et al. (2004)",1,1
+"Border et al. (2017)",1,1
+"Breton et al. (2008)",1,1
+"Budnik et al. (2000)",1,1
+"Bulit & Massoni (2011)",1,1
+"Calvert et al. (2006)",1,1
+"Chase et al. (1997)",1,1
+"Cilimburg et al. (2002)",1,1
+"Clark et al. (2018)",1,1
+"Cohen & Gratto-Trevor (2011)",1,1
+"Collins & Doherty (2006)",1,1
+"Collins et al. (2010)",1,1
+"Conroy et al. (1999)",1,1
+"Costa & Elias (1998)",1,1
+"Covas et al. (2004)",1,1
+"Cowley & Siriwardena (2005)",1,1
+"Cox & Jones (2010)",1,1
+"Craig et al. (2015)",1,1
+"Craig et al. (2004)",1,1
+"de Swardt & Peach (2001)",1,1
+"Delestrade & Stoyanov (1995)",1,1
+"Dhondt et al. (1998)",1,1
+"Domínguez & Cuadrado (1994)",1,1
+"Duckworth et al. (2012)",1,1
+"Duriez et al. (2012)",1,1
+"Evans et al. (2009)",1,1
+"Ferro & Boano (1994)",1,1
+"Francis & Saurola (2002)",1,1
+"Franke et al. (2011)",1,1
+"Frantz et al. (2019)",1,1
+"Gardali et al. (2000)",1,1
+"Gardali et al. (2003)",1,1
+"Grande et al. (2009)",1,1
+"Green et al. (1997)",1,1
+"Hernández-Matías et al. (2011)",1,1
+"Hiraldo et al. (1996)",1,1
+"Hunt et al. (2013)",1,1
+"Hámori et al. (2017)",1,1
+"Jankowiak et al. (2016)",1,1
+"Johnson et al. (2010)",1,1
+"Johnstone (1998)",1,1
+"Karell et al. (2009)",1,1
+"Kauffman et al. (2003)",1,1
+"Keyser et al. (2004)",1,1
+"Koivula et al. (2008)",1,1
+"Kostecke et al. (2008)",1,1
+"Kralj et al. (2018)",1,1
+"Larson et al. (2000)",1,1
+"Le Gouar et al. (2011)",1,1
+"Ledwón et al. (2013)",1,1
+"Lieske et al. (2000)",1,1
+"Lloyd (2008)",1,1
+"Loison et al. (2002)",1,1
+"Low et al. (2010)",1,1
+"López-Iborra et al. (2006)",1,1
+"López-Iborra et al. (2013)",1,1
+"Macario et al. (2017)",1,1
+"Martin et al. (2009)",1,1
+"Marvelde et al. (2009)",1,1
+"Masoero et al. (2016)",1,1
+"Mazerolle et al. (2005)",1,1
+"McDonald (1993)",1,1
+"McGrady et al. (2016)",1,1
+"Mendez et al. (2018)",1,1
+"Migot (1992)",1,1
+"Mihoub et al. (2010)",1,1
+"Miller et al. (2003)",1,1
+"Millsap (2002)",1,1
+"Monticelli et al. (2014)",1,1
+"Morrison (2003)",1,1
+"Mullin et al. (2010)",1,1
+"Mumme (2015)",1,1
+"Murphy (2001)",1,1
+"Murphy et al. (2017)",1,1
+"Møller et al. (2005)",1,1
+"Nevoux et al. (2008)",1,1
+"Noer & Secher (1983)",1,1
+"North (1979)",1,1
+"Nur et al. (2004)",1,1
+"Ortega & Ortega (2009)",1,1
+"Pakanen & Thorup (2016)",1,1
+"Palestis & Hines (2015)",1,1
+"Paton (1994)",1,1
+"Payne & Payne (1990)",1,1
+"Pellegrini et al. (2011)",1,1
+"Pichorim & Monteiro-Filho (2010)",1,1
+"Picozzi (1984)",1,1
+"Podmokla et al. (2017)",1,1
+"Pradel et al. (1997)",1,1
+"Presti et al. (2018)",1,1
+"Prugnolle et al. (2003)",1,1
+"Rangel-Salazar et. al (2008)",1,1
+"Redmond & Murphy (2011)",1,1
+"Renken & Smith (1995)",1,1
+"Reynolds & Joy (2006)",1,1
+"Robinson (2010)",1,1
+"Robinson et al. (2010)",1,1
+"Rockwell et al. (2017)",1,1
+"Rodrigues et al. (2013)",1,1
+"Rodríguez-Ruiz et al. (2019)",1,1
+"Ryder & Sillett (2016)",1,1
+"Saalfeld et al. (2013)",1,1
+"Salgado-Oritz et al. (2008)",1,1
+"Sandercock et al. (2005)",1,1
+"Sankamethawee et al. (2011)",1,1
+"Saunders et al. (2014)",1,1
+"Schaub & von Hirschheydt (2009)",1,1
+"Schmutz et al. (2006)",1,1
+"Schmutz et al. (2008)",1,1
+"Sergio et al. (2011)",1,1
+"Shitikov et al. (2013a)",1,1
+"Shitikov et al. (2013b)",1,1
+"Shitikov et al. (2016)",1,1
+"Sillet & Holmes (2002)",1,1
+"Silvano & Boano (2012)",1,1
+"Smart et al. (2010)",1,1
+"Smith et al. (2017)",1,1
+"Sofaer et al. (2014)",1,1
+"Spendelow et al. (2008)",1,1
+"Stenzel et al. (2011)",1,1
+"Stokke et al. (2005)",1,1
+"Stutchbury et al. (2009)",1,1
+"Szostek & Becker (2012)",1,1
+"Szép (1991)",1,1
+"Tang et al. (2017)",1,1
+"Tavares-Damasceno et al. (2017)",1,1
+"Tomson et al. (1997)",1,1
+"Versluijs et al. (2016)",1,1
+"Väli & Bergmanis (2017)",1,1
+"Wahl & Barbraud (2014)",1,1
+"Wellicome et al. (2014)",1,1
+"Wilke et al. (2017)",1,1
+"Willson & Pendleton (2008)",1,1
+"Wolfe et al. (2015)",1,1
+"Woltmann & Sherry (2011)",1,1
+"Zimmerman et al. (2007)",1,1
+"Zöckler et al. (2010)",1,1

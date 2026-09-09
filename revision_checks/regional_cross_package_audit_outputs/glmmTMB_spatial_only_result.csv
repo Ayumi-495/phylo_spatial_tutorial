@@ -1,0 +1,2 @@
+"package","model","n","studies","sites","mean","ci_lb","ci_ub","iid_effect_variance","spatial_variance","spatial_sd","rho_km","logLik_REML","AIC_REML","pdHess","optimizer_convergence","diagnose_ok","warnings"
+"glmmTMB","regional_spatial_only",186,30,32,-0.0972717246000634,-0.490883535401115,0.296340086200989,0.213704182877356,0.62565914997679,0.790986188233897,28.9628042218124,-241.320699842274,490.641399684547,TRUE,0,FALSE,""

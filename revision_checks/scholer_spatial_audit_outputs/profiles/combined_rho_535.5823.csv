@@ -1,0 +1,2 @@
+"model","parameter","fixed_value","estimated_tau2","estimated_rho_km","logLik_REML","AIC_REML","elapsed_seconds","convergence_status","warnings"
+"combined","rho",535.5823133,0.0204158507498481,535.5823133,-823.544921980215,1655.08984396043,31.953,"completed_no_explicit_optimizer_status","Setting class(x) to multiple strings (""vcovmat"", ""dsyMatrix"", ...); result will no longer be an S4 object"

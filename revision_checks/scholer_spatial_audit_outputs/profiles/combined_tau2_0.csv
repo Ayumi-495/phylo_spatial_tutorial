@@ -1,0 +1,2 @@
+"model","parameter","fixed_value","estimated_tau2","estimated_rho_km","logLik_REML","AIC_REML","elapsed_seconds","convergence_status","warnings"
+"combined","tau2",0,0,4085.68139361813,-825.23928993561,1658.47857987122,8.984,"completed_no_explicit_optimizer_status",""

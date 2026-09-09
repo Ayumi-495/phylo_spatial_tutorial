@@ -1,0 +1,6 @@
+R: R version 4.5.3 (2026-03-11)
+metafor: 5.0.1
+geosphere: 1.5.20
+Distance method: geosphere::distm(..., fun = geosphere::distGeo) / 1000; WGS84 ellipsoidal great-circle kilometres.
+Sampling-error assumption: V = var_Hedges, hence diagonal and independent.
+Spatial outer group: const has one level, so spatial covariance is allowed across studies.

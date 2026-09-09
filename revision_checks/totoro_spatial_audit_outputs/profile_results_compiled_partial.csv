@@ -1,0 +1,40 @@
+"model","component","value","logLik_REML","AIC_REML","status","elapsed_seconds","warnings","delta_logLik_from_profile_max"
+"combined","rho",0.03,-4018.48948181145,8044.97896362289,"completed_no_explicit_optimizer_status",131.518,NA,-0.150951071449981
+"combined","rho",0.1,-4018.48948191917,8044.97896383835,"completed_no_explicit_optimizer_status",132.299,NA,-0.150951179170079
+"combined","rho",0.3,-4018.48948191872,8044.97896383745,"completed_no_explicit_optimizer_status",135.209,NA,-0.150951178719879
+"combined","rho",1,-4018.48948178573,8044.97896357145,"completed_no_explicit_optimizer_status",198.321,NA,-0.150951045729926
+"combined","rho",3,-4018.48948200865,8044.97896401729,"completed_no_explicit_optimizer_status",443.21,NA,-0.15095126865026
+"combined","rho",100,-4018.33853074,8044.67706148001,"completed_no_explicit_optimizer_status",535.038,"Setting class(x) to multiple strings (""vcovmat"", ""dsyMatrix"", ...); result will no longer be an S4 object",0
+"combined","tau2",0,-4018.4894814454,8044.9789628908,"completed_no_explicit_optimizer_status",48.833,NA,-0.687136548070157
+"combined","tau2",0.005,-4018.27965466205,8044.5593093241,"completed_no_explicit_optimizer_status",369.592,"Setting class(x) to multiple strings (""vcovmat"", ""dsyMatrix"", ...); result will no longer be an S4 object",-0.477309764719848
+"combined","tau2",0.01,-4018.13157281475,8044.26314562951,"completed_no_explicit_optimizer_status",328.207,"Setting class(x) to multiple strings (""vcovmat"", ""dsyMatrix"", ...); result will no longer be an S4 object",-0.329227917420212
+"combined","tau2",0.02,-4017.94995588354,8043.89991176707,"completed_no_explicit_optimizer_status",342.551,"Setting class(x) to multiple strings (""vcovmat"", ""dsyMatrix"", ...); result will no longer be an S4 object",-0.147610986210111
+"combined","tau2",0.04,-4017.83897149077,8043.67794298155,"completed_no_explicit_optimizer_status",514.154,"Setting class(x) to multiple strings (""vcovmat"", ""dsyMatrix"", ...); result will no longer be an S4 object",-0.0366265934399053
+"combined","tau2",0.06,-4017.80234489733,8043.60468979465,"completed_no_explicit_optimizer_status",560.719,"Setting class(x) to multiple strings (""vcovmat"", ""dsyMatrix"", ...); result will no longer be an S4 object",0
+"combined","tau2",0.1,-4018.26480483149,8044.52960966298,"completed_no_explicit_optimizer_status",375.624,"Setting class(x) to multiple strings (""vcovmat"", ""dsyMatrix"", ...); result will no longer be an S4 object",-0.462459934160051
+"combined","tau2",0.2,-4018.39530450732,8044.79060901463,"completed_no_explicit_optimizer_status",457.201,"Setting class(x) to multiple strings (""vcovmat"", ""dsyMatrix"", ...); result will no longer be an S4 object",-0.592959609989975
+"combined","tau2",0.4,-4018.39695342535,8044.79390685069,"completed_no_explicit_optimizer_status",472.077,"Setting class(x) to multiple strings (""vcovmat"", ""dsyMatrix"", ...); result will no longer be an S4 object",-0.594608528020217
+"combined","tau2",0.8,-4018.39772437636,8044.79544875273,"completed_no_explicit_optimizer_status",460.548,"Setting class(x) to multiple strings (""vcovmat"", ""dsyMatrix"", ...); result will no longer be an S4 object",-0.595379479030271
+"combined","tau2",1.6,-4018.39809789675,8044.79619579349,"completed_no_explicit_optimizer_status",449.275,"Setting class(x) to multiple strings (""vcovmat"", ""dsyMatrix"", ...); result will no longer be an S4 object",-0.595752999420256
+"spatial_only","rho",0.005,-4034.63007297149,8075.26014594299,"completed_no_explicit_optimizer_status",36.329,NA,-0.174281960539702
+"spatial_only","rho",0.01,-4034.60470117085,8075.2094023417,"completed_no_explicit_optimizer_status",36.686,NA,-0.14891015989997
+"spatial_only","rho",0.02,-4034.53126464073,8075.06252928146,"completed_no_explicit_optimizer_status",40.432,NA,-0.0754736297799354
+"spatial_only","rho",0.03,-4034.49221154351,8074.98442308702,"completed_no_explicit_optimizer_status",40.352,NA,-0.0364205325599869
+"spatial_only","rho",0.05,-4034.47452545274,8074.94905090547,"completed_no_explicit_optimizer_status",36.603,NA,-0.0187344417900022
+"spatial_only","rho",0.08,-4034.47792214508,8074.95584429015,"completed_no_explicit_optimizer_status",40.171,NA,-0.0221311341297223
+"spatial_only","rho",0.15,-4034.45579101095,8074.91158202189,"completed_no_explicit_optimizer_status",39.531,NA,0
+"spatial_only","rho",0.3,-4034.64652535159,8075.29305070318,"completed_no_explicit_optimizer_status",40.125,NA,-0.190734340639665
+"spatial_only","rho",1,-4037.4749350353,8080.94987007061,"completed_no_explicit_optimizer_status",41.459,NA,-3.01914402434977
+"spatial_only","rho",3,-4047.55525391151,8101.11050782303,"completed_no_explicit_optimizer_status",79.643,NA,-13.09946290056
+"spatial_only","rho",10,-4073.78188773994,8153.56377547989,"completed_no_explicit_optimizer_status",264.653,NA,-39.3260967289898
+"spatial_only","rho",100,-4124.37062614526,8254.74125229053,"completed_no_explicit_optimizer_status",183.071,"Setting class(x) to multiple strings (""vcovmat"", ""dsyMatrix"", ...); result will no longer be an S4 object",-89.9148351343097
+"spatial_only","tau2",0,-4412.70993872848,8831.41987745695,"completed_no_explicit_optimizer_status",20.507,NA,-378.25466621769
+"spatial_only","tau2",0.25,-4148.46212454154,8302.92424908309,"completed_no_explicit_optimizer_status",128.575,NA,-114.00685203075
+"spatial_only","tau2",0.5,-4074.44868917021,8154.89737834041,"completed_no_explicit_optimizer_status",142.361,NA,-39.9934166594198
+"spatial_only","tau2",0.8,-4043.85387501532,8093.70775003064,"completed_no_explicit_optimizer_status",184.396,NA,-9.39860250453012
+"spatial_only","tau2",1,-4036.68061912639,8079.36123825277,"completed_no_explicit_optimizer_status",169.136,NA,-2.22534661559985
+"spatial_only","tau2",1.23102644501013,-4034.45527251079,8074.91054502158,"completed_no_explicit_optimizer_status",178.017,NA,0
+"spatial_only","tau2",1.5,-4036.37059925831,8078.74119851661,"completed_no_explicit_optimizer_status",192.742,NA,-1.91532674751988
+"spatial_only","tau2",2,-4046.27633067211,8098.55266134423,"completed_no_explicit_optimizer_status",134.452,NA,-11.8210581613198
+"spatial_only","tau2",3,-4071.88280174005,8149.76560348009,"completed_no_explicit_optimizer_status",192.848,NA,-37.42752922926
+"spatial_only","tau2",5,-4121.10465514659,8248.20931029317,"completed_no_explicit_optimizer_status",270.903,NA,-86.6493826357996

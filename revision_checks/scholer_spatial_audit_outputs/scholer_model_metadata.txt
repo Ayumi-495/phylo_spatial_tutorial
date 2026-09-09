@@ -1,0 +1,8 @@
+R: R version 4.5.3 (2026-03-11)
+metafor: 5.0.1
+Dataset: Scholer et al. full data; 949 effect sizes, 205 references, 454 recorded coordinate locations.
+Distance: WGS84 ellipsoidal great-circle kilometres from geosphere::distGeo(), inherited from the audited prepared data.
+Sampling variance: vi = se^2; V is diagonal under the retained independent-sampling-error assumption.
+Fixed effects: intercept only. Common estimation/test settings: method=REML, test=t, sparse=TRUE.
+Spatial outer group: const has one level, allowing covariance across studies.
+No iid location intercept is fitted.

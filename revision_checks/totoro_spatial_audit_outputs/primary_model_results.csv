@@ -1,0 +1,4 @@
+"model","mean","ci_lb","ci_ub","sigma2_effect","sigma2_study","tau2_spatial","rho_km","logLik_REML","AIC_REML","elapsed_seconds","warnings","convergence_status"
+"unstructured_only",-0.345388931335265,-0.470194996581505,-0.220582866089026,0.775372663638828,1.24172752044572,0,0,-4018.4894814454,8042.9789628908,2.148,NA,"completed_no_explicit_optimizer_status"
+"spatial_only",-0.334044259593893,-0.459966263820848,-0.208122255366938,0.793428772264592,NA,1.23102644501013,0.0500339517425388,-4034.47452543364,8076.94905086729,408.839,NA,"completed_no_explicit_optimizer_status"
+"combined",-0.348936921350419,-0.491471878696621,-0.206401964004218,0.775349902740361,1.16654926669368,0.0618844513121274,384.958293862223,-4017.80207225388,8045.60414450776,876.702,"Setting class(x) to multiple strings (""vcovmat"", ""dsyMatrix"", ...); result will no longer be an S4 object","completed_no_explicit_optimizer_status"

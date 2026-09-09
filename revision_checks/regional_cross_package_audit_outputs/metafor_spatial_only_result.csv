@@ -1,0 +1,2 @@
+"package","model","n","studies","sites","mean","ci_lb","ci_ub","iid_effect_variance","spatial_variance","rho_km","logLik_REML","AIC_REML","warnings"
+"metafor","regional_spatial_only",186,30,32,-0.0972716725912152,-0.489461813326107,0.294918468143677,0.213704231818156,0.625659560726298,28.9628455138008,-241.320699842274,490.641399684548,"Setting class(x) to multiple strings (""vcovmat"", ""dsyMatrix"", ...); result will no longer be an S4 object"

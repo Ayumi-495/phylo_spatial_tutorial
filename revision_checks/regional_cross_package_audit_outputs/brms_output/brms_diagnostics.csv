@@ -1,0 +1,2 @@
+"max_rhat","min_bulk_ess","min_tail_ess","divergences","max_treedepth_seen","max_treedepth","rhat_ok","ess_ok","divergences_ok","treedepth_ok"
+1.00233340831306,1121.42116189724,1707.82332934417,0,7,12,TRUE,TRUE,TRUE,TRUE

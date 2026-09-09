@@ -1,0 +1,5 @@
+pdHess: TRUE
+optimizer convergence: 0
+optimizer message: relative convergence (4)
+diagnose() returned: FALSE
+diagnose() flagged an unusually large absolute Z statistic for the Gaussian dispersion intercept; this is a Wald-approximation caution, not an optimizer convergence failure.

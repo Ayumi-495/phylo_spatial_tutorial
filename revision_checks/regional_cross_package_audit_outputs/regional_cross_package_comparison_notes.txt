@@ -1,0 +1,4 @@
+The metafor and glmmTMB rows use REML and the same known diagonal sampling VCV; metafor used REMLf=FALSE to match the equalto likelihood convention.
+The brms row is posterior inference, not a REML/AIC fit; its intervals are 95% credible intervals.
+brms sigma^2 and sdgp^2/rho summaries are posterior quantiles transformed draw-by-draw, not squares of interval endpoints.
+The brms GP has 32 unique coordinate inputs because gp() groups repeated x_km/y_km values; no study-level intercept was included.

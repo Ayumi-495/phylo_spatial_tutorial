@@ -1350,12 +1350,6 @@ orchard_plot(res1,
 
 ```
 
-<div style="display: none">
-
-The following legacy package-specific examples have not been rerun under the
-verified study/location structure and are intentionally omitted from the
-rendered tutorial pending a separate package-comparison audit.
-
 ##### brms
 
 ```{r}
@@ -2526,7 +2520,7 @@ tmb_p2
 
 ## How to make a spatial distance matrix?
 
-Spatial meta-analysis models residual similarity as a function of separation among recorded coordinate locations. The required input is a distance matrix whose row and column order matches the levels of the location factor used in the model. For global data, calculate ellipsoidal great-circle distances in kilometres from longitude and latitude rather than projecting all observations to EPSG:3857.
+Spatial meta-analysis models residual similarity as a function of separation among recorded coordinate locations. The required input is a distance matrix whose row and column order matches the levels of the location factor used in the model. For global data, calculate ellipsoidal great-circle distances in kilometres from longitude and latitude rather than applying one global planar projection.
 
 ### Step 1. Prepare the recorded coordinate locations
 
@@ -2611,8 +2605,6 @@ stopifnot(all(abs(diag(distance_km)) < 1e-10), all(distance_km >= 0))
 
 The exponential kernel assumes that the similarity between two effect sizes decreases smoothly as the geographic distance between their locations increases. As a result, nearby sites are more strongly correlated, whereas correlation declines exponentially with distance and becomes negligible for sites that are far apart. This can provide a simple way to represent spatial autocorrelation without requiring a hard distance threshold.
 
-::: panel-tabset
-
 ##### metafor
 We use the same effect sizes, diagonal sampling variances, intercept-only fixed effect, and effect-size-level heterogeneity in all three models. `const` is a one-level outer grouping factor, so the spatial covariance is allowed across studies. The spatial random term is indexed by `site_id`, not effect ID.
 
@@ -2650,1304 +2642,229 @@ The unstructured-only model estimates study-level heterogeneity without a spatia
 
 The pooled mean is similar under all three covariance specifications. In contrast, variance allocation and conclusions about spatial structure depend strongly on the model. The spatial-only model has a large spatial variance, but its extremely short `rho` is poorly resolved; it should not be read as evidence for strong broad-scale spatial autocorrelation. In the combined model, the additional spatial component is weakly identified once unstructured study-level heterogeneity is included. A profile likelihood with spatial variance fixed to zero was only 0.687 log-likelihood units below the maximum, and `rho` values of approximately 200--3,000 km gave almost indistinguishable likelihoods. Therefore, the combined estimate of about 385 km is not evidence for a well-defined spatial correlation range.
 
-##### brms
+#### Squared-exponential kernel (concise illustration)
 
-In `brms`, the covariance function of the Gaussian process is controlled by the `cov` argument. To use an exponential kernel, set `cov = "exponential"`. Note that scale determines whether the input predictors are rescaled (by default, to make the maximum Euclidean distance equal to 1). If the coordinates are already expressed in meaningful units such as kilometres, and you want the GP length-scale parameter to be interpretable in those units, it is advisable to use s`cale = FALSE`.
-
-```{r}
-#| eval: false
-
-dat_Roger$effect_id <- as.character(dat_Roger$effect_id)
-vcv <- diag(dat_Roger$var_Hedges)
-
-rownames(vcv) <- colnames(vcv) <- dat_Roger$effect_id
-
-fit_sp_eg1_exp_brms <- bf(d_Hedges ~ 1 +
-                 # (1|site_id) + # this is site-level random effect
-                 (1|gr(effect_id, cov = vcv)) + # this is m (sampling error)
-                gp(x_km, y_km, 
-                   cov = "exponential",
-                   scale = FALSE)
-                )
-
-# generate default priors
-prior <- default_prior(fit_sp_eg1_exp_brms, 
-                           data = dat_Roger, 
-                           data2 = list(vcv = vcv),
-                           family = gaussian())
-prior <- c(
-  prior,
-  set_prior("constant(1)", class = "sd", group = "effect_id"),
-  replace = TRUE
-) # meta-analysis assumes sampling variance is known so fixing this to 1
-prior
- #                            prior     class       coef     group resp dpar nlpar lb ub tag       source
- #          student_t(3, -0.1, 2.5) Intercept                                                     default
- #                           (flat)    lscale                                       0             default
- # inv_gamma(1.494197, 2141.138175)    lscale gpx_kmy_km                            0             default
- #             student_t(3, 0, 2.5)        sd                                       0             default
- #                      constant(1)        sd            effect_id                  0             default <- check this
- #                      constant(1)        sd  Intercept effect_id                  0        (vectorized) <- check this
- #             student_t(3, 0, 2.5)      sdgp                                       0             default
- #             student_t(3, 0, 2.5)      sdgp gpx_kmy_km                            0        (vectorized)
- #             student_t(3, 0, 2.5)     sigma                                       0             default
-
-# fitting model
-sp_eg1_exp_brms <- brm(
-  formula = fit_sp_eg1_exp_brms,
-  data = dat_Roger,
-  data2 = list(vcv=vcv),
-  chains = 2,
-  iter = 6000,
-  warmup = 3000,
-  prior = prior,
-  control = list(adapt_delta = 0.95, max_treedepth = 15)
-  )
-summary(sp_eg1_exp_brms)
-#  Family: gaussian 
-#   Links: mu = identity 
-# Formula: d_Hedges ~ 1 + (1 | gr(effect_id, cov = vcv)) + gp(x_km, y_km, cov = "exponential", scale = FALSE) 
-#    Data: dat_Roger (Number of observations: 2361) 
-#   Draws: 2 chains, each with iter = 6000; warmup = 3000; thin = 1;
-#          total post-warmup draws = 6000
-# 
-# Gaussian Process Hyperparameters:
-#                    Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sdgp(gpx_kmy_km)       1.14      0.07     1.00     1.29 1.00     1818     3552
-# lscale(gpx_kmy_km)   128.18     26.02    85.59   187.10 1.00     2227     2567
-# 
-# Multilevel Hyperparameters:
-# ~effect_id (Number of levels: 2361) 
-#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sd(Intercept)     1.00      0.00     1.00     1.00   NA       NA       NA
-# 
-# Regression Coefficients:
-#           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# Intercept    -0.32      0.09    -0.51    -0.15 1.00     1503     2737
-# 
-# Further Distributional Parameters:
-#       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sigma     0.97      0.02     0.92     1.01 1.00     3047     4199
-```
-
-##### glmmTMB
-
-In `glmmTMB`, the exponential spatial field is specified by `exp(pos + 0 | const)`, where `pos` is an index constructed from the spatial coordinates.
+The kernel can be changed without changing the recorded-coordinate grouping or the great-circle distance workflow. For example, this is the corresponding spatial-only Gaussian-kernel specification. It is an implementation illustration only: no numerical result is shown because the earlier projected-coordinate fit was not retained as an audited result.
 
 ```{r}
 #| eval: false
 
-dat_Roger$effect_id <- factor(dat_Roger$effect_id)
-dat_Roger$site_id <- factor(dat_Roger$site_id)
-
-VCV <- diag(dat_Roger$var_Hedges, nrow = nrow(dat_Roger)) 
-rownames(VCV)<- colnames(VCV)<- dat_Roger$effect_id
-VCV[1:5, 1:5]
-
-dat_Roger$pos <- numFactor(dat_Roger$x_km, dat_Roger$y_km)
-
-system.time(
-  sp_eg1_exp_tmb <- glmmTMB(d_Hedges ~ 1 
-                   + equalto(0+effect_id|const, VCV)
-                   # + (1|site_id)
-                   + exp(pos+0|const),
-                   data = dat_Roger, 
-                   REML=TRUE)
-  )
- #   user  system elapsed 
- # 45.570   1.369  47.530 
-
-summary(sp_eg1_exp_tmb)　
-# Family: gaussian  ( identity )
-# Formula:          d_Hedges ~ 1 + equalto(0 + effect_id | const, VCV) + exp(pos +      0 | const)
-# Data: dat_Roger
-# 
-#       AIC       BIC    logLik -2*log(L)  df.resid 
-#    9088.5    9111.5   -4540.2    9080.5      2357 
-# 
-# Random effects:
-# 
-# Conditional model:
-#  Groups   Name                                     Variance  Std.Dev. Corr                                            
-#  const    effect_id1                                0.202208 0.44968                                                  
-#           effect_id10                               0.166676 0.40826  0.00                                            
-#           effect_id100                              0.225770 0.47515  0.00 0.00                                       
-#           effect_id1000                             0.197994 0.44497  0.00 0.00 0.00                                  
-#           effect_id1001                             3.676968 1.91754  0.00 0.00 0.00 0.00                             
-#           effect_id1002                             0.315616 0.56180  0.00 0.00 0.00 0.00 0.00                        
-#           effect_id1003                             0.305460 0.55268  0.00 0.00 0.00 0.00 0.00 0.00                   
-#           effect_id1004                             0.313426 0.55984  0.00 0.00 0.00 0.00 0.00 0.00 0.00              
-#           effect_id1005                             0.413540 0.64307  0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00         
-#           effect_id1006                             0.325726 0.57072  0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00    
-#           ...                                      ...       ...      ...  ...  ...  ...  ...  ...  ...  ...  ...  ...
-#  const.1  pos(16262.6644099893,-5204.51951303405)   1.866150 1.36607                                                  
-#           pos(16280.4755285163,-5116.14629455727)   1.866150 1.36607  0.00                                            
-#           pos(-7965.96086752978,-5019.4733863405)   1.866150 1.36607  0.00 0.00                                       
-#           pos(-7959.34359171906,-4693.06364429579)  1.866150 1.36607  0.00 0.00 0.00                                  
-#           pos(-7960.45678662699,-4691.63535918108)  1.866150 1.36607  0.00 0.00 0.00 0.00                             
-#           pos(-7096.61753807119,-4685.92422115392)  1.866150 1.36607  0.00 0.00 0.00 0.00 0.00                        
-#           pos(-7992.73943895704,-4607.717759142)    1.866150 1.36607  0.00 0.00 0.00 0.00 0.00 0.00                   
-#           pos(-7903.68384632242,-4579.4258128701)   1.866150 1.36607  0.00 0.00 0.00 0.00 0.00 0.00 0.00              
-#           pos(16237.0609271069,-4578.0132445546)    1.866150 1.36607  0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00         
-#           pos(16304.594788628,-4572.36489569299)    1.866150 1.36607  0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00    
-#           ...                                      ...       ...      ...  ...  ...  ...  ...  ...  ...  ...  ...  ...
-#  Residual                                           1.864305 1.36540                                                  
-# Number of obs: 2361, groups:  const, 1
-# 
-# Dispersion estimate for gaussian family (sigma^2): 1.86 
-# 
-# Conditional model:
-#             Estimate Std. Error z value Pr(>|z|)    
-# (Intercept) -0.40936    0.08139  -5.029 4.92e-07 ***
-
-head(confint(sp_eg1_exp_tmb), 10) 
-#                                                               2.5 %     97.5 %   Estimate
-# (Intercept)                                              -0.5688798 -0.2498315 -0.4093556
-# Std.Dev.pos(16262.6644099893,-5204.51951303405)|const.1   1.2417049  1.5028930  1.3660708
-# Std.Dev.pos(16280.4755285163,-5116.14629455727)|const.1   1.2417049  1.5028930  1.3660708
-# Std.Dev.pos(-7965.96086752978,-5019.4733863405)|const.1   1.2417049  1.5028930  1.3660708
-# Std.Dev.pos(-7959.34359171906,-4693.06364429579)|const.1  1.2417049  1.5028930  1.3660708
-# Std.Dev.pos(-7960.45678662699,-4691.63535918108)|const.1  1.2417049  1.5028930  1.3660708
-# Std.Dev.pos(-7096.61753807119,-4685.92422115392)|const.1  1.2417049  1.5028930  1.3660708
-# Std.Dev.pos(-7992.73943895704,-4607.717759142)|const.1    1.2417049  1.5028930  1.3660708
-# Std.Dev.pos(-7903.68384632242,-4579.4258128701)|const.1   1.2417049  1.5028930  1.3660708
-# Std.Dev.pos(16237.0609271069,-4578.0132445546)|const.1    1.2417049  1.5028930  1.3660708
-
-sigma(sp_eg1_exp_tmb) 
-# 1.365396
-sp_eg1_exp_tmb_varcor <- VarCorr(sp_eg1_exp_tmb)$cond
-exp(sp_eg1_exp_tmb$fit$par)
-#   betadisp (effect_id)     theta (tau/tau^2)      theta (rho)
-#   1.3653956               1.3660708 (1.866149)   0.2476221 
-
-```
-
-</div>
-
-The `metafor` comparison estimates a spatial variance ($\tau^2$) and a scale parameter ($\rho$). For an exponential correlation, $\rho$ controls the rate at which correlation declines with distance. Neither parameter should be interpreted solely from its point estimate: profile likelihoods assess whether the data distinguish the parameter from plausible alternatives.
-
-Spatial variance ($\tau^2$) describes the amount of heterogeneity assigned to the spatial component. The scale parameter ($\rho$) describes how the exponential correlation changes with great-circle distance. Both parameters can be weakly identified, so their profile likelihoods, rather than their point estimates alone, should guide interpretation.
-
-The sampling-error structure is held fixed across the three models through `V = var_Hedges`, which is diagonal under the independent-sampling-error assumption used here.
-
-The pooled mean remains negative and similar across the three covariance specifications. This robustness does not extend to the allocation of heterogeneity or to inference about spatial structure. The spatial-only model is a restricted model, and the combined model does not establish a well-defined spatial correlation range once study-level heterogeneity is included.
-
-:::
-
-#### Squared-exponential kernel (Gaussian process)
-
-::: panel-tabset
-
-##### metafor
-
-```{r}
-#| eval: False
-
-sp_eg1_gau_mf <- rma.mv(d_Hedges, var_Hedges, 
-                         random = list(
-                          ~ 1|effect_id,
-                          ~ x_km + y_km |const
-                          ), 
-                        struct = "SPGAU", 
-                        data = dat_Roger,
-                        sparse = TRUE,
-                        verbose = TRUE,
-                        method = "REML",
-                        test = "t"
-                        )
-
-summary(sp_eg1_gau_mf)
-# Multivariate Meta-Analysis Model (k = 2361; method: REML)
-# 
-# logLik    Deviance         AIC         BIC        AICc   
-# -4034.4772   8068.9544   8076.9544   8100.0201   8076.9714   
-# 
-# Variance Components:
-#   
-#   estim    sqrt  nlvls  fixed     factor 
-# sigma^2    0.7934  0.8907   2361     no  effect_id 
-# 
-# outer factor: const        (nlvls = 1)
-# inner term:   ~x_km + y_km (nlvls = 383)
-# 
-# estim    sqrt  fixed 
-# tau^2      1.2308  1.1094     no 
-# rho        0.0377             no 
-# 
-# Test for Heterogeneity:
-#   Q(df = 2360) = 21273.5149, p-val < .0001
-# 
-# Model Results:
-#   
-#   estimate      se     tval    df    pval    ci.lb    ci.ub      
-# -0.3340  0.0642  -5.2036  2360  <.0001  -0.4599  -0.2082  *** 
-```
-
-##### brms
-
--   *model is running* -
-
-```{r}
-#| eval: False
-
-dat_Roger$effect_id <- as.character(dat_Roger$effect_id)
-vcv <- diag(dat_Roger$var_Hedges)
-
-rownames(vcv) <- colnames(vcv) <- dat_Roger$effect_id
-
-fit_sp_eg1_gau_brms <- bf(d_Hedges ~ 1 +
-                            # (1|site_id) + # this is site-level random effect
-                            (1|gr(effect_id, cov = vcv)) + # this is m (sampling error)
-                            gp(x_km, y_km, 
-                               cov = "exp_quad",
-                               scale = FALSE)
+spatial_only_gaussian <- rma.mv(
+  yi = d_Hedges, V = var_Hedges,
+  random = list(~ 1 | effect_id, ~ site_id | const),
+  struct = "SPGAU", dist = list(site_id = distance_km),
+  data = dat_Roger, method = "REML", test = "t", sparse = TRUE
 )
+```
 
-# generate default priors
-prior <- default_prior(fit_sp_eg1_gau_brms, 
-                       data = dat_Roger, 
-                       data2 = list(vcv = vcv),
-                       family = gaussian())
-prior <- c(
-  prior,
-  set_prior("constant(1)", class = "sd", group = "effect_id"),
-  replace = TRUE
-) # meta-analysis assumes sampling variance is known so fixing this to 1
-prior
+### 2. Grau-Andrés et al. (2024): regional cross-package implementation
 
-# fitting model
-sp_eg1_gau_brms <- brm(
-  formula = fit_sp_eg1_gau_brms,
-  data = dat_Roger,
-  data2 = list(vcv=vcv),
-  chains = 2,
-  iter = 6000,
-  warmup = 3000,
-  prior = prior,
-  control = list(adapt_delta = 0.95, max_treedepth = 15)
+The global example above requires great-circle geometry because a single planar projection would distort distances across the full dataset. To demonstrate analogous model specifications in `metafor`, `glmmTMB`, and `brms`, we use the full Spain-labelled subset: 186 effect sizes from 30 studies at 32 recorded-coordinate locations. The geographically isolated singleton is retained. Spain was selected from objective geographic and data-structure criteria, before fitting: it is geographically coherent, retains multiple studies and locations, and can be represented with one regional projection with small distance distortion. It was not selected from model estimates or package agreement.
+
+The subset uses a WGS84 Lambert Conformal Conic projection with projected coordinates in kilometres. Its maximum pairwise distance distortion relative to WGS84 ellipsoidal great-circle distance is 0.103%.
+
+```{r}
+#| eval: false
+
+library(sf)
+library(geosphere)
+
+dat_spain <- read.csv(here("data", "Roger_etal_2024", "Roger_etal_2024.csv")) |>
+  filter(country == "Spain", !is.na(latitude), !is.na(longitude))
+
+stopifnot(nrow(dat_spain) == 186L, all(dat_spain$var_Hedges > 0))
+dat_spain$effect_id <- factor(sprintf("effect_%04d", seq_len(nrow(dat_spain))))
+dat_spain$study_id <- factor(dat_spain$study_id)
+dat_spain$site_key <- sprintf("%.8f_%.8f", dat_spain$latitude, dat_spain$longitude)
+spain_site_levels <- sort(unique(dat_spain$site_key))
+dat_spain$site_id <- factor(dat_spain$site_key, levels = spain_site_levels)
+dat_spain$const <- factor("all_sites")
+stopifnot(nlevels(dat_spain$study_id) == 30L, nlevels(dat_spain$site_id) == 32L)
+
+spain_sites <- unique(dat_spain[c("site_key", "latitude", "longitude")])
+spain_sites <- spain_sites[match(spain_site_levels, spain_sites$site_key), ]
+spain_sites$site_id <- spain_site_levels
+
+spain_lcc <- "+proj=lcc +lat_1=38 +lat_2=43 +lat_0=40.5 +lon_0=-3.5 +datum=WGS84 +units=m +no_defs"
+spain_sf <- st_as_sf(spain_sites, coords = c("longitude", "latitude"), crs = 4326)
+spain_xy_m <- st_coordinates(st_transform(spain_sf, spain_lcc))
+spain_sites$x_km <- spain_xy_m[, 1] / 1000
+spain_sites$y_km <- spain_xy_m[, 2] / 1000
+dat_spain$x_km <- spain_sites$x_km[match(dat_spain$site_key, spain_sites$site_key)]
+dat_spain$y_km <- spain_sites$y_km[match(dat_spain$site_key, spain_sites$site_key)]
+
+D_spain_km <- as.matrix(dist(spain_sites[c("x_km", "y_km")]))
+rownames(D_spain_km) <- colnames(D_spain_km) <- spain_site_levels
+stopifnot(identical(rownames(D_spain_km), levels(dat_spain$site_id)))
+stopifnot(identical(colnames(D_spain_km), levels(dat_spain$site_id)))
+
+D_spain_gc_km <- geosphere::distm(
+  as.matrix(spain_sites[c("longitude", "latitude")]), fun = geosphere::distGeo
+) / 1000
+distortion <- abs(D_spain_km[upper.tri(D_spain_km)] /
+                  D_spain_gc_km[upper.tri(D_spain_gc_km)] - 1)
+stopifnot(max(distortion) * 100 < 0.11)
+```
+
+All three implementations target the same spatial-only covariance decomposition:
+
+$$\mathbf{V} + \sigma^2_{\mathrm{effect}}\mathbf{I} + \tau^2_{\mathrm{spatial}}\mathbf{R}(\rho),$$
+
+where $\mathbf{V}$ is the known diagonal sampling-variance matrix and, for the exponential kernel,
+
+$$\operatorname{Cor}(d) = \exp(-d / \rho).$$
+
+No study-level random intercept is included in this regional comparison.
+
+#### `metafor`
+
+```{r}
+#| eval: false
+
+spain_metafor <- rma.mv(
+  yi = d_Hedges, V = var_Hedges,
+  random = list(~ 1 | effect_id, ~ site_id | const),
+  struct = "SPEXP", dist = list(site_id = D_spain_km),
+  data = dat_spain, method = "REML", test = "t", sparse = TRUE,
+  control = list(REMLf = FALSE)
 )
-summary(sp_eg1_gau_brms)
-
 ```
 
-##### glmmTMB
+`REMLf = FALSE` retains REML estimation and uses the likelihood convention matched by the `glmmTMB` `equalto()` implementation; it does not change the fitted variance or range estimates.
 
-```{r}
-#| eval: False
-
-VCV <- diag(dat_Roger$var_Hedges, nrow = nrow(dat_Roger)) 
-rownames(VCV)<- colnames(VCV)<- dat_Roger$effect_id
-VCV[1:5, 1:5]
-
-dat_Roger$pos <- numFactor(dat_Roger$x_km, dat_Roger$y_km)
-
-system.time(
-  sp_eg1_gau_tmb <- glmmTMB(d_Hedges ~ 1 
-                            + equalto(0+effect_id|const, VCV)
-                            # + (1|site_id)
-                            + gau(pos+0|const),
-                            data = dat_Roger, 
-                            REML=TRUE)
-)
-#   user  system elapsed 
-# 45.570   1.369  47.530 
-
-summary(sp_eg1_gau_tmb)　
-# Family: gaussian  ( identity )
-# Formula:          d_Hedges ~ 1 + equalto(0 + effect_id | const, VCV) + gau(pos +      0 | const)
-# Data: dat_Roger
-# 
-#       AIC       BIC    logLik -2*log(L)  df.resid 
-#    8084.6    8107.6   -4038.3    8076.6      2357 
-# 
-# Random effects:
-# 
-# Conditional model:
-#  Groups   Name                                     Variance  Std.Dev. Corr                    
-#  const    effect_id1                                0.202208 0.44968                          
-#           effect_id2                                0.166676 0.40826  0.00                    
-#           effect_id3                                0.225770 0.47515  0.00 0.00               
-#           effect_id4                                0.197994 0.44497  0.00 0.00 0.00          
-#           effect_id5                                3.676968 1.91754  0.00 0.00 0.00 0.00     
-#           effect_id6                                0.315616 0.56180  0.00 0.00 0.00 0.00 0.00
-#           effect_id7                                0.305460 0.55268  0.00 0.00 0.00 0.00 0.00
-#           effect_id8                                0.313426 0.55984  0.00 0.00 0.00 0.00 0.00
-#           effect_id9                                0.413540 0.64307  0.00 0.00 0.00 0.00 0.00
-#           effect_id10                               0.325726 0.57072  0.00 0.00 0.00 0.00 0.00
-#           ...                                      ...       ...      ...  ...  ...  ...  ... 
-#  const.1  pos(16262.6644099893,-5204.51951303405)   1.236050 1.11178                          
-#           pos(16280.4755285163,-5116.14629455727)   1.236050 1.11178  0.00                    
-#           pos(-7965.96086752978,-5019.4733863405)   1.236050 1.11178  0.00 0.00               
-#           pos(-7959.34359171906,-4693.06364429579)  1.236050 1.11178  0.00 0.00 0.00          
-#           pos(-7960.45678662699,-4691.63535918108)  1.236050 1.11178  0.00 0.00 0.00 0.00     
-#           pos(-7096.61753807119,-4685.92422115392)  1.236050 1.11178  0.00 0.00 0.00 0.00 0.00
-#           pos(-7992.73943895704,-4607.717759142)    1.236050 1.11178  0.00 0.00 0.00 0.00 0.00
-#           pos(-7903.68384632242,-4579.4258128701)   1.236050 1.11178  0.00 0.00 0.00 0.00 0.00
-#           pos(16237.0609271069,-4578.0132445546)    1.236050 1.11178  0.00 0.00 0.00 0.00 0.00
-#           pos(16304.594788628,-4572.36489569299)    1.236050 1.11178  0.00 0.00 0.00 0.00 0.00
-#           ...                                      ...       ...      ...  ...  ...  ...  ... 
-#  Residual                                           0.793988 0.89106   0.00                   
-#  0.00 0.00              
-#  0.00 0.00 0.00         
-#  0.00 0.00 0.00 0.00    
-#  ...  ...  ...  ...  ...
-#  0.00                   
-#  0.00 0.00              
-#  0.00 0.00 0.00         
-#  0.00 0.00 0.00 0.00    
-#  ...  ...  ...  ...  ...
-#                         
-# Number of obs: 2361, groups:  const, 1
-# 
-# Dispersion estimate for gaussian family (sigma^2): 0.794 
-# 
-# Conditional model:
-#             Estimate Std. Error z value Pr(>|z|)    
-# (Intercept) -0.33676    0.06479  -5.197 2.02e-07 ***
-
-sp_eg1_gau_tmb$fit$par
-# betadisp      theta      theta 
-# -0.1153437  0.1059605 -0.8393711
-
-head(confint(sp_eg1_gau_tmb), 10) 
-sigma(sp_eg1_gau_tmb) 
-# 0.8910599
-sp_eg1_gau_tmb_varcor <- VarCorr(sp_eg1_gau_tmb)$cond
-exp(sp_eg1_gau_tmb$fit$par)
-#  betadisp     theta     theta 
-# 0.8910599 1.1117780 0.4319821 
-```
-
-:::
-
-#### Visualisations
-
-::: panel-tabset
-
-##### metafor
-
-```{r}
-#| eval: FALSE
-
- ma_sp1_exp0_mf <- readRDS(here("Rdata", "tutorial_v2", "sp_eg1_exp_mf.rds"))
-metafor_sp_p1 <- orchaRd::orchard_plot(ma_sp1_exp0_mf, 
-                           group = "effect_id",
-                           xlab = "Effect size",
-                           angle = 45) + 
-  scale_x_discrete(labels = c("Overall effect")) +
-  scale_color_manual(values = "#CDAD00") +
-  scale_fill_manual(values = "#FFD700") + 
-  theme_classic()
-
-## random effect
-ci_var <- confint(ma_sp1_exp0_mf, level = 0.95) 
- 
-
-tbl2 <- tibble::as_tibble(ci_var, rownames = "term")
-# A tibble: 5 × 4
-# term    estimate  ci.lb ci.ub
-# <chr>      <dbl>  <dbl> <dbl>
-#   1 sigma^2    0.793 0.726  0.868
-# 2 sigma      0.891 0.852  0.932
-# 3 tau^2      1.23  1.01   1.50 
-# 4 tau        1.11  1.01   1.22 
-# 5 rho        0.174 0.0174 0.857
-
-tbl_var2 <- tbl2 %>% 
-  filter(term %in% c("tau^2","sigma^2")) %>% 
-  mutate(term = factor(term, levels = c("tau^2","sigma^2")))
-
-s_metafor_p1var <- ggplot(tbl_var2, aes(x = estimate, y = term)) +
-  geom_point(size = 3, color = "#528B8B") +
-  geom_errorbar(aes(xmin = ci.lb, xmax = ci.ub), height = 0.25, color = "#528B8B") +
-  # scale_x_continuous(limits = c(0.0, 1.80)) + 
-  labs(x = "Variance with with 95% CI", y = NULL) +
-  theme_classic(base_size = 12)
-
-tbl_rho2 <- tbl2 %>% 
-  filter(term == "rho")
-
-s_metafor_p1rho <- ggplot(tbl_rho2, aes(x = estimate, y = term)) +
-  geom_point(size = 3, color = "#CD6090") +
-  geom_errorbar(aes(xmin = ci.lb, xmax = ci.ub), 
-                height = 0.25, color = "#CD6090") +
-  labs(x = "rho with 95% CI", y = NULL) +
-  theme_classic(base_size = 12)
-
-metafor_sp_eg1 <- metafor_sp_p1 / (s_metafor_p1var+s_metafor_p1rho)
-metafor_sp_eg1
-
-```
-
-![metafor spatial MA eg.1](figs/tutorial/metafor_sp_eg1.png){width="80%"}
-
-
-##### brms
-
-```{r}
-#| eval: FALSE
-
-get_variables_dynamic <- function(model, pattern) {
-  variables <- get_variables(model)
-  variables[grep(pattern, variables)]
-}
-
-get_variables(sp_eg1_exp_brms)
-
-rename_vars_exp4 <- function(variable) {
-  variable <- as.character(variable)
-
-  # fixed
-  variable <- gsub("^b_Intercept$", "Overall effect", variable)
-
-  # residual SD (sigma in brms)
-  variable <- gsub("^sigma$", "Residual SD", variable)
-
-  # GP SD
-  variable <- gsub("^sdgp_gpx_kmy_km$", "SD of gp_x", variable)
-
-  # GP length-scale
-  variable <- gsub("^lscale_gpx_kmy_km$", "lscale", variable)
-
-  variable
-}
-
-### fixed effect ----
-visualize_fixed_effects_exp4 <- function(model) {
-  fixed_effect_vars <- get_variables_dynamic(model, "^b_")
-  if (length(fixed_effect_vars) == 0) {
-    message("No fixed effects found")
-    return(NULL)
-  }
- 
-  tryCatch({
-    fixed_effects_samples <- model %>%
-      spread_draws(!!!syms(fixed_effect_vars)) %>%
-      tidyr::pivot_longer(
-        cols      = dplyr::all_of(fixed_effect_vars),
-        names_to  = ".variable",
-        values_to = ".value"
-      ) %>%
-      dplyr::mutate(.variable = rename_vars_exp4(.variable))
-   
-    ggplot(fixed_effects_samples, aes(x = .value, y = .variable)) +
-      ggdist::stat_halfeye(
-        normalize      = "xy",
-        point_interval = "mean_qi",
-        fill           = "#FFD700",
-        color          = "#CDAD00"
-      ) +
-      geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
-      labs(y = "Fixed effects", x = "Posterior values") +
-      theme_classic()
-  }, error = function(e) {
-    message("Error in visualize_fixed_effects_exp4: ", e$message)
-    return(NULL)
-  })
-}
-
-### random effect ----
-sd_to_var <- function(df) {
-  df %>%
-    dplyr::mutate(
-      .value    = (.value)^2,
-      .variable = gsub("^SD of ", "Var of ", .variable)
-    )
-}
-
-#### random effect (Var) ----
-visualize_random_and_gp_var_exp4 <- function(model) {
- 
-  re_vars <- get_variables_dynamic(model, "^(sigma|sdgp_)")
- 
-  if (length(re_vars) == 0) {
-    message("No random or GP SD parameters found")
-    return(NULL)
-  }
- 
-  tryCatch({
-    samples <- model %>%
-      spread_draws(!!!syms(re_vars)) %>%
-      tidyr::pivot_longer(
-        cols      = dplyr::all_of(re_vars),
-        names_to  = ".variable",
-        values_to = ".value"
-      ) %>%
-      dplyr::mutate(.variable = rename_vars_exp4(.variable)) %>%
-      sd_to_var()
-   
-    ggplot(samples, aes(x = .value, y = .variable)) +
-      ggdist::stat_halfeye(
-        normalize      = "xy",
-        point_interval = "mean_qi",
-        fill           = "#B0E2FF",
-        color          = "#4F94CD"
-      ) +
-      geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
-      labs(
-        y = "Random and GP effects (variance)",
-        x = "Posterior values (variance)"
-      ) +
-      # scale_x_continuous(limits = c(0.7, 2.0)) + 
-      theme_classic()
-   
-  }, error = function(e) {
-    message("Error in visualize_random_and_gp_var_exp4: ", e$message)
-    return(NULL)
-  })
-}
-
-visualize_gp_lscale_exp4 <- function(model) {
-  gp_ls_vars <- get_variables_dynamic(model, "^lscale_")
-  if (length(gp_ls_vars) == 0) {
-    message("No GP length-scale parameters found")
-    return(NULL)
-  }
- 
-  tryCatch({
-    gp_ls_samples <- model %>%
-      spread_draws(!!!syms(gp_ls_vars)) %>%
-      tidyr::pivot_longer(
-        cols      = dplyr::all_of(gp_ls_vars),
-        names_to  = ".variable",
-        values_to = ".value"
-      ) %>%
-      dplyr::mutate(.variable = rename_vars_exp4(.variable))
-   
-    ggplot(gp_ls_samples, aes(x = .value, y = .variable)) +
-      ggdist::stat_halfeye(
-        normalize      = "xy",
-        point_interval = "mean_qi",
-        fill           = "#CD6090",
-        color          = "#8B3A62"
-      ) +
-      geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
-      labs(y = "lscale", x = "Posterior values") +
-      theme_classic()
-  }, error = function(e) {
-    message("Error in visualize_gp_lscale_exp4: ", e$message)
-    return(NULL)
-  })
-}
-
-s_brms_p1  <- visualize_fixed_effects_exp4(sp_eg1_exp_brms)
-s_metafor_p1sd <- visualize_random_and_gp_var_exp4(sp_eg1_exp_brms)
-s_metafor_p1lscale <- visualize_gp_lscale_exp4(sp_eg1_exp_brms)
-brms_sp2.1 <- s_brms_p1 / (s_metafor_p1sd + s_metafor_p1lscale)
-brms_sp2.1
-
-```
-![brms spatial MA eg.1](figs/tutorial/brms_sp2_eg1.png){width="80%"}
-
-::: 
-
-### 2. Scholer et al. (2021)
-
-We used the dataset accompanying [Scholer et al. (2020)](https://doi.org/10.1111/ele.13573), which was assembled for a meta-analysis of global avian survival across species and latitude. The dataset includes 949 estimates from 204 studies, with each row containing a survival estimate, its standard error, study and species identifiers, geographic coordinates, and several climatic and life-history variables. In our analyses, `logit_survival` was treated as the effect size (`yi`), and the known sampling variance was calculated as `vi` = `se^2`.
+#### `glmmTMB`
 
 ```{r}
 #| eval: false
 
-dat_scholer2020 <- read.csv(here("data","Scholer_2020", "Scholer_2020.csv"))
+VCV_spain <- diag(dat_spain$var_Hedges)
+rownames(VCV_spain) <- colnames(VCV_spain) <- levels(dat_spain$effect_id)
+stopifnot(identical(rownames(VCV_spain), levels(dat_spain$effect_id)))
+stopifnot(identical(colnames(VCV_spain), levels(dat_spain$effect_id)))
 
-head(dat_scholer2020)
-# logit_survival -> yi, 1/se -> vi^2
-
-dat_scholer2020 <- dat_scholer2020 |> 
-  mutate(vi = se^2)
-
-dat_scholer2020$const <- 1 # add constant for spatial models
-dat_scholer2020$effect_id <- seq_len(nrow(dat_scholer2020))
-
-coords2 <- cbind(dat_scholer2020$long, dat_scholer2020$lat)
-
-# project to a planar coordinate system and convert to kilometers
-dat_sf2 <- st_as_sf(dat_scholer2020, coords = c("long", "lat"), crs = 4326)
-dat_sf2_proj <- st_transform(dat_sf2, crs = 3857)
-
-coords_m <- st_coordinates(dat_sf2_proj)
-dat_scholer2020$x_km <- coords_m[,1] / 1000
-dat_scholer2020$y_km <- coords_m[,2] / 1000
-
-coords_km <- cbind(dat_scholer2020$x_km, dat_scholer2020$y_km)
-dist_matrix_euclid2 <- as.matrix(dist(coords_km))
-
-# row and column names
-rownames(dist_matrix_euclid2) <- dat_scholer2020$effect_id
-colnames(dist_matrix_euclid2) <- dat_scholer2020$effect_id
-
-dat_scholer2020 <- dat_scholer2020 |>
-  group_by(lat, long) |>
-  mutate(site_id = cur_group_id()) |>
-  ungroup()
-names(dat_scholer2020)
-dat_scholer2020 <- dat_scholer2020 |>
-  mutate(site_id = as.factor(site_id),
-         effect_id = as.factor(effect_id))
-nrow(dat_scholer2020)
-# [1] 949
-
-cat_vars <- dat_scholer2020 |>
-  dplyr::select(where( ~ is.factor(.x) || is.character(.x)))
-
-n_levels <- cat_vars |> 
-  dplyr::summarise(across(
-    everything(),
-    ~ dplyr::n_distinct(.x)
-  )) |> 
-  tidyr::pivot_longer(
-    cols = everything(),
-    names_to = "variable",
-    values_to = "n_levels"
-  )
-
-n_levels
-# A tibble: 15 × 2
-# variable     n_levels
-# <chr>           <int>
-# 1 ref               205
-# 2 order              15
-# 3 species           636
-# 4 common            636
-# 5 tip_label         625
-# 6 migration           2
-# 7 sitename          207
-# 8 country            46
-# 9 hemisphere          2
-# 10 passerine           2
-# 11 realm               2
-# 12 study_type          4
-# 13 auk_used            2
-# 14 geomean_used        9
-# 15 effect_id         949
-# 16 site_id           454
-```
-
-It looks multiple sampling locations and effect sizes per studies…
-
-```{r}
-#| eval: false
-
-site_coords <- dat_scholer2020 |>
-  distinct(site_id, x_km, y_km) |>
-  arrange(site_id)
-
-coords_site <- as.matrix(site_coords[, c("x_km", "y_km")])
-dist_site <- as.matrix(dist(coords_site))
-
-rownames(dist_site) <- as.character(site_coords$site_id)
-colnames(dist_site) <- as.character(site_coords$site_id)
-dist_site
-
-dat_scholer2020$site_id <- as.character(dat_scholer2020$site_id)
-
-```
-
-
-#### Exponential kernel
-
-::: panel-tabset
-
-We initially included `site_id` as a random effect, but the model yielded a zero estimate for it. As a result, we removed it from the following models.
-
-##### metafor
-
-```{r}
-#| eval: false
-
-sp_exp_metafor_eg2 <- rma.mv(
-  yi = logit_survival,
-  V  = vi,                      
-  random = list(
-    ~ 1 | effect_id,          
-    ~ 1 | ref,                   
-    ~ effect_id | const           
-  ),
-  struct = "SPEXP",
-  data = dat_scholer2020,
-  dist = list(site = dist_site), 
-  method = "REML",
-  test = "t",
-  sparse = TRUE,
-  verbose = TRUE
-)
-
-summary(sp_exp_metafor_eg2)
-# Multivariate Meta-Analysis Model (k = 949; method: REML)
-# 
-# Variance Components:
-# 
-#             estim    sqrt  nlvls  fixed     factor 
-# sigma^2.1  0.2255  0.4749    949     no  effect_id 
-# sigma^2.2  0.4471  0.6687    205     no        ref 
-# 
-# outer factor: const    (nlvls = 1)
-# inner term:   ~site_id (nlvls = 454)
-# 
-#               estim    sqrt  fixed 
-# tau^2        0.0207  0.1438     no 
-# rho        737.8164             no 
-# 
-# Test for Heterogeneity:
-# Q(df = 948) = 974007.4599, p-val < .0001
-# 
-# Model Results:
-# 
-# estimate      se     tval   df    pval   ci.lb   ci.ub      
-#   0.6540  0.0614  10.6455  948  <.0001  0.5334  0.7746  *** 
-
-confint(ma_sp2_exp)
-#           estimate  ci.lb  ci.ub 
-# sigma^2.1   0.2255 0.2025 0.2519 
-# sigma.1     0.4749 0.4500 0.5019 
-# 
-#           estimate  ci.lb  ci.ub 
-# sigma^2.2   0.4471 0.3308 0.5947 
-# sigma.2     0.6687 0.5751 0.7712 
-# 
-#       estimate  ci.lb    ci.ub 
-# tau^2   0.0207 0.0000 >10.0000 
-# tau     0.1438 0.0000  >3.1623 
-# 
-#     estimate    ci.lb      ci.ub 
-# rho 737.8164 <73.7816 >7378.1637 
-
-```
-
-##### brms
-
-```{r}
-#| eval: false
-dat_scholer2020$ref_id <- as.integer(factor(dat_scholer2020$ref))
-dat_scholer2020$effect_id <- as.character(dat_scholer2020$effect_id)
-vcv <- diag(dat_scholer2020$vi)
-
-rownames(vcv) <- colnames(vcv) <- dat_scholer2020$effect_id
-
-fit_gp_brms <- bf(logit_survival ~ 1 +
-                    (1|ref_id) + # this is site-level random effect
-                    (1|gr(effect_id, cov = vcv)) + # this is m (sampling error)
-                    gp(x_km, y_km, 
-                       cov = "exponential",
-                       scale = FALSE)
-)
-
-# generate default priors
-prior <- default_prior(fit_gp_brms, 
-                       data = dat_scholer2020, 
-                       data2 = list(vcv = vcv),
-                       family = gaussian())
-prior <- c(
-  prior,
-  set_prior("constant(1)", class = "sd", group = "effect_id"),
-  replace = TRUE
-) # meta-analysis assumes sampling variance is known so fixing this to 1
-prior
-
-sp_exp_brms_eg2 <- brm(
-        formula = fit_gp_brms,
-        data = dat_scholer2020,
-        data2 = list(vcv = vcv),
-        prior = prior,
-        iter = 6000, 
-        warmup = 3000,  
-        chains = num_chains,
-        backend = "cmdstanr",
-        threads = threading(threads_per_chain), 
-        control = list(adapt_delta = 0.95, max_treedepth = 15)
-        )
-
-summary(sp_exp_brms_eg2)
-# Family: gaussian 
-#   Links: mu = identity 
-# Formula: logit_survival ~ 1 + (1 | ref_id) + (1 | gr(effect_id, cov = vcv)) + gp(x_km, y_km, cov = "exponential", scale = FALSE) 
-#    Data: dat_scholer2020 (Number of observations: 949) 
-#   Draws: 2 chains, each with iter = 6000; warmup = 3000; thin = 1;
-#          total post-warmup draws = 6000
-# 
-# Gaussian Process Hyperparameters:
-#                    Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sdgp(gpx_kmy_km)       0.18      0.09     0.02     0.39 1.00      588      998
-# lscale(gpx_kmy_km)  4062.02  11170.84   495.01 21405.11 1.00     1562     2126
-# 
-# Multilevel Hyperparameters:
-# ~effect_id (Number of levels: 949) 
-#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sd(Intercept)     1.00      0.00     1.00     1.00   NA       NA       NA
-# 
-# ~ref_id (Number of levels: 205) 
-#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sd(Intercept)     0.67      0.05     0.57     0.77 1.00     1520     2637
-# 
-# Regression Coefficients:
-#           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# Intercept     0.64      0.10     0.45     0.82 1.00     1854     2469
-# 
-# Further Distributional Parameters:
-#       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sigma     0.48      0.01     0.45     0.50 1.00     3887     4592
-# 
-# Draws were sampled using sample(hmc). For each parameter, Bulk_ESS
-# and Tail_ESS are effective sample size measures, and Rhat is the potential
-# scale reduction factor on split chains (at convergence, Rhat = 1).
-```
-
-##### glmmTMB
-
-
-```{r}
-#| eval: false
-
-rownames(dist_matrix_euclid2) <- dat_scholer2020$effect_id
-colnames(dist_matrix_euclid2) <- dat_scholer2020$effect_id
-
-VCV <- diag(dat_scholer2020$vi)
-rownames(VCV) <- colnames(VCV) <- levels(dat_scholer2020$effect_id)
-dat_scholer2020$pos <- numFactor(dat_scholer2020$x_km, dat_scholer2020$y_km)
-
-sp_exp_tmb_eg2 <- glmmTMB(
-  logit_survival ~ 1 +
-    equalto(0 + effect_id | const, VCV) +
-    (1 | ref) +
+dat_spain$pos <- glmmTMB::numFactor(dat_spain$x_km, dat_spain$y_km)
+spain_glmmTMB <- glmmTMB::glmmTMB(
+  d_Hedges ~ 1 +
+    equalto(0 + effect_id | const, VCV_spain) +
     exp(pos + 0 | const),
-  data = dat_scholer2020,
-  family = gaussian(),
-  REML = TRUE
+  data = dat_spain, REML = TRUE
 )
 
-summary(sp_exp_tmb_eg2)
-# Warning message:
-# In finalizeTMB(TMBStruc, obj, fit, h, data.tmb.old) :
-#   Model convergence problem; non-positive-definite Hessian matrix. See vignette('troubleshooting')
-
-#  Family: gaussian  ( identity )
-# Formula: logit_survival ~ 1 + equalto(0 + effect_id | const, VCV) + (1 | ref) + exp(pos + 0 | const)
-# Data: dat_scholer2020
-# 
-#       AIC       BIC    logLik -2*log(L)  df.resid 
-#        NA        NA        NA        NA       944 
-# 
-# Random effects:
-# 
-# Conditional model:
-#  Groups   Name                                     Variance  Std.Dev.  Corr                    
-#  const    effect_id1                               3.600e-03 6.000e-02                         
-#           effect_id2                               1.000e-02 1.000e-01 0.00                    
-#           effect_id3                               9.610e-04 3.100e-02 0.00 0.00               
-#           effect_id4                               5.290e-04 2.300e-02 0.00 0.00 0.00          
-#           effect_id5                               2.500e-03 5.000e-02 0.00 0.00 0.00 0.00     
-#           effect_id6                               6.250e-04 2.500e-02 0.00 0.00 0.00 0.00 0.00
-#           effect_id7                               6.400e-05 8.000e-03 0.00 0.00 0.00 0.00 0.00
-#           effect_id8                               3.600e-05 6.000e-03 0.00 0.00 0.00 0.00 0.00
-#           effect_id9                               1.600e-03 4.000e-02 0.00 0.00 0.00 0.00 0.00
-#           effect_id10                              8.100e-03 9.000e-02 0.00 0.00 0.00 0.00 0.00
-#           ...                                      ...       ...       ...  ...  ...  ...  ... 
-#  ref      (Intercept)                              4.764e-01 6.902e-01                         
-#  const.1  pos(-8204.24647146426,-5175.97074920631) 7.404e-10 2.721e-05                         
-#           pos(-7937.0796935604,-5012.34166384752)  7.404e-10 2.721e-05 0.00                    
-#           pos(-6456.53046600987,-4245.72066044159) 7.404e-10 2.721e-05 0.00 0.00               
-#           pos(-8048.39918435368,-4218.3732871734)  7.404e-10 2.721e-05 0.00 0.00 0.00          
-#           pos(2037.14668151691,-4042.23749967617)  7.404e-10 2.721e-05 0.00 0.00 0.00 0.00     
-#           pos(2103.93837599287,-4042.23749967617)  7.404e-10 2.721e-05 0.00 0.00 0.00 0.00 0.00
-#           pos(2304.31345942076,-4028.80202613441)  7.404e-10 2.721e-05 0.00 0.00 0.00 0.00 0.00
-#           pos(2849.7789643078,-4028.80202613441)   7.404e-10 2.721e-05 0.00 0.00 0.00 0.00 0.00
-#           pos(2092.80642691354,-4015.38236007316)  7.404e-10 2.721e-05 0.00 0.00 0.00 0.00 0.00
-#           pos(2471.29269561067,-3961.86021744575)  7.404e-10 2.721e-05 0.00 0.00 0.00 0.00 0.00
-#           ...                                      ...       ...       ...  ...  ...  ...  ... 
-#  Residual                                          2.306e-01 4.802e-01 
-#  0.00                   
-#  0.00 0.00              
-#  0.00 0.00 0.00         
-#  0.00 0.00 0.00 0.00    
-#  ...  ...  ...  ...  ...
-#  0.00                   
-#  0.00 0.00              
-#  0.00 0.00 0.00         
-#  0.00 0.00 0.00 0.00    
-#  ...  ...  ...  ...  ...
-#                         
-# Number of obs: 949, groups:  const, 1; ref, 205
-# 
-# Dispersion estimate for gaussian family (sigma^2): 0.231 
-# 
-# Conditional model:
-#             Estimate Std. Error z value Pr(>|z|)    
-# (Intercept)  0.66869    0.05644   11.85   <2e-16 ***
+theta_spain <- spain_glmmTMB$fit$par[names(spain_glmmTMB$fit$par) == "theta"]
+rho_spain_km <- exp(theta_spain[2])
 ```
 
-The `metafor` and `brms` implementations produced very similar substantive results. In both models, the estimated intercept was about 0.65, with broadly overlapping uncertainty intervals. Among-study heterogeneity was also highly consistent across packages: `metafor` estimated a study-level variance of 0.45, while `brms` estimated standard deviation as 0.68 (var = 0.462). At the effect-size level, `metafor` estimated a variance of 0.23. In the analogous `brms` model, the residual standard deviation (`sigma`) was 0.48, giving a closely comparable estimate of effect-size-level variation.
+Here `equalto()` supplies the known sampling-variance matrix. The Gaussian residual variance is the iid effect-size heterogeneity. For `exp`, `glmmTMB` parameterises correlation as $\exp\{-\exp(-\theta_2)d\}$, so the common e-folding range is `rho_spain_km = exp(theta_spain[2])` km.
 
-The spatial term was smaller in magnitude, with `metafor` estimating $\tau^2$ \approx 0.021 and `brms` estimating `sdgp` at about 0.18 (sdgp\^2 = 0.032). However, the spatial range parameter was very imprecisely estimated in both implementations, suggesting limited information about the exact distance scale of spatial autocorrelation.
-
-This implies that average adult survival was positive on the logit scale, while also varying appreciably among studies and locations. The spatial component suggests that geographically proximate populations may show somewhat similar survival values, although the exact scale of that dependence is not estimated very precisely in this example.
-
-In `glmmTMB`, however, the model produced a non-positive Hessian warning, indicating that the model did not converge properly. Inspection of the fitted variance components and diagnostic output suggested that the main instability was associated with the spatial random-effect term. Specifically, the estimated variance of spatial effect was extremely small.effectively collapsing to the boundary of the parameter space. This pattern suggests that, for these data and under this exact model specification, the spatial random effect was only weakly informed by the data and could not be estimated reliably in glmmTMB. Accordingly, we treat this fit as non-converged and do not interpret the spatial component substantively. Importantly, this should not be taken as strong evidence that spatial structure is absent in the data. Rather, it indicates that the spatial-effect parameter was not stably identifiable in this implementation. More broadly, this result suggests caution when comparing spatial-effect estimates across modelling frameworks, because even if analogous models fitted in `metafor` or `brms` return estimates or appear to converge numerically, those spatial parameters may still be weakly identified and poorly defined. In such cases, interpretation of the spatial component should depend not only on whether a model returns an estimate, but also on whether the corresponding uncertainty interval is reasonably bounded and interpretable.
-
-:::
-
-#### Squared-exponential kernel (gaussian process)
-
-::: panel-tabset
-
-##### metafor
+#### `brms`
 
 ```{r}
 #| eval: false
 
-sp_gau_metafor_eg2 <- rma.mv(
-  yi = logit_survival,
-  V  = vi,                      
-  random = list(
-    ~ 1 | effect_id,          
-    ~ 1 | ref,                   
-    ~ site_id | const           
-  ),
-  struct = "SPGAU",
-  data = dat_scholer2020,
-  dist = list(site = dist_site), 
-  method = "REML",
-  test = "t",
-  sparse = TRUE,
-  verbose = TRUE
+spain_formula_brms <- bf(
+  d_Hedges | se(sqrt(var_Hedges), sigma = TRUE) ~
+    1 + gp(x_km, y_km, cov = "exponential", scale = FALSE)
 )
 
-summary(sp_gau_metafor_eg2)
-# Multivariate Meta-Analysis Model (k = 949; method: REML)
-# 
-#    logLik   Deviance        AIC        BIC       AICc   
-# -824.5113  1649.0225  1659.0225  1683.2943  1659.0862   
-# 
-# Variance Components:
-# 
-#             estim    sqrt  nlvls  fixed     factor 
-# sigma^2.1  0.2297  0.4793    949     no  effect_id 
-# sigma^2.2  0.4578  0.6766    205     no        ref 
-# 
-# outer factor: const    (nlvls = 1)
-# inner term:   ~site_id (nlvls = 454)
-# 
-#                estim    sqrt  fixed 
-# tau^2         0.0202  0.1420     no 
-# rho        4713.8765             no 
-# 
-# Test for Heterogeneity:
-# Q(df = 948) = 974007.4599, p-val < .0001
-# 
-# Model Results:
-# 
-# estimate      se    tval   df    pval   ci.lb   ci.ub      
-#   0.6466  0.0830  7.7876  948  <.0001  0.4837  0.8096  *** 
+spain_priors_brms <- c(
+  prior(normal(0, 1), class = "Intercept"),
+  prior(student_t(3, 0, 1), class = "sigma"),
+  prior(student_t(3, 0, 1), class = "sdgp", coef = "gpx_kmy_km"),
+  prior(lognormal(log(50), 1), class = "lscale", coef = "gpx_kmy_km")
+)
 
-confint(sp_gau_metafor_eg2)
-#           estimate  ci.lb  ci.ub 
-# sigma^2.1   0.2297 0.2069 0.2559 
-# sigma.1     0.4793 0.4548 0.5059 
-# 
-#           estimate  ci.lb  ci.ub 
-# sigma^2.2   0.4578 0.3435 0.6054 
-# sigma.2     0.6766 0.5861 0.7781 
-# 
-#       estimate  ci.lb    ci.ub 
-# tau^2   0.0202 0.0000 >10.0000 
-# tau     0.1420 0.0000  >3.1623 
-# 
-#      estimate     ci.lb       ci.ub 
-# rho 4713.8765 <471.3877 >47138.7654 
+spain_brms <- brm(
+  formula = spain_formula_brms, data = dat_spain, family = gaussian(),
+  prior = spain_priors_brms, backend = "cmdstanr",
+  chains = 4, cores = 4,
+  threads = threading(threads = 10, static = TRUE),
+  iter = 3000, warmup = 1500, seed = 20260908,
+  control = list(adapt_delta = 0.95, max_treedepth = 12)
+)
 ```
 
-##### brms
+With `sigma = TRUE`, `brms` models each observation with standard deviation $\sqrt{se_i^2 + \sigma^2}$: `sigma` is therefore the iid effect-size heterogeneity in addition to the known sampling SE. No separate effect-ID random effect is added. With `scale = FALSE`, the exponential GP length scale is in kilometres.
+
+The audited run used four chains and ten Stan threads per chain on Totoro. Its diagnostics were max R-hat = 1.0023, minimum bulk ESS = 1,121, minimum tail ESS = 1,708, zero divergences, and maximum observed treedepth = 7/12.
+
+![Density-overlay posterior predictive check for the audited Spain `brms` model](revision_checks/regional_cross_package_audit_outputs/brms_output/brms_pp_check_dens_overlay.png){width="75%"}
+
+| Package | Mean (95% interval) | iid effect variance | Spatial variance | rho (km) | Diagnostic note |
+|---|---:|---:|---:|---:|---|
+| `metafor` | -0.097 (-0.489, 0.295) | 0.214 | 0.626 | 29.0 | completed |
+| `glmmTMB` | -0.097 (-0.491, 0.296) | 0.214 | 0.626 | 29.0 | convergence code 0; positive-definite Hessian |
+| `brms` | -0.100 (-0.533, 0.388) | 0.220 (0.132–0.352) | 0.661 (0.251–1.671) | 36.6 (8.1–155.3) | HMC diagnostics above |
+
+Under this matched implementation, the `metafor` and `glmmTMB` parameter estimates and REML likelihood quantities agree to numerical precision. Their displayed intervals differ slightly because `metafor` uses a t-based interval here and `glmmTMB` uses a Wald z interval. The `brms` posterior estimates are broadly consistent with the frequentist estimates, but a credible interval and a confidence interval do not have the same inferential interpretation.
+
+### 3. Scholer et al. (2020): advanced hierarchical spatial meta-analysis
+
+The dataset accompanying [Scholer et al. (2020)](https://doi.org/10.1111/ele.13573) contains 949 effect sizes from 205 references at 454 recorded-coordinate locations. This example illustrates a more complex setting in which effect-size heterogeneity, study-level heterogeneity, and location-level spatial covariance can all be considered. The three identifiers below remain distinct: `effect_id` identifies rows, `study_id` identifies references, and `site_id` identifies sorted recorded-coordinate pairs.
 
 ```{r}
 #| eval: false
 
-fit_gp_brms <- bf(logit_survival ~ 1 +
-                    (1|ref) + # this is site-level random effect
-                    (1|gr(effect_id, cov = vcv)) + # this is m (sampling error)
-                    gp(x_km, y_km, 
-                       cov = "exp_quad",
-                       scale = FALSE)
-)
+dat_scholer <- read.csv(here("data", "Scholer_2020", "Scholer_2020.csv")) |>
+  mutate(
+    vi = se^2,
+    effect_id = factor(sprintf("effect_%04d", row_number())),
+    study_id = factor(ref),
+    site_key = sprintf("%.8f_%.8f", lat, long)
+  )
 
-# generate default priors
-prior <- default_prior(fit_gp_brms, 
-                       data = dat_scholer2020, 
-                       data2 = list(vcv = vcv),
-                       family = gaussian())
-prior <- c(
-  prior,
-  set_prior("constant(1)", class = "sd", group = "effect_id"),
-  replace = TRUE
-) # meta-analysis assumes sampling variance is known so fixing this to 1
-prior
+scholer_site_levels <- sort(unique(dat_scholer$site_key))
+dat_scholer$site_id <- factor(dat_scholer$site_key, levels = scholer_site_levels)
+dat_scholer$const <- factor("all_sites")
+stopifnot(nrow(dat_scholer) == 949L, nlevels(dat_scholer$study_id) == 205L)
+stopifnot(nlevels(dat_scholer$site_id) == 454L, all(dat_scholer$vi > 0))
 
-sp_gau_brms_eg2 <- brm(
-  formula = fit_gp_brms,
-  data = dat_scholer2020,
-  data2 = list(vcv = vcv),
-  prior = prior,
-  iter = 8000, 
-  warmup = 4000,  
-  chains = num_chains,
-  backend = "cmdstanr",
-  threads = threading(threads_per_chain), 
-  control = list(adapt_delta = 0.95, max_treedepth = 15)
-)
+scholer_sites <- unique(dat_scholer[c("site_key", "lat", "long")])
+scholer_sites <- scholer_sites[match(scholer_site_levels, scholer_sites$site_key), ]
+scholer_lonlat <- as.matrix(scholer_sites[c("long", "lat")])
+scholer_distance_km <- geosphere::distm(scholer_lonlat, fun = geosphere::distGeo) / 1000
+rownames(scholer_distance_km) <- colnames(scholer_distance_km) <- scholer_site_levels
 
-summary(sp_gau_brms_eg2)
-#  Family: gaussian 
-#   Links: mu = identity 
-# Formula: logit_survival ~ 1 + (1 | ref) + (1 | gr(effect_id, cov = vcv)) + gp(x_km, y_km, cov = "exp_quad", scale = FALSE) 
-#    Data: dat_scholer2020 (Number of observations: 949) 
-#   Draws: 2 chains, each with iter = 8000; warmup = 4000; thin = 1;
-#          total post-warmup draws = 8000
-# 
-# Gaussian Process Hyperparameters:
-#                    Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sdgp(gpx_kmy_km)       0.16      0.11     0.02     0.42 1.00      836      969
-# lscale(gpx_kmy_km)  3465.74  13257.32   365.32 19298.85 1.00      242      525
-# 
-# Multilevel Hyperparameters:
-# ~effect_id (Number of levels: 949) 
-#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sd(Intercept)     1.00      0.00     1.00     1.00   NA       NA       NA
-# 
-# ~ref (Number of levels: 205) 
-#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sd(Intercept)     0.68      0.05     0.58     0.78 1.00     2069     3664
-# 
-# Regression Coefficients:
-#           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# Intercept     0.65      0.10     0.47     0.82 1.00     2347     1774
-# 
-# Further Distributional Parameters:
-#       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sigma     0.48      0.01     0.45     0.51 1.00     4263     5271
-# 
-# Draws were sampled using sample(hmc). For each parameter, Bulk_ESS
-# and Tail_ESS are effective sample size measures, and Rhat is the potential
-# scale reduction factor on split chains (at convergence, Rhat = 1).
-
+stopifnot(identical(rownames(scholer_distance_km), levels(dat_scholer$site_id)))
+stopifnot(identical(colnames(scholer_distance_km), levels(dat_scholer$site_id)))
+stopifnot(isTRUE(all.equal(scholer_distance_km, t(scholer_distance_km), tolerance = 1e-10)))
 ```
-
-##### glmmTMB
-
-TBU
-
-The Gaussian-process kernel gave us the identical results to exponential kernel model except for `rho` and `lscale`. The `metafor` and `brms` implementations gave very similar substantive results. In both models, the estimated intercept was about 0.65, with broadly overlapping 95% CI and CrI. Variation among individual effect sizes was estimated at approximately 0.48 on the standard deviation scale, and between-study heterogeneity was also nearly identical across packages at about 0.68. The spatial term was smaller in magnitude, with `metafor` estimating \tau \approx 0.14 and `brms` estimating the Gaussian process standard deviation at about 0.16 (sdgp\^2 = 0.026). However, the distance-scale parameter of spatial correlation remained weakly identified, with wide uncertainty in both implementations.
-
-:::
-
-#### Visualisations
-
-::: panel-tabset
-
-##### metafor
-```{r}
-#| eval: FALSE
-
-metafor_sp_p1 <- orchaRd::orchard_plot(sp_exp_metafor_eg2, 
-                           group = "ref",
-                           xlab = "Effect size",
-                           angle = 45) + 
-  scale_x_discrete(labels = c("Overall effect")) +
-  scale_color_manual(values = "#CDAD00") +
-  scale_fill_manual(values = "#FFD700") + 
-  theme_classic()
-
-## random effect
-ci_var <- confint(sp_exp_metafor_eg2, level = 0.95) 
- 
-
-tbl2 <- tibble::as_tibble(ci_var, rownames = "term")
-
-
-tbl_var2 <- tbl2 %>% 
-  filter(term %in% c("sigma^2.1", "sigma^2.2", "tau^2")) %>% 
-  mutate(term = factor(term, levels = c("sigma^2.1", "sigma^2.2", "tau^2")))
-
-s_metafor_p1var <- ggplot(tbl_var2, aes(x = estimate, y = term)) +
-  geom_point(size = 3, color = "#528B8B") +
-  geom_errorbar(aes(xmin = ci.lb, xmax = ci.ub), height = 0.25, color = "#528B8B") +
-  labs(x = "Variance with with 95% CI", y = NULL) +
-  theme_classic(base_size = 12)
-
-tbl_rho2 <- tbl2 %>% 
-  filter(term == "rho")
-
-s_metafor_p1rho <- ggplot(tbl_rho2, aes(x = estimate, y = term)) +
-  geom_point(size = 3, color = "#CD6090") +
-  geom_errorbar(aes(xmin = ci.lb, xmax = ci.ub), 
-                height = 0.25, color = "#CD6090") +
-  labs(x = "rho with 95% CI", y = NULL) +
-  theme_classic(base_size = 12)
-
-metafor_sp_eg2 <- metafor_sp_p1 / (s_metafor_p1var + s_metafor_p1rho)
-metafor_sp_eg2
-
-```
-
-![metafor spatial MA eg.1](figs/tutorial/metafor_expspatial_MA_1.png){width="80%"}
-
-
-##### brms
 
 ```{r}
-#| eval: FALSE
+#| eval: false
 
-sp_eg2_exp_brms <- readRDS(here("Rdata", "tutorial_v2", "sp_exp_brms_eg2.rds"))
-get_variables_dynamic <- function(model, pattern) {
-  variables <- get_variables(model)
-  variables[grep(pattern, variables)]
-}
+scholer_unstructured <- rma.mv(
+  yi = logit_survival, V = vi,
+  random = list(~ 1 | effect_id, ~ 1 | study_id),
+  data = dat_scholer, method = "REML", test = "t", sparse = TRUE
+)
 
-get_variables(sp_eg2_exp_brms)
+scholer_spatial_only <- rma.mv(
+  yi = logit_survival, V = vi,
+  random = list(~ 1 | effect_id, ~ site_id | const),
+  struct = "SPEXP", dist = list(site_id = scholer_distance_km),
+  data = dat_scholer, method = "REML", test = "t", sparse = TRUE
+)
 
-rename_vars_exp4 <- function(variable) {
-  variable <- as.character(variable)
-
-  # fixed
-  variable <- gsub("^b_Intercept$", "Overall effect", variable)
-
-  # residual SD (sigma in brms)
-  variable <- gsub("^sigma$", "Residual SD", variable)
-
-  # GP SD
-  variable <- gsub("^sdgp_gpx_kmy_km$", "SD of gp_x", variable)
-
-  # GP length-scale
-  variable <- gsub("^lscale_gpx_kmy_km$", "lscale", variable)
-
-  variable
-}
-
-### fixed effect ----
-visualize_fixed_effects_exp4 <- function(model) {
-  fixed_effect_vars <- get_variables_dynamic(model, "^b_")
-  if (length(fixed_effect_vars) == 0) {
-    message("No fixed effects found")
-    return(NULL)
-  }
- 
-  tryCatch({
-    fixed_effects_samples <- model %>%
-      spread_draws(!!!syms(fixed_effect_vars)) %>%
-      tidyr::pivot_longer(
-        cols      = dplyr::all_of(fixed_effect_vars),
-        names_to  = ".variable",
-        values_to = ".value"
-      ) %>%
-      dplyr::mutate(.variable = rename_vars_exp4(.variable))
-   
-    ggplot(fixed_effects_samples, aes(x = .value, y = .variable)) +
-      ggdist::stat_halfeye(
-        normalize      = "xy",
-        point_interval = "mean_qi",
-        fill           = "#FFD700",
-        color          = "#CDAD00"
-      ) +
-      geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
-      labs(y = "Fixed effects", x = "Posterior values") +
-      theme_classic()
-  }, error = function(e) {
-    message("Error in visualize_fixed_effects_exp4: ", e$message)
-    return(NULL)
-  })
-}
-
-### random effect ----
-sd_to_var <- function(df) {
-  df %>%
-    dplyr::mutate(
-      .value    = (.value)^2,
-      .variable = gsub("^SD of ", "Var of ", .variable)
-    )
-}
-
-#### random effect (Var) ----
-visualize_random_and_gp_var_exp4 <- function(model) {
- 
-  re_vars <- get_variables_dynamic(model, "^(sigma|sdgp_)")
- 
-  if (length(re_vars) == 0) {
-    message("No random or GP SD parameters found")
-    return(NULL)
-  }
- 
-  tryCatch({
-    samples <- model %>%
-      spread_draws(!!!syms(re_vars)) %>%
-      tidyr::pivot_longer(
-        cols      = dplyr::all_of(re_vars),
-        names_to  = ".variable",
-        values_to = ".value"
-      ) %>%
-      dplyr::mutate(.variable = rename_vars_exp4(.variable)) %>%
-      sd_to_var()
-   
-    ggplot(samples, aes(x = .value, y = .variable)) +
-      ggdist::stat_halfeye(
-        normalize      = "xy",
-        point_interval = "mean_qi",
-        fill           = "#B0E2FF",
-        color          = "#4F94CD"
-      ) +
-      geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
-      labs(
-        y = "Random and GP effects (variance)",
-        x = "Posterior values (variance)"
-      ) +
-      # scale_x_continuous(limits = c(0.7, 2.0)) + 
-      theme_classic()
-   
-  }, error = function(e) {
-    message("Error in visualize_random_and_gp_var_exp4: ", e$message)
-    return(NULL)
-  })
-}
-
-visualize_gp_lscale_exp4 <- function(model) {
-  gp_ls_vars <- get_variables_dynamic(model, "^lscale_")
-  if (length(gp_ls_vars) == 0) {
-    message("No GP length-scale parameters found")
-    return(NULL)
-  }
- 
-  tryCatch({
-    gp_ls_samples <- model %>%
-      spread_draws(!!!syms(gp_ls_vars)) %>%
-      tidyr::pivot_longer(
-        cols      = dplyr::all_of(gp_ls_vars),
-        names_to  = ".variable",
-        values_to = ".value"
-      ) %>%
-      dplyr::mutate(.variable = rename_vars_exp4(.variable))
-   
-    ggplot(gp_ls_samples, aes(x = .value, y = .variable)) +
-      ggdist::stat_halfeye(
-        normalize      = "xy",
-        point_interval = "mean_qi",
-        fill           = "#CD6090",
-        color          = "#8B3A62"
-      ) +
-      geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
-      labs(y = "lscale", x = "Posterior values") +
-      theme_classic()
-  }, error = function(e) {
-    message("Error in visualize_gp_lscale_exp4: ", e$message)
-    return(NULL)
-  })
-}
-
-s_brms_p1  <- visualize_fixed_effects_exp4(sp_eg2_exp_brms)
-s_metafor_p1sd <- visualize_random_and_gp_var_exp4(sp_eg2_exp_brms)
-s_metafor_p1lscale <- visualize_gp_lscale_exp4(sp_eg2_exp_brms)
-brms_sp2.1 <- s_brms_p1 / (s_metafor_p1sd + s_metafor_p1lscale)
-brms_sp2.1
-
+scholer_combined <- rma.mv(
+  yi = logit_survival, V = vi,
+  random = list(~ 1 | effect_id, ~ 1 | study_id, ~ site_id | const),
+  struct = "SPEXP", dist = list(site_id = scholer_distance_km),
+  data = dat_scholer, method = "REML", test = "t", sparse = TRUE
+)
 ```
-![brms spatial MA eg.1](figs/tutorial/brms_sp2.1.png){width="80%"}
 
-::: 
+| Model | Mean (95% CI) | Effect-size variance | Study variance | Spatial variance | rho (km) | AIC |
+|---|---:|---:|---:|---:|---:|---:|
+| Unstructured-only | 0.669 (0.558, 0.779) | 0.231 | 0.476 | -- | -- | 1656.479 |
+| Spatial-only | 0.458 (0.350, 0.567) | 0.280 | -- | 0.323 | 168.7 | 1864.607 |
+| Combined | 0.657 (0.536, 0.778) | 0.225 | 0.449 | 0.0204 | 535.6 | 1657.090 |
+
+The spatial-only model has a clearly identified spatial component under its restricted covariance structure, but its AIC is 208.129 units higher than the unstructured-only model. It is therefore a poor description of these data relative to the model with study-level heterogeneity.
+
+In the combined model, the spatial variance is small and weakly identified. Fixing $\tau^2$ to zero reduces the profile log-likelihood by only 1.694 units. Every tested rho between 10 and 12,000 km lies within 1.92 log-likelihood units of the profile maximum. The primary estimate of rho = 535.6 km agrees with the profile maximum, but it is not a precise correlation range.
+
+The spatial-only model can absorb heterogeneity that is better represented as study-level variation. Once study-level heterogeneity is included, these data provide little support for a distinct additional spatial component. This does not show that spatial autocorrelation is absent; it shows that the additional spatial component is weakly identified under this covariance decomposition.
+
 # Software and package versions
 
 <details>

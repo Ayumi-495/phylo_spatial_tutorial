@@ -1,0 +1,2 @@
+"model","component","value","logLik_REML","AIC_REML","status","elapsed_seconds","warnings"
+"spatial_only","rho",0.15,-4034.45579101095,8074.91158202189,"completed_no_explicit_optimizer_status",39.531,""

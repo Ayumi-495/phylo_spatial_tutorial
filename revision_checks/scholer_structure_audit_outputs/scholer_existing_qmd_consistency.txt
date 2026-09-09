@@ -1,0 +1,8 @@
+Existing QMD correctness check (no model run):
+1. The historical preparation code creates a 949 x 949 EPSG:3857 effect-level distance matrix, then a separate 454 x 454 site distance matrix.
+2. The displayed metafor call specifies ~ effect_id | const (949 inner levels) but supplies dist = list(site = dist_site), whose 454 row/column names refer to site IDs.
+3. The displayed model output instead reports inner term ~site_id (454 levels). It cannot be the output of the displayed call as written.
+4. confint(ma_sp2_exp) refers to an undefined object; the displayed fitted object is sp_exp_metafor_eg2.
+5. The prose says 204 studies, while the current data contain 205 unique ref values. The section header says Scholer et al. (2021), while its citation and linked paper say 2020.
+Conclusion: no existing numerical output in this section should be reused. The corrected future spatial term must be ~ site_id | const with dist = list(site_id = distance_km).
+No model fitting was performed by this audit.

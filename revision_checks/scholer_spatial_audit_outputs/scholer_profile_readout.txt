@@ -1,0 +1,7 @@
+Profile points were fit with the relevant spatial parameter fixed and all other free parameters re-optimized.
+Each point was saved independently before compilation. Delta log-likelihood is relative to the maximum among the stated bounded grid points.
+A grid range with delta <= 1.92 is descriptive only, not a formal confidence interval.
+combined rho primary= 535.5823 grid maximum= 535.5823 primary-minus-grid-max delta= -2.04977e-10 grid delta<=1.92 range= 10 to 12000
+combined tau2 primary= 0.02041598 grid maximum= 0.02 primary-minus-grid-max delta= -0.000369597 grid delta<=1.92 range= 0 to 0.16 tau2=0 delta= 1.694
+spatial_only rho primary= 168.7094 grid maximum= 168.7094 primary-minus-grid-max delta= 1.50067e-11 grid delta<=1.92 range= 168.7093726 to 168.7093726
+spatial_only tau2 primary= 0.3226584 grid maximum= 0.3226584 primary-minus-grid-max delta= 5.79803e-11 grid delta<=1.92 range= 0.3226583722 to 0.3226583722 tau2=0 delta= 126.498

@@ -1,0 +1,7 @@
+max R-hat: 1.00233340831306
+minimum bulk ESS: 1121.42116189724
+minimum tail ESS: 1707.82332934417
+divergences: 0
+maximum treedepth seen: 7
+The known sampling standard errors were combined with the additional iid heterogeneity as sqrt(se_i^2 + sigma^2).
+The exponential GP range is lscale in km because scale=FALSE and x_km/y_km were supplied.

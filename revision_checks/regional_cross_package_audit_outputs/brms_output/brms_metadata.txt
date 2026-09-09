@@ -1,0 +1,19 @@
+R: R version 4.5.3 (2026-03-11)
+brms: 2.22.0
+cmdstanr: 0.8.0
+CmdStan: 2.36.0
+seed: 20260908
+chains: 4
+cores: 4
+threads_per_chain: 10
+iter: 3000
+warmup: 1500
+adapt_delta: 0.95
+max_treedepth: 12
+data: Spain-labelled subset; 186 effect sizes, 30 studies, 32 recorded-coordinate locations.
+formula: d_Hedges | se(sqrt(var_Hedges), sigma=TRUE) ~ 1 + gp(x_km, y_km, cov=exponential, scale=FALSE).
+sampling model: Normal(mu, sqrt(se_i^2 + sigma^2)); sigma is iid effect-size SD.
+spatial model: exponential GP covariance sdgp^2 * exp(-distance/lscale) over unique recorded coordinate pairs.
+coordinates: WGS84 Lambert Conformal Conic projected x_km/y_km from the shared prepared regional audit file.
+No study-level intercept was included in this regional spatial-only comparison.
+priors:                  prior     class       coef group resp dpar nlpar   lb   ub           normal(0, 1) Intercept                                  <NA> <NA>     student_t(3, 0, 1)     sigma                                  <NA> <NA>     student_t(3, 0, 1)      sdgp gpx_kmy_km                       <NA> <NA>  lognormal(log(50), 1)    lscale gpx_kmy_km                       <NA> <NA>  source    user    user    user    user
