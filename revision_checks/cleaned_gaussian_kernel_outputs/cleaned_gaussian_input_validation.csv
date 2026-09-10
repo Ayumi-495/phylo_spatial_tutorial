@@ -1,0 +1,2 @@
+"n_effects","n_studies","n_sites","n_const_levels","distance_units","distance_rows_match_site_levels","distance_cols_match_site_levels","same_yi_V_X_as_saved_cleaned_SPEXP"
+2355,390,380,1,"WGS84 ellipsoidal geodesic kilometres",TRUE,TRUE,TRUE

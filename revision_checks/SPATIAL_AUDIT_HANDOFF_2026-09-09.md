@@ -3,7 +3,7 @@
 ## A. Current status
 
 - **Branch:** `revision-online-tutorial`.
-- **HEAD before this audit-only checkpoint:** `0e572932d6cd6716c7d6eacd8a02f5fe61b46aa7` (`0e57293`, *Complete audited spatial tutorial revision*).
+- **HEAD before the cleaned-Gaussian audit-only checkpoint:** `9eea010e6c253d53898afcd4869bf14600fc1e4c` (`9eea010`, *Add validated spatial audit handoff*).
 - **Revision worktree:** `/Users/ayumi/Library/CloudStorage/GoogleDrive-ayumi.mizuno5@gmail.com/My Drive/research/phylo_spatial_tutorial_revision/`.
 - **Totoro staging/output path:** `/home/amizuno/phylo_spatial_tutorial_revision/revision_checks/`. The completed cleaned-primary profiles and companion report were recovered from there into the local revision worktree in this checkpoint.
 - **Intentionally unchanged in this checkpoint:** `tutorial_v2.qmd`, the manuscript, and the response letter. This commit contains audit material and this handoff only.
@@ -115,16 +115,18 @@ Total I2 remains very similar. In the combined model, spatial I2 changes from ap
 
 Do not compare absolute AIC values between the 2,355- and 2,361-effect datasets. AIC comparisons are valid only among models fitted to the same observations.
 
-## I. Gaussian full-data sensitivity
+## I. Gaussian kernel sensitivity: cleaned primary and full-data history
 
-The finalized Gaussian audit is `revision_checks/grau_global_gaussian_kernel_audit_2026-09-09.md`; its saved objects, profiles, targeted refits, WGS84 distance matrix, and generalized I2 are under `revision_checks/gaussian_global_outputs/`. The script is `revision_checks/grau_global_gaussian_kernel_audit.R`.
+The preferred kernel-sensitivity record is now the fixed-dataset `published_cleaned` audit: `revision_checks/cleaned_gaussian_kernel_audit_2026-09-10.md`. Its reproducible fit and no-refit record scripts are `revision_checks/cleaned_gaussian_kernel_audit.R` and `revision_checks/cleaned_gaussian_kernel_finalize.R`. Its machine-readable sources are `revision_checks/cleaned_gaussian_kernel_outputs/cleaned_gaussian_input_validation.csv`, `revision_checks/cleaned_gaussian_kernel_outputs/spatial_only_spgau_result.csv`, `revision_checks/cleaned_gaussian_kernel_outputs/combined_spgau_targeted_multistart.csv`, `revision_checks/cleaned_gaussian_kernel_outputs/combined_spgau_tau2_zero_result.csv`, `revision_checks/cleaned_gaussian_kernel_outputs/cleaned_gaussian_identification_summary.csv`, `revision_checks/cleaned_gaussian_kernel_outputs/cleaned_gaussian_generalized_i2.csv`, and `revision_checks/cleaned_gaussian_kernel_outputs/cleaned_gaussian_validation_summary.csv`.
 
-This is a **full 2,361-effect kernel/optimizer sensitivity analysis**, not a cleaned-primary analysis. Do not rerun Gaussian fits on `published_cleaned` without a separate decision.
+These SPGAU models use `Cor(d) = exp(-d^2/rho^2)`, so rho is the e-folding distance in kilometres. They use the same 2,355 effects, 390 studies, 380 recorded-coordinate locations, WGS84 geodesic distance matrix, response, diagonal sampling variance, intercept-only fixed effect, and effect-size hierarchy as the cleaned primary SPEXP analysis.
 
-- Gaussian spatial-only has large spatial variance and an extremely short 0.362-km e-folding range.
-- The Gaussian combined fit has optimizer-dependent stationary solutions around **312 km** and **3,091 km**; their log-likelihood difference is only **0.384**.
-- Relative to the best observed combined solution, zero spatial variance costs only **1.063** log-likelihood units.
-- The Gaussian rho is practically weakly identified. Neither rho should receive substantive biological interpretation.
+- Gaussian spatial-only has large spatial variance (**1.15270**) and an extremely short **0.346-km** e-folding range.
+- The limited combined starts reveal two near-equal stationary solutions: approximately **306 km** (best) and **3,674 km**, separated by only **0.285** REML log-likelihood units.
+- Relative to the best observed combined solution, the exact `tau2 = 0` restriction costs only **1.285** log-likelihood units. It is the saved cleaned unstructured model, because rho is nonidentified when spatial variance is zero.
+- Therefore, cleaned Gaussian sensitivity supports the same qualitative conclusion as cleaned SPEXP: the negative pooled result is robust, but the additional combined spatial component and its rho are weakly identified. Neither Gaussian rho should receive substantive biological interpretation.
+
+The previous **full 2,361-effect** Gaussian audit remains historical/R18-sensitivity evidence, not the preferred fixed-dataset kernel comparison: `revision_checks/grau_global_gaussian_kernel_audit_2026-09-09.md`, `grau_global_gaussian_kernel_audit.R`, and `revision_checks/gaussian_global_outputs/`. It likewise found spatial-only variance at an extremely short range and combined Gaussian branches near 312 and 3,091 km (Delta logLik 0.384; zero-spatial loss 1.063). Keep the two dataset roles explicit.
 
 ## J. Spain cross-package analysis
 
@@ -172,14 +174,14 @@ This is a handoff recommendation only. It does not authorise tutorial edits in t
 2. Present the global Grau-Andres `published_cleaned` primary SPEXP analysis.
 3. Present the Reviewer 18 full-data influential-effect sensitivity.
 4. Explain generalized I2 as marginal variance allocation.
-5. Present the full-data Gaussian kernel/optimizer sensitivity.
+5. Present the cleaned-data Gaussian kernel sensitivity; mention the full-data Gaussian result only as historical/R18-sensitivity corroboration.
 6. Present the Spain regional cross-package implementation.
 7. Present Scholer as an advanced cross-classified spatial meta-analysis.
 8. End with a short reporting checklist: data definition, distance/unit, model structure, variance/rho profiles, and an explicit distinction between pooled robustness and spatial-structure uncertainty.
 
 ## N. Remaining limitations and unresolved issues
 
-- All completed Totoro cleaned-primary profile points, compiled CSVs, targeted multi-start outputs, and the companion report were recovered locally in this checkpoint. No requested cleaned-primary output remains Totoro-only.
+- All completed Totoro cleaned-primary profile points, Gaussian fit objects, compiled CSVs, targeted multi-start outputs, and companion reports were recovered locally in this checkpoint. No requested cleaned-primary output remains Totoro-only.
 - A no-execute Quarto render previously confirmed the intended spatial sections are visible. An executing full render remains blocked upstream by the pre-existing missing `Rdata/tutorial_v2/moura2021_BM_meta_reg.rds`; do not solve that by altering non-spatial content.
 - The remaining work is editorial, not numerical: decide the amount of detail and reader guidance to put around the identifiability results, then update `tutorial_v2.qmd` from these source files. Do not report a biological spatial range from the combined models.
 
@@ -190,5 +192,5 @@ This is a handoff recommendation only. It does not authorise tutorial edits in t
 - Inspect the named reports and CSVs/models, especially `published_cleaned_primary_results.csv`, `cleaned_profile_summary.csv`, and `cleaned_generalized_i2.csv`.
 - Confirm `published_cleaned` remains the primary global dataset and `all_spatially_usable` remains the R18 sensitivity analysis.
 - Confirm Spain is unaffected by R18.
-- Confirm that no additional spatial fitting is required.
+- Use the cleaned Gaussian audit for kernel sensitivity; no additional Gaussian profile grid is required unless a genuine implementation error is found or Ayumi requests it.
 - Preserve the distinctions among primary analysis, influential-effect sensitivity, kernel/optimizer sensitivity, and regional cross-package implementation.
