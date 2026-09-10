@@ -1,0 +1,7 @@
+"dataset","model","AIC_rank","delta_AIC_within_dataset"
+"all_spatially_usable","unstructured_only",1,0
+"published_cleaned","unstructured_only",1,0
+"all_spatially_usable","spatial_only",3,33.9700879764896
+"published_cleaned","spatial_only",3,24.1195186899404
+"all_spatially_usable","combined",2,2.62518161695971
+"published_cleaned","combined",2,2.13365542766041

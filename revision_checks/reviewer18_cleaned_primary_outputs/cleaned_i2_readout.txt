@@ -1,0 +1,4 @@
+Generalized v_tilde uses the saved cleaned models' actual vi and X.
+trace(P) is evaluated as trace(W) - trace((X'WX)^(-1) X'W^2X), without materializing dense W or P.
+Component I2 values partition marginal heterogeneity variance; spatial I2 is not variance explained by distance or rho.
+No model was fitted or updated.

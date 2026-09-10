@@ -1,0 +1,12 @@
+R: R version 4.6.0 (2026-04-24)
+metafor: 5.0.1
+glmmTMB: 1.1.15
+sf: 1.1.1
+geosphere: 1.6.8
+CRS: +proj=lcc +lat_1=38 +lat_2=43 +lat_0=40.5 +lon_0=-3.5 +datum=WGS84 +units=m +no_defs
+Region: country == Spain; all 186 rows with non-missing coordinates retained.
+Projected coordinates: WGS84 Lambert Conformal Conic, expressed in kilometres.
+Sampling error: V = diag(var_Hedges), independent sampling errors.
+Target model: intercept + iid effect-size heterogeneity + Gaussian spatial covariance.
+equalto preflight: glmmTMB equalto(0 + effect_id | const, VCV) with dispformula=~0 was compared with metafor VCV fit.
+Preflight result:    n metafor_mean glmmTMB_mean metafor_logLik glmmTMB_logLik glmmTMB_pdHess 1 20    0.8708312    0.8708312      -30.34107      -30.34107           TRUE   warning 1        

@@ -1,0 +1,4 @@
+"model","delta_mean_clean_minus_full","delta_effect_variance_clean_minus_full","delta_study_variance_clean_minus_full","delta_spatial_variance_clean_minus_full","delta_rho_km_clean_minus_full"
+"unstructured_only",-0.018544849437911,-0.023813054248353,-0.10342519946462,NA,NA
+"spatial_only",-0.021795271728771,-0.0304044646231599,NA,-0.0815450494734999,0.0869046299159672
+"combined",-0.013487488588984,-0.023963201681267,-0.0722976724984901,-0.0140385495235708,1673.94865338526

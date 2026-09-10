@@ -1,0 +1,4 @@
+I2 uses the actual saved vi and intercept-only X.
+Spatial I2 is a marginal variance allocation, not variance explained by distance, rho, or pairwise correlation.
+Combined I2 is retained separately for each targeted free-refit solution so optimizer/ridge dependence is visible.
+No model was refitted by this script.

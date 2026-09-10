@@ -1,0 +1,2 @@
+"model","component","value","mean","effect_variance","study_variance","spatial_variance","rho_km","logLik_REML","AIC_REML","status","elapsed_seconds","warnings"
+"combined","tau2",0.06,-0.362188479858047,0.751427468787343,1.08962465108224,0.06,2286.46418529918,-3968.27789916051,7944.55579832101,"completed_no_explicit_optimizer_status",363.528,"Setting class(x) to multiple strings (""vcovmat"", ""dsyMatrix"", ...); result will no longer be an S4 object"

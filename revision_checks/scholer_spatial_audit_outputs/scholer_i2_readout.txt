@@ -1,0 +1,4 @@
+I2 uses v_tilde=(k-p)/trace(P), P=W-WX(X'WX)^-1X'W, W=V^-1.
+Actual saved model vi and X were used; all three fits have identical vi and X.
+Spatial I2 is a marginal variance allocation, not variance explained by distance, a range, or pairwise correlation.
+No model was refitted.

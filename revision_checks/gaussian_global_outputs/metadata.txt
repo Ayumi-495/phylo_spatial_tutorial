@@ -1,0 +1,6 @@
+R: R version 4.5.3 (2026-03-11)
+metafor: 5.0.1
+geosphere: 1.5.20
+Distance: WGS84 ellipsoidal great-circle kilometres via geosphere::distGeo.
+Spatial Gaussian correlation: exp(-d^2/rho^2); rho is the e-folding distance.
+Same yi, diagonal V, intercept-only fixed effect, iid effect-level term, and constant spatial outer group as the audited SPEXP fits.

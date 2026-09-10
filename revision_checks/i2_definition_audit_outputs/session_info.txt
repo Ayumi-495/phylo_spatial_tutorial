@@ -1,0 +1,9 @@
+R: R version 4.6.0 (2026-04-24)
+metafor object package version: 5.0.1
+glmmTMB: 1.1.15
+brms: 2.23.0
+posterior: 1.7.0
+No model was refitted.
+Grau calculations use the saved models' actual vi and X.
+Spain calculations use the saved metafor model's V and X for one common v_tilde.
+brms I2 was transformed draw-by-draw, then summarized by posterior quantiles.

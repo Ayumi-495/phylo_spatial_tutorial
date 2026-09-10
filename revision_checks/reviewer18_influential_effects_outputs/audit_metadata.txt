@@ -1,0 +1,10 @@
+R: R version 4.5.3 (2026-03-11)
+metafor: 5.0.1
+geosphere: 1.5.20
+Dryad data SHA-256: 435c87cac364acc3bfb61e978b83c6bed06a5b08a2336c15e5f7427ed8674b45
+Dryad code SHA-256: 9a7aa3cbd14faeb59a8dd6773f52524db2a240637a40616a5cd8d42db80d015c
+Distance: geosphere::distm(..., fun=geosphere::distGeo)/1000; WGS84 ellipsoidal geodesic kilometres.
+Published-cleaned means the 2361 spatially usable Dryad rows minus the six code-listed records present in the Dryad CSV.
+Launonen_1999-1 is named in the archived code but is already absent from the archived Dryad CSV; no replacement record was invented.
+Sampling V is diagonal var_Hedges; fixed effects are intercept-only; all models include iid effect-size heterogeneity.
+No additional iid site intercept was fitted; spatial outer group const has one level.

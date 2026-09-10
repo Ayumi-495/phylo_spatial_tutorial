@@ -1,0 +1,2 @@
+"model","component","value","mean","effect_variance","study_variance","spatial_variance","rho_km","logLik_REML","AIC_REML","status","elapsed_seconds","warnings"
+"spatial_only","rho",1,-0.348778814239315,0.76327202941199,NA,1.20457667379995,1,-3983.73516781616,7973.47033563231,"completed_no_explicit_optimizer_status",49.652,""

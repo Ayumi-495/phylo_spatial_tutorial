@@ -1,0 +1,2 @@
+"start_label","fixed_rho_km","start_effect_variance","start_study_variance","start_spatial_variance","start_rho_km","pooled_mean","ci_lb","ci_ub","iid_effect_variance","study_variance","spatial_variance","rho_km","logLik_REML","AIC_REML","convergence_status","elapsed_seconds","warnings"
+"fixed200",NA,0.775568566150275,1.13139792827622,0.088691411637678,200,-0.348014234964198,-0.487401802754792,-0.208626667173603,0.775543299143913,1.13951796600728,0.0830245702476023,312.357141623324,-4017.42687118915,8044.8537423783,"completed_no_explicit_optimizer_status",1513.787,""

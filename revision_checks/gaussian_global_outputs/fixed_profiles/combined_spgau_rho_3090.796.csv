@@ -1,0 +1,2 @@
+"model","component","value","logLik_REML","AIC_REML","status","elapsed_seconds","warnings"
+"combined_spgau","rho",3090.7958,-4017.81107127858,8043.62214255716,"completed_no_explicit_optimizer_status",417.428,"Setting class(x) to multiple strings (""vcovmat"", ""dsyMatrix"", ...); result will no longer be an S4 object"

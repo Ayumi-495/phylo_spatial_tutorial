@@ -1,0 +1,3 @@
+"effect_uid","study_id","study_num","ES_num","response","d_Hedges","var_Hedges","imputed","source"
+"Pellegrini_2021-1","Pellegrini_2021",210,1,"abundance",-0.724446169,1.71993763,"no","Fig2b"
+"Pellegrini_2021-2","Pellegrini_2021",210,2,"abundance",-0.31921943,0.225256977,"no","Fig1b"

@@ -1,0 +1,7 @@
+"package","model","component","variance","generalized_v_tilde","I2_percent"
+"metafor","Spain_exponential_spatial_only","total",0.839363792544453,0.13253228719118,86.3635331025072
+"metafor","Spain_exponential_spatial_only","effect_size",0.213704231818156,0.13253228719118,21.9883829427819
+"metafor","Spain_exponential_spatial_only","spatial",0.625659560726298,0.13253228719118,64.3751501597253
+"glmmTMB","Spain_exponential_spatial_only","total",0.839363332854146,0.13253228719118,86.3635266526873
+"glmmTMB","Spain_exponential_spatial_only","effect_size",0.213704182877356,0.13253228719118,21.9883883073153
+"glmmTMB","Spain_exponential_spatial_only","spatial",0.62565914997679,0.13253228719118,64.375138345372

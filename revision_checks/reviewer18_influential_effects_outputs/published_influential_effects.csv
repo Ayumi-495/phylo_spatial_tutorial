@@ -1,0 +1,8 @@
+"effect_uid","study_id","ES_num","response_expected","cooks_threshold","present_in_dryad_csv","study_num","response","d_Hedges","var_Hedges","imputed","source","country","latitude","longitude","spatially_usable","among_two_missing_coordinate_records","absolute_effect_rank_all_dryad","absolute_effect_rank_spatial","within_top_7_absolute_spatial"
+"Ngugi_2022-2","Ngugi_2022",2,"abundance",0.015,TRUE,296,"abundance",5.412367085,0.517968298,"no","Fig5","Kenya",0.28,37.8666677,TRUE,FALSE,54,54,FALSE
+"Gagnon_2015-2","Gagnon_2015",2,"abundance",0.015,TRUE,24,"abundance",-9.375232111,0.79912481,"no","Fig5","US",30.68,-90.48,TRUE,FALSE,17,17,FALSE
+"Moris_2017-1","Moris_2017",1,"abundance",0.015,TRUE,370,"abundance",4.447277468,0.10624078,"no","Fig3a","Italy",44.9,7.22,TRUE,FALSE,85,85,FALSE
+"Schwilk_1997-1","Schwilk_1997",1,"diversity",0.015,TRUE,103,"diversity",3.359365019,1.607111111,"no","Fig4","South Africa",-33.95,18.92,TRUE,FALSE,149,149,FALSE
+"Silveira_2016-4","Silveira_2016",4,"diversity",0.015,TRUE,136,"diversity",-2.432011514,0.217416875,"no","Fig2","Brazil",-3.39,-55.35,TRUE,FALSE,248,248,FALSE
+"Launonen_1999-1","Launonen_1999",1,"fitness",0.06,FALSE,NA,NA,NA,NA,NA,NA,NA,NA,NA,FALSE,FALSE,NA,NA,NA
+"Ansley_2015-1","Ansley_2015",1,"fitness",0.06,TRUE,83,"fitness",7.435582691,1.862225521,"no","Fig4","US",33.85,-99.43,TRUE,FALSE,30,30,FALSE

@@ -1,0 +1,3 @@
+"file","expected_sha256","actual_sha256","exact_match"
+"data","435c87cac364acc3bfb61e978b83c6bed06a5b08a2336c15e5f7427ed8674b45","435c87cac364acc3bfb61e978b83c6bed06a5b08a2336c15e5f7427ed8674b45",TRUE
+"code","9a7aa3cbd14faeb59a8dd6773f52524db2a240637a40616a5cd8d42db80d015c","9a7aa3cbd14faeb59a8dd6773f52524db2a240637a40616a5cd8d42db80d015c",TRUE

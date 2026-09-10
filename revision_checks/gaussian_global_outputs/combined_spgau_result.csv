@@ -1,0 +1,2 @@
+"model","kernel","mean","ci_lb","ci_ub","iid_effect_variance","study_variance","spatial_variance","e_folding_range_km","logLik_REML","AIC_REML","convergence_status","elapsed_seconds","warnings"
+"combined_spgau","Gaussian: exp(-d^2/rho^2)",-0.335243148326113,-0.520259835608968,-0.150226461043258,0.775206707271178,1.21321975931966,0.0365815086685606,3090.79583253413,-4017.81107127865,8045.62214255731,"completed_no_explicit_optimizer_status",555.187,"Setting class(x) to multiple strings (""vcovmat"", ""dsyMatrix"", ...); result will no longer be an S4 object"

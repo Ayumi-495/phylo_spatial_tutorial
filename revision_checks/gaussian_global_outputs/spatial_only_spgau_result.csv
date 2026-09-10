@@ -1,0 +1,2 @@
+"model","kernel","mean","ci_lb","ci_ub","iid_effect_variance","study_variance","spatial_variance","e_folding_range_km","logLik_REML","AIC_REML","convergence_status","elapsed_seconds","warnings"
+"spatial_only_spgau","Gaussian: exp(-d^2/rho^2)",-0.335868417900508,-0.462893759099768,-0.208843076701247,0.793838787774536,NA,1.23719633675305,0.362201091937189,-4034.34126928666,8076.68253857332,"completed_no_explicit_optimizer_status",104.175,""

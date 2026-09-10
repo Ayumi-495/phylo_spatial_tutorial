@@ -35,6 +35,33 @@ The spatial-only model has an identifiable spatial term under its deliberately r
 
 No broad multi-start analysis was run because the primary/profile comparison did not show a competing likelihood maximum or starting-value dependence.
 
+## Generalized I² audit (added 2026-09-09)
+
+The corrected Scholer fits and profiles above were already present in spatial-completion commit `0e57293`. They were revalidated against the saved prepared data after a later handoff incorrectly described them as not yet fitted. The saved fit objects contain 949 observations, the same `vi` and intercept-only `X`, and the expected distinct `effect_id`, `study_id`, and `site_id` structures. No Scholer model was refitted in this I² pass.
+
+Using the actual saved sampling variances and design matrix,
+
+\[
+\widetilde v = \frac{k-p}{\operatorname{tr}(P)}=0.000725865052242,
+\quad P=W-WX(X'WX)^{-1}X'W,\quad W=V^{-1}.
+\]
+
+For comparison, the arithmetic mean sampling variance is 0.00785229548999 and the simple harmonic mean is 0.000721567012154. The large difference from the arithmetic mean explains why older Scholer I² values based on “mean sampling variance” must not be reused.
+
+| Model | Total I² (%) | Effect-size I² (%) | Study I² (%) | Spatial I² (%) |
+|---|---:|---:|---:|---:|
+| Unstructured-only | 99.8974 | 32.5854 | 67.3120 | -- |
+| Spatial-only | 99.8798 | 46.4345 | -- | 53.4453 |
+| Combined | 99.8956 | 32.4334 | 64.5256 | 2.9366 |
+
+These are plug-in variance-partition summaries, not evidence that the corresponding components are precisely identified. In particular:
+
+- the spatial-only spatial I² is large and its variance/rho profiles have clear maxima under that deliberately restricted model, but the model is strongly disfavoured by AIC;
+- the combined spatial point variance is small (0.0204), and it is also weakly identified: fixing it to zero costs only 1.694 log-likelihood units and every tested rho from 10 to 12,000 km remains within 1.92 units of the profile maximum;
+- the combined spatial I² of 2.94% is the share of typical marginal variance assigned to that fitted spatial random component. It is not a percentage explained by geographic distance, a spatial range, or a pairwise correlation measure.
+
+Exact I² code and outputs are in `scholer_i2_audit.R`, `scholer_i2_sampling_variance.csv`, and `scholer_i2_results.csv`.
+
 ## Saved evidence
 
 - `scholer_primary_model_results.csv`: primary estimates, AIC, warnings, and elapsed times.
@@ -42,3 +69,4 @@ No broad multi-start analysis was run because the primary/profile comparison did
 - `profiles/`: one RDS and one CSV for each completed profile point.
 - `scholer_profile_points_compiled.csv` and `scholer_profile_summary.csv`: compiled likelihood grid.
 - `scholer_model_metadata.txt`: data, distance, and common fitting settings.
+- `scholer_i2_sampling_variance.csv`, `scholer_i2_results.csv`, and `scholer_i2_readout.txt`: generalized I² denominator and component calculations.
