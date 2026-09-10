@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="dcterms.date" content="2026-09-08">
+<meta name="dcterms.date" content="2026-09-10">
 
 <title>TUTORIAL: A unified framework for phylogenetic and spatial meta-analysis</title>
 <style>
@@ -150,7 +150,7 @@ window.Quarto = {
       <div>
       <div class="quarto-title-meta-heading">Published</div>
       <div class="quarto-title-meta-contents">
-        <p class="date">September 8, 2026</p>
+        <p class="date">September 10, 2026</p>
       </div>
     </div>
     
@@ -188,29 +188,30 @@ window.Quarto = {
   </ul></li>
   <li><a href="#spatial-meta-analysis" id="toc-spatial-meta-analysis" class="nav-link" data-scroll-target="#spatial-meta-analysis">Spatial meta-analysis</a>
   <ul>
-  <li><a href="#how-to-make-a-spatial-distance-matrix" id="toc-how-to-make-a-spatial-distance-matrix" class="nav-link" data-scroll-target="#how-to-make-a-spatial-distance-matrix">How to make a spatial distance matrix?</a>
-  <ul>
-  <li><a href="#step-1.-prepare-the-recorded-coordinate-locations" id="toc-step-1.-prepare-the-recorded-coordinate-locations" class="nav-link" data-scroll-target="#step-1.-prepare-the-recorded-coordinate-locations">Step 1. Prepare the recorded coordinate locations</a></li>
-  <li><a href="#step-2.-compute-the-great-circle-distance-matrix" id="toc-step-2.-compute-the-great-circle-distance-matrix" class="nav-link" data-scroll-target="#step-2.-compute-the-great-circle-distance-matrix">Step 2. Compute the great-circle distance matrix</a></li>
-  </ul></li>
+  <li><a href="#from-recorded-coordinates-to-a-distance-matrix" id="toc-from-recorded-coordinates-to-a-distance-matrix" class="nav-link" data-scroll-target="#from-recorded-coordinates-to-a-distance-matrix">From recorded coordinates to a distance matrix</a></li>
   <li><a href="#examples-from-real-meta-analyses-1" id="toc-examples-from-real-meta-analyses-1" class="nav-link" data-scroll-target="#examples-from-real-meta-analyses-1">Examples from real meta-analyses</a>
   <ul>
-  <li><a href="#grau-andrés-et-al.-2024" id="toc-grau-andrés-et-al.-2024" class="nav-link" data-scroll-target="#grau-andrés-et-al.-2024">1. Grau-Andrés et al.&nbsp;(2024)</a>
+  <li><a href="#grau-andrés-et-al.-2024-global-spatial-meta-analysis" id="toc-grau-andrés-et-al.-2024-global-spatial-meta-analysis" class="nav-link" data-scroll-target="#grau-andrés-et-al.-2024-global-spatial-meta-analysis">1. Grau-Andrés et al.&nbsp;(2024): global spatial meta-analysis</a>
   <ul>
-  <li><a href="#exponential-kernel" id="toc-exponential-kernel" class="nav-link" data-scroll-target="#exponential-kernel">Exponential kernel</a>
-  <ul>
-  <li><a href="#metafor-6" id="toc-metafor-6" class="nav-link" data-scroll-target="#metafor-6">metafor</a></li>
+  <li><a href="#primary-and-sensitivity-datasets" id="toc-primary-and-sensitivity-datasets" class="nav-link" data-scroll-target="#primary-and-sensitivity-datasets">Primary and sensitivity datasets</a></li>
+  <li><a href="#primary-exponential-models" id="toc-primary-exponential-models" class="nav-link" data-scroll-target="#primary-exponential-models">Primary exponential models</a></li>
+  <li><a href="#profile-diagnostics-for-the-primary-analysis" id="toc-profile-diagnostics-for-the-primary-analysis" class="nav-link" data-scroll-target="#profile-diagnostics-for-the-primary-analysis">Profile diagnostics for the primary analysis</a></li>
+  <li><a href="#sensitivity-to-influential-effect-exclusions" id="toc-sensitivity-to-influential-effect-exclusions" class="nav-link" data-scroll-target="#sensitivity-to-influential-effect-exclusions">Sensitivity to influential-effect exclusions</a></li>
+  <li><a href="#generalized-i2" id="toc-generalized-i2" class="nav-link" data-scroll-target="#generalized-i2">Generalized <span class="math inline">\(I^2\)</span></a></li>
+  <li><a href="#gaussian-kernel-sensitivity" id="toc-gaussian-kernel-sensitivity" class="nav-link" data-scroll-target="#gaussian-kernel-sensitivity">Gaussian-kernel sensitivity</a></li>
   </ul></li>
-  <li><a href="#squared-exponential-kernel-concise-illustration" id="toc-squared-exponential-kernel-concise-illustration" class="nav-link" data-scroll-target="#squared-exponential-kernel-concise-illustration">Squared-exponential kernel (concise illustration)</a></li>
-  </ul></li>
-  <li><a href="#grau-andrés-et-al.-2024-regional-cross-package-implementation" id="toc-grau-andrés-et-al.-2024-regional-cross-package-implementation" class="nav-link" data-scroll-target="#grau-andrés-et-al.-2024-regional-cross-package-implementation">2. Grau-Andrés et al.&nbsp;(2024): regional cross-package implementation</a>
+  <li><a href="#grau-andrés-et-al.-2024-spain-cross-package-implementation" id="toc-grau-andrés-et-al.-2024-spain-cross-package-implementation" class="nav-link" data-scroll-target="#grau-andrés-et-al.-2024-spain-cross-package-implementation">2. Grau-Andrés et al.&nbsp;(2024): Spain cross-package implementation</a>
   <ul>
-  <li><a href="#metafor-7" id="toc-metafor-7" class="nav-link" data-scroll-target="#metafor-7"><code>metafor</code></a></li>
+  <li><a href="#metafor-6" id="toc-metafor-6" class="nav-link" data-scroll-target="#metafor-6"><code>metafor</code></a></li>
   <li><a href="#glmmtmb-6" id="toc-glmmtmb-6" class="nav-link" data-scroll-target="#glmmtmb-6"><code>glmmTMB</code></a></li>
   <li><a href="#brms-6" id="toc-brms-6" class="nav-link" data-scroll-target="#brms-6"><code>brms</code></a></li>
   </ul></li>
-  <li><a href="#scholer-et-al.-2020-advanced-hierarchical-spatial-meta-analysis" id="toc-scholer-et-al.-2020-advanced-hierarchical-spatial-meta-analysis" class="nav-link" data-scroll-target="#scholer-et-al.-2020-advanced-hierarchical-spatial-meta-analysis">3. Scholer et al.&nbsp;(2020): advanced hierarchical spatial meta-analysis</a></li>
+  <li><a href="#scholer-et-al.-2020-advanced-hierarchical-spatial-meta-analysis" id="toc-scholer-et-al.-2020-advanced-hierarchical-spatial-meta-analysis" class="nav-link" data-scroll-target="#scholer-et-al.-2020-advanced-hierarchical-spatial-meta-analysis">3. Scholer et al.&nbsp;(2020): advanced hierarchical spatial meta-analysis</a>
+  <ul>
+  <li><a href="#profile-diagnostics-and-generalized-i2" id="toc-profile-diagnostics-and-generalized-i2" class="nav-link" data-scroll-target="#profile-diagnostics-and-generalized-i2">Profile diagnostics and generalized <span class="math inline">\(I^2\)</span></a></li>
   </ul></li>
+  </ul></li>
+  <li><a href="#reporting-a-spatial-meta-analysis" id="toc-reporting-a-spatial-meta-analysis" class="nav-link" data-scroll-target="#reporting-a-spatial-meta-analysis">Reporting a spatial meta-analysis</a></li>
   </ul></li>
   <li><a href="#software-and-package-versions" id="toc-software-and-package-versions" class="nav-link" data-scroll-target="#software-and-package-versions">Software and package versions</a></li>
   <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
@@ -2324,11 +2325,9 @@ Std.Dev.species.id.phyAcanthurus_nigricans_ott467313|g.1
 </section>
 <section id="spatial-meta-analysis" class="level1">
 <h1>Spatial meta-analysis</h1>
-<section id="how-to-make-a-spatial-distance-matrix" class="level2">
-<h2 class="anchored" data-anchor-id="how-to-make-a-spatial-distance-matrix">How to make a spatial distance matrix?</h2>
-<p>Spatial meta-analysis models residual similarity as a function of separation among recorded coordinate locations. The required input is a distance matrix whose row and column order matches the levels of the location factor used in the model. For global data, calculate ellipsoidal great-circle distances in kilometres from longitude and latitude rather than applying one global planar projection.</p>
-<section id="step-1.-prepare-the-recorded-coordinate-locations" class="level3">
-<h3 class="anchored" data-anchor-id="step-1.-prepare-the-recorded-coordinate-locations">Step 1. Prepare the recorded coordinate locations</h3>
+<section id="from-recorded-coordinates-to-a-distance-matrix" class="level2">
+<h2 class="anchored" data-anchor-id="from-recorded-coordinates-to-a-distance-matrix">From recorded coordinates to a distance matrix</h2>
+<p>Spatial meta-analysis models residual similarity as a function of separation among recorded-coordinate locations. The distance matrix must have the same row and column order as the levels of the location factor used in the model. For global data, use WGS84 ellipsoidal geodesic distances in kilometres from longitude and latitude, rather than one global planar projection.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb63"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(geosphere)</span>
 <span id="cb63-2"><a href="#cb63-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -2336,162 +2335,433 @@ Std.Dev.species.id.phyAcanthurus_nigricans_ott467313|g.1
 <span id="cb63-4"><a href="#cb63-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">site_id =</span> <span class="fu">c</span>(<span class="st">"A"</span>, <span class="st">"B"</span>, <span class="st">"C"</span>),</span>
 <span id="cb63-5"><a href="#cb63-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">latitude =</span> <span class="fu">c</span>(<span class="fl">34.05</span>, <span class="fl">36.16</span>, <span class="fl">40.71</span>),</span>
 <span id="cb63-6"><a href="#cb63-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">longitude =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="fl">118.24</span>, <span class="sc">-</span><span class="fl">115.15</span>, <span class="sc">-</span><span class="fl">74.00</span>)</span>
-<span id="cb63-7"><a href="#cb63-7" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb63-7"><a href="#cb63-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb63-8"><a href="#cb63-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb63-9"><a href="#cb63-9" aria-hidden="true" tabindex="-1"></a>coordinates_lonlat <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(toy_sites[<span class="fu">c</span>(<span class="st">"longitude"</span>, <span class="st">"latitude"</span>)])</span>
+<span id="cb63-10"><a href="#cb63-10" aria-hidden="true" tabindex="-1"></a>D_km <span class="ot">&lt;-</span> geosphere<span class="sc">::</span><span class="fu">distm</span>(coordinates_lonlat, <span class="at">fun =</span> geosphere<span class="sc">::</span>distGeo) <span class="sc">/</span> <span class="dv">1000</span></span>
+<span id="cb63-11"><a href="#cb63-11" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(D_km) <span class="ot">&lt;-</span> <span class="fu">colnames</span>(D_km) <span class="ot">&lt;-</span> toy_sites<span class="sc">$</span>site_id</span>
+<span id="cb63-12"><a href="#cb63-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb63-13"><a href="#cb63-13" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">identical</span>(<span class="fu">rownames</span>(D_km), toy_sites<span class="sc">$</span>site_id))</span>
+<span id="cb63-14"><a href="#cb63-14" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">identical</span>(<span class="fu">colnames</span>(D_km), toy_sites<span class="sc">$</span>site_id))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-</section>
-<section id="step-2.-compute-the-great-circle-distance-matrix" class="level3">
-<h3 class="anchored" data-anchor-id="step-2.-compute-the-great-circle-distance-matrix">Step 2. Compute the great-circle distance matrix</h3>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb64"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a>coordinates_lonlat <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(toy_sites[<span class="fu">c</span>(<span class="st">"longitude"</span>, <span class="st">"latitude"</span>)])</span>
-<span id="cb64-2"><a href="#cb64-2" aria-hidden="true" tabindex="-1"></a>D_km <span class="ot">&lt;-</span> geosphere<span class="sc">::</span><span class="fu">distm</span>(coordinates_lonlat, <span class="at">fun =</span> geosphere<span class="sc">::</span>distGeo) <span class="sc">/</span> <span class="dv">1000</span></span>
-<span id="cb64-3"><a href="#cb64-3" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(D_km) <span class="ot">&lt;-</span> <span class="fu">colnames</span>(D_km) <span class="ot">&lt;-</span> toy_sites<span class="sc">$</span>site_id</span>
-<span id="cb64-4"><a href="#cb64-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb64-5"><a href="#cb64-5" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">identical</span>(<span class="fu">rownames</span>(D_km), toy_sites<span class="sc">$</span>site_id))</span>
-<span id="cb64-6"><a href="#cb64-6" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">identical</span>(<span class="fu">colnames</span>(D_km), toy_sites<span class="sc">$</span>site_id))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-<p>Each element <span class="math inline">\(D_{ij}\)</span> is the WGS84 ellipsoidal great-circle distance in kilometres between recorded coordinate locations <span class="math inline">\(i\)</span> and <span class="math inline">\(j\)</span>. Identical recorded coordinates do not necessarily establish that observations came from the same exact field site.</p>
-<p><strong>Why this matrix matters?</strong></p>
-<p>Spatial meta-analytic models assume that residual similarity between effect sizes decays with geographic distance. The distance matrix <span class="math inline">\(\mathbf{D}\)</span> encodes this information.</p>
-<p>Differences in implementation and requirements between <span class="math inline">\(R\)</span> packages:</p>
-<ul>
-<li>In <code>metafor</code>, we supply <span class="math inline">\(\mathbf{D}\)</span> directly, and <code>metafor</code> transforms it into a residual correlation matrix using a specified kernel, such as a linear, exponential, or Gaussian kernel(more info: <a href="https://wviechtb.github.io/metafor/reference/rma.mv.html">here</a>).</li>
-<li>In <code>brms</code>, we supply the geographic coordinates, and <code>brms</code> internally computes the pairwise distances and applies the corresponding distance-based kernel.</li>
-<li>In <code>glmmTMB</code>, we supply geographic coordinates, and it models spatial dependence through a continuous spatial random field whose covariance structure is implicitly governed by distance rather than by an explicit user-supplied distance matrix.</li>
-</ul>
-</section>
+<p>Each element <span class="math inline">\(D_{ij}\)</span> is the WGS84 ellipsoidal geodesic distance in kilometres between recorded-coordinate locations <span class="math inline">\(i\)</span> and <span class="math inline">\(j\)</span>. Identical coordinates identify the same recorded-coordinate location in the dataset, but do not establish that observations came from the same exact field site.</p>
+<p>The examples below keep three grouping structures distinct: <code>effect_id</code> identifies effect sizes, <code>study_id</code> identifies studies or references, and <code>site_id</code> identifies recorded-coordinate locations. In <code>metafor</code>, the distance matrix is supplied directly. The Spain example later shows how analogous regional spatial models can be specified in <code>metafor</code>, <code>glmmTMB</code>, and <code>brms</code>.</p>
 </section>
 <section id="examples-from-real-meta-analyses-1" class="level2">
 <h2 class="anchored" data-anchor-id="examples-from-real-meta-analyses-1">Examples from real meta-analyses</h2>
-<section id="grau-andrés-et-al.-2024" class="level3">
-<h3 class="anchored" data-anchor-id="grau-andrés-et-al.-2024">1. Grau-Andrés et al.&nbsp;(2024)</h3>
-<p>The dataset comes from <a href="https://doi.org/10.1111/geb.13858">Grau-Andrés et al.&nbsp;(2024)</a> and contains 2,361 effect sizes of Hedges’ d.&nbsp;We retain all effect sizes: they belong to 393 studies and 383 recorded coordinate locations. Studies and recorded coordinate locations are distinct grouping structures: some studies contain multiple recorded locations, and some recorded locations are shared by multiple studies. Identical coordinates are treated as the same recorded coordinate location, not as proof of the same exact field site.</p>
+<section id="grau-andrés-et-al.-2024-global-spatial-meta-analysis" class="level3">
+<h3 class="anchored" data-anchor-id="grau-andrés-et-al.-2024-global-spatial-meta-analysis">1. Grau-Andrés et al.&nbsp;(2024): global spatial meta-analysis</h3>
+<section id="primary-and-sensitivity-datasets" class="level4">
+<h4 class="anchored" data-anchor-id="primary-and-sensitivity-datasets">Primary and sensitivity datasets</h4>
+<p>The primary worked example uses <code>published_cleaned</code>, with 2,355 effect sizes of Hedges’ <span class="math inline">\(d\)</span>, 390 studies, and 380 recorded-coordinate locations. These are the spatially usable observations after excluding the recoverable influential effects removed in the published analysis. The full <code>all_spatially_usable</code> dataset, with 2,361 effect sizes, 393 studies, and 383 recorded-coordinate locations, is retained as a sensitivity analysis.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb65"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(geosphere)</span>
-<span id="cb65-2"><a href="#cb65-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb65-3"><a href="#cb65-3" aria-hidden="true" tabindex="-1"></a>dat_Roger <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="fu">here</span>(<span class="st">"data"</span>, <span class="st">"Roger_etal_2024"</span>, <span class="st">"Roger_etal_2024.csv"</span>))</span>
-<span id="cb65-4"><a href="#cb65-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb65-5"><a href="#cb65-5" aria-hidden="true" tabindex="-1"></a>dat_Roger <span class="ot">&lt;-</span> dat_Roger <span class="sc">|&gt;</span></span>
-<span id="cb65-6"><a href="#cb65-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(latitude), <span class="sc">!</span><span class="fu">is.na</span>(longitude))</span>
-<span id="cb65-7"><a href="#cb65-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb65-8"><a href="#cb65-8" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">nrow</span>(dat_Roger) <span class="sc">==</span> <span class="dv">2361</span>L, <span class="fu">all</span>(dat_Roger<span class="sc">$</span>var_Hedges <span class="sc">&gt;</span> <span class="dv">0</span>))</span>
-<span id="cb65-9"><a href="#cb65-9" aria-hidden="true" tabindex="-1"></a>dat_Roger<span class="sc">$</span>effect_id <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="fu">seq_len</span>(<span class="fu">nrow</span>(dat_Roger)))</span>
-<span id="cb65-10"><a href="#cb65-10" aria-hidden="true" tabindex="-1"></a>dat_Roger<span class="sc">$</span>study_id <span class="ot">&lt;-</span> <span class="fu">factor</span>(dat_Roger<span class="sc">$</span>study_id)</span>
-<span id="cb65-11"><a href="#cb65-11" aria-hidden="true" tabindex="-1"></a>dat_Roger<span class="sc">$</span>site_key <span class="ot">&lt;-</span> <span class="fu">sprintf</span>(<span class="st">"%.8f_%.8f"</span>, dat_Roger<span class="sc">$</span>latitude, dat_Roger<span class="sc">$</span>longitude)</span>
-<span id="cb65-12"><a href="#cb65-12" aria-hidden="true" tabindex="-1"></a>site_levels <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">unique</span>(dat_Roger<span class="sc">$</span>site_key))</span>
-<span id="cb65-13"><a href="#cb65-13" aria-hidden="true" tabindex="-1"></a>dat_Roger<span class="sc">$</span>site_id <span class="ot">&lt;-</span> <span class="fu">factor</span>(dat_Roger<span class="sc">$</span>site_key, <span class="at">levels =</span> site_levels)</span>
-<span id="cb65-14"><a href="#cb65-14" aria-hidden="true" tabindex="-1"></a>dat_Roger<span class="sc">$</span>const <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="st">"all_sites"</span>)</span>
-<span id="cb65-15"><a href="#cb65-15" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">nlevels</span>(dat_Roger<span class="sc">$</span>study_id) <span class="sc">==</span> <span class="dv">393</span>L, <span class="fu">nlevels</span>(dat_Roger<span class="sc">$</span>site_id) <span class="sc">==</span> <span class="dv">383</span>L)</span>
-<span id="cb65-16"><a href="#cb65-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb65-17"><a href="#cb65-17" aria-hidden="true" tabindex="-1"></a>site_lookup <span class="ot">&lt;-</span> <span class="fu">unique</span>(dat_Roger[<span class="fu">c</span>(<span class="st">"site_id"</span>, <span class="st">"site_key"</span>, <span class="st">"latitude"</span>, <span class="st">"longitude"</span>)])</span>
-<span id="cb65-18"><a href="#cb65-18" aria-hidden="true" tabindex="-1"></a>site_lookup <span class="ot">&lt;-</span> site_lookup[<span class="fu">match</span>(site_levels, site_lookup<span class="sc">$</span>site_key), ]</span>
-<span id="cb65-19"><a href="#cb65-19" aria-hidden="true" tabindex="-1"></a>coordinates_lonlat <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(site_lookup[<span class="fu">c</span>(<span class="st">"longitude"</span>, <span class="st">"latitude"</span>)])</span>
-<span id="cb65-20"><a href="#cb65-20" aria-hidden="true" tabindex="-1"></a>distance_km <span class="ot">&lt;-</span> geosphere<span class="sc">::</span><span class="fu">distm</span>(coordinates_lonlat, <span class="at">fun =</span> geosphere<span class="sc">::</span>distGeo) <span class="sc">/</span> <span class="dv">1000</span></span>
-<span id="cb65-21"><a href="#cb65-21" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(distance_km) <span class="ot">&lt;-</span> <span class="fu">colnames</span>(distance_km) <span class="ot">&lt;-</span> site_levels</span>
-<span id="cb65-22"><a href="#cb65-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb65-23"><a href="#cb65-23" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">identical</span>(<span class="fu">rownames</span>(distance_km), <span class="fu">levels</span>(dat_Roger<span class="sc">$</span>site_id)))</span>
-<span id="cb65-24"><a href="#cb65-24" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">identical</span>(<span class="fu">colnames</span>(distance_km), <span class="fu">levels</span>(dat_Roger<span class="sc">$</span>site_id)))</span>
-<span id="cb65-25"><a href="#cb65-25" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">isTRUE</span>(<span class="fu">all.equal</span>(distance_km, <span class="fu">t</span>(distance_km), <span class="at">tolerance =</span> <span class="fl">1e-10</span>)))</span>
-<span id="cb65-26"><a href="#cb65-26" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">all</span>(<span class="fu">abs</span>(<span class="fu">diag</span>(distance_km)) <span class="sc">&lt;</span> <span class="fl">1e-10</span>), <span class="fu">all</span>(distance_km <span class="sc">&gt;=</span> <span class="dv">0</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb64"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(geosphere)</span>
+<span id="cb64-2"><a href="#cb64-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb64-3"><a href="#cb64-3" aria-hidden="true" tabindex="-1"></a>grau_raw <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="fu">here</span>(<span class="st">"data"</span>, <span class="st">"Roger_etal_2024"</span>, <span class="st">"Roger_etal_2024.csv"</span>))</span>
+<span id="cb64-4"><a href="#cb64-4" aria-hidden="true" tabindex="-1"></a>grau_raw<span class="sc">$</span>effect_uid <span class="ot">&lt;-</span> <span class="fu">paste</span>(grau_raw<span class="sc">$</span>study_id, grau_raw<span class="sc">$</span>ES_num, <span class="at">sep =</span> <span class="st">"-"</span>)</span>
+<span id="cb64-5"><a href="#cb64-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb64-6"><a href="#cb64-6" aria-hidden="true" tabindex="-1"></a>all_spatially_usable <span class="ot">&lt;-</span> grau_raw <span class="sc">|&gt;</span></span>
+<span id="cb64-7"><a href="#cb64-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(latitude), <span class="sc">!</span><span class="fu">is.na</span>(longitude))</span>
+<span id="cb64-8"><a href="#cb64-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb64-9"><a href="#cb64-9" aria-hidden="true" tabindex="-1"></a>published_exclusions <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb64-10"><a href="#cb64-10" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Ngugi_2022-2"</span>, <span class="st">"Gagnon_2015-2"</span>, <span class="st">"Moris_2017-1"</span>,</span>
+<span id="cb64-11"><a href="#cb64-11" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Schwilk_1997-1"</span>, <span class="st">"Silveira_2016-4"</span>, <span class="st">"Ansley_2015-1"</span></span>
+<span id="cb64-12"><a href="#cb64-12" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb64-13"><a href="#cb64-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb64-14"><a href="#cb64-14" aria-hidden="true" tabindex="-1"></a>published_cleaned <span class="ot">&lt;-</span> all_spatially_usable <span class="sc">|&gt;</span></span>
+<span id="cb64-15"><a href="#cb64-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span>effect_uid <span class="sc">%in%</span> published_exclusions)</span>
+<span id="cb64-16"><a href="#cb64-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb64-17"><a href="#cb64-17" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">nrow</span>(all_spatially_usable) <span class="sc">==</span> <span class="dv">2361</span>L,</span>
+<span id="cb64-18"><a href="#cb64-18" aria-hidden="true" tabindex="-1"></a>          <span class="fu">nrow</span>(published_cleaned) <span class="sc">==</span> <span class="dv">2355</span>L,</span>
+<span id="cb64-19"><a href="#cb64-19" aria-hidden="true" tabindex="-1"></a>          <span class="fu">all</span>(published_cleaned<span class="sc">$</span>var_Hedges <span class="sc">&gt;</span> <span class="dv">0</span>))</span>
+<span id="cb64-20"><a href="#cb64-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb64-21"><a href="#cb64-21" aria-hidden="true" tabindex="-1"></a>prepare_spatial_data <span class="ot">&lt;-</span> <span class="cf">function</span>(dat, n_studies, n_sites) {</span>
+<span id="cb64-22"><a href="#cb64-22" aria-hidden="true" tabindex="-1"></a>  dat<span class="sc">$</span>effect_id <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="fu">seq_len</span>(<span class="fu">nrow</span>(dat)))</span>
+<span id="cb64-23"><a href="#cb64-23" aria-hidden="true" tabindex="-1"></a>  dat<span class="sc">$</span>study_id <span class="ot">&lt;-</span> <span class="fu">factor</span>(dat<span class="sc">$</span>study_id)</span>
+<span id="cb64-24"><a href="#cb64-24" aria-hidden="true" tabindex="-1"></a>  dat<span class="sc">$</span>site_key <span class="ot">&lt;-</span> <span class="fu">sprintf</span>(<span class="st">"%.8f_%.8f"</span>, dat<span class="sc">$</span>latitude, dat<span class="sc">$</span>longitude)</span>
+<span id="cb64-25"><a href="#cb64-25" aria-hidden="true" tabindex="-1"></a>  site_levels <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">unique</span>(dat<span class="sc">$</span>site_key))</span>
+<span id="cb64-26"><a href="#cb64-26" aria-hidden="true" tabindex="-1"></a>  dat<span class="sc">$</span>site_id <span class="ot">&lt;-</span> <span class="fu">factor</span>(dat<span class="sc">$</span>site_key, <span class="at">levels =</span> site_levels)</span>
+<span id="cb64-27"><a href="#cb64-27" aria-hidden="true" tabindex="-1"></a>  dat<span class="sc">$</span>const <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="st">"all_sites"</span>)</span>
+<span id="cb64-28"><a href="#cb64-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb64-29"><a href="#cb64-29" aria-hidden="true" tabindex="-1"></a>  site_lookup <span class="ot">&lt;-</span> <span class="fu">unique</span>(dat[<span class="fu">c</span>(<span class="st">"site_key"</span>, <span class="st">"latitude"</span>, <span class="st">"longitude"</span>)])</span>
+<span id="cb64-30"><a href="#cb64-30" aria-hidden="true" tabindex="-1"></a>  site_lookup <span class="ot">&lt;-</span> site_lookup[<span class="fu">match</span>(site_levels, site_lookup<span class="sc">$</span>site_key), ]</span>
+<span id="cb64-31"><a href="#cb64-31" aria-hidden="true" tabindex="-1"></a>  coordinates_lonlat <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(site_lookup[<span class="fu">c</span>(<span class="st">"longitude"</span>, <span class="st">"latitude"</span>)])</span>
+<span id="cb64-32"><a href="#cb64-32" aria-hidden="true" tabindex="-1"></a>  distance_km <span class="ot">&lt;-</span> geosphere<span class="sc">::</span><span class="fu">distm</span>(</span>
+<span id="cb64-33"><a href="#cb64-33" aria-hidden="true" tabindex="-1"></a>    coordinates_lonlat, <span class="at">fun =</span> geosphere<span class="sc">::</span>distGeo</span>
+<span id="cb64-34"><a href="#cb64-34" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">/</span> <span class="dv">1000</span></span>
+<span id="cb64-35"><a href="#cb64-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rownames</span>(distance_km) <span class="ot">&lt;-</span> <span class="fu">colnames</span>(distance_km) <span class="ot">&lt;-</span> site_levels</span>
+<span id="cb64-36"><a href="#cb64-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb64-37"><a href="#cb64-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stopifnot</span>(<span class="fu">nlevels</span>(dat<span class="sc">$</span>study_id) <span class="sc">==</span> n_studies,</span>
+<span id="cb64-38"><a href="#cb64-38" aria-hidden="true" tabindex="-1"></a>            <span class="fu">nlevels</span>(dat<span class="sc">$</span>site_id) <span class="sc">==</span> n_sites,</span>
+<span id="cb64-39"><a href="#cb64-39" aria-hidden="true" tabindex="-1"></a>            <span class="fu">identical</span>(<span class="fu">rownames</span>(distance_km), <span class="fu">levels</span>(dat<span class="sc">$</span>site_id)),</span>
+<span id="cb64-40"><a href="#cb64-40" aria-hidden="true" tabindex="-1"></a>            <span class="fu">identical</span>(<span class="fu">colnames</span>(distance_km), <span class="fu">levels</span>(dat<span class="sc">$</span>site_id)),</span>
+<span id="cb64-41"><a href="#cb64-41" aria-hidden="true" tabindex="-1"></a>            <span class="fu">isTRUE</span>(<span class="fu">all.equal</span>(distance_km, <span class="fu">t</span>(distance_km), <span class="at">tolerance =</span> <span class="fl">1e-10</span>)),</span>
+<span id="cb64-42"><a href="#cb64-42" aria-hidden="true" tabindex="-1"></a>            <span class="fu">all</span>(<span class="fu">abs</span>(<span class="fu">diag</span>(distance_km)) <span class="sc">&lt;</span> <span class="fl">1e-10</span>))</span>
+<span id="cb64-43"><a href="#cb64-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb64-44"><a href="#cb64-44" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">data =</span> dat, <span class="at">distance_km =</span> distance_km)</span>
+<span id="cb64-45"><a href="#cb64-45" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb64-46"><a href="#cb64-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb64-47"><a href="#cb64-47" aria-hidden="true" tabindex="-1"></a>grau_clean <span class="ot">&lt;-</span> <span class="fu">prepare_spatial_data</span>(published_cleaned, <span class="at">n_studies =</span> <span class="dv">390</span>L, <span class="at">n_sites =</span> <span class="dv">380</span>L)</span>
+<span id="cb64-48"><a href="#cb64-48" aria-hidden="true" tabindex="-1"></a>grau_full <span class="ot">&lt;-</span> <span class="fu">prepare_spatial_data</span>(all_spatially_usable, <span class="at">n_studies =</span> <span class="dv">393</span>L, <span class="at">n_sites =</span> <span class="dv">383</span>L)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<section id="exponential-kernel" class="level4">
-<h4 class="anchored" data-anchor-id="exponential-kernel">Exponential kernel</h4>
-<p>The exponential kernel assumes that the similarity between two effect sizes decreases smoothly as the geographic distance between their locations increases. As a result, nearby sites are more strongly correlated, whereas correlation declines exponentially with distance and becomes negligible for sites that are far apart. This can provide a simple way to represent spatial autocorrelation without requiring a hard distance threshold.</p>
-<section id="metafor-6" class="level5">
-<h5 class="anchored" data-anchor-id="metafor-6">metafor</h5>
-<p>We use the same effect sizes, diagonal sampling variances, intercept-only fixed effect, and effect-size-level heterogeneity in all three models. <code>const</code> is a one-level outer grouping factor, so the spatial covariance is allowed across studies. The spatial random term is indexed by <code>site_id</code>, not effect ID.</p>
+<details>
+<summary>
+Reproducibility note on influential-effect exclusions
+</summary>
+<p>The archived published analysis named seven influential effects. Six occur in the public data and are removed above. <code>Launonen_1999-1</code> was already absent from the public CSV, so it cannot be removed again and no substitute observation was invented. The two observations without coordinates are different records from the published influential effects.</p>
+</details>
+</section>
+<section id="primary-exponential-models" class="level4">
+<h4 class="anchored" data-anchor-id="primary-exponential-models">Primary exponential models</h4>
+<p>For the primary analysis, all models use the same effect sizes, diagonal sampling variances, intercept-only fixed effect, and iid effect-size heterogeneity. The one-level outer factor <code>const</code> allows spatial covariance across studies. The spatial term is indexed by <code>site_id</code>, not by <code>effect_id</code>.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb66"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a>unstructured_only <span class="ot">&lt;-</span> <span class="fu">rma.mv</span>(</span>
-<span id="cb66-2"><a href="#cb66-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">yi =</span> d_Hedges, <span class="at">V =</span> var_Hedges,</span>
-<span id="cb66-3"><a href="#cb66-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">random =</span> <span class="fu">list</span>(<span class="sc">~</span> <span class="dv">1</span> <span class="sc">|</span> effect_id, <span class="sc">~</span> <span class="dv">1</span> <span class="sc">|</span> study_id),</span>
-<span id="cb66-4"><a href="#cb66-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> dat_Roger, <span class="at">method =</span> <span class="st">"REML"</span>, <span class="at">test =</span> <span class="st">"t"</span>, <span class="at">sparse =</span> <span class="cn">TRUE</span></span>
-<span id="cb66-5"><a href="#cb66-5" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb66-6"><a href="#cb66-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb66-7"><a href="#cb66-7" aria-hidden="true" tabindex="-1"></a>spatial_only <span class="ot">&lt;-</span> <span class="fu">rma.mv</span>(</span>
-<span id="cb66-8"><a href="#cb66-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">yi =</span> d_Hedges, <span class="at">V =</span> var_Hedges,</span>
-<span id="cb66-9"><a href="#cb66-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">random =</span> <span class="fu">list</span>(<span class="sc">~</span> <span class="dv">1</span> <span class="sc">|</span> effect_id, <span class="sc">~</span> site_id <span class="sc">|</span> const),</span>
-<span id="cb66-10"><a href="#cb66-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">struct =</span> <span class="st">"SPEXP"</span>, <span class="at">dist =</span> <span class="fu">list</span>(<span class="at">site_id =</span> distance_km),</span>
-<span id="cb66-11"><a href="#cb66-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> dat_Roger, <span class="at">method =</span> <span class="st">"REML"</span>, <span class="at">test =</span> <span class="st">"t"</span>, <span class="at">sparse =</span> <span class="cn">TRUE</span></span>
-<span id="cb66-12"><a href="#cb66-12" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb66-13"><a href="#cb66-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb66-14"><a href="#cb66-14" aria-hidden="true" tabindex="-1"></a>combined <span class="ot">&lt;-</span> <span class="fu">rma.mv</span>(</span>
-<span id="cb66-15"><a href="#cb66-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">yi =</span> d_Hedges, <span class="at">V =</span> var_Hedges,</span>
-<span id="cb66-16"><a href="#cb66-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">random =</span> <span class="fu">list</span>(<span class="sc">~</span> <span class="dv">1</span> <span class="sc">|</span> effect_id, <span class="sc">~</span> <span class="dv">1</span> <span class="sc">|</span> study_id, <span class="sc">~</span> site_id <span class="sc">|</span> const),</span>
-<span id="cb66-17"><a href="#cb66-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">struct =</span> <span class="st">"SPEXP"</span>, <span class="at">dist =</span> <span class="fu">list</span>(<span class="at">site_id =</span> distance_km),</span>
-<span id="cb66-18"><a href="#cb66-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> dat_Roger, <span class="at">method =</span> <span class="st">"REML"</span>, <span class="at">test =</span> <span class="st">"t"</span>, <span class="at">sparse =</span> <span class="cn">TRUE</span></span>
-<span id="cb66-19"><a href="#cb66-19" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb65"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a>grau_unstructured <span class="ot">&lt;-</span> <span class="fu">rma.mv</span>(</span>
+<span id="cb65-2"><a href="#cb65-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">yi =</span> d_Hedges, <span class="at">V =</span> var_Hedges,</span>
+<span id="cb65-3"><a href="#cb65-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">random =</span> <span class="fu">list</span>(<span class="sc">~</span> <span class="dv">1</span> <span class="sc">|</span> effect_id, <span class="sc">~</span> <span class="dv">1</span> <span class="sc">|</span> study_id),</span>
+<span id="cb65-4"><a href="#cb65-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> grau_clean<span class="sc">$</span>data, <span class="at">method =</span> <span class="st">"REML"</span>, <span class="at">test =</span> <span class="st">"t"</span>, <span class="at">sparse =</span> <span class="cn">TRUE</span></span>
+<span id="cb65-5"><a href="#cb65-5" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb65-6"><a href="#cb65-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb65-7"><a href="#cb65-7" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">identical</span>(<span class="fu">rownames</span>(grau_clean<span class="sc">$</span>distance_km), <span class="fu">levels</span>(grau_clean<span class="sc">$</span>data<span class="sc">$</span>site_id)),</span>
+<span id="cb65-8"><a href="#cb65-8" aria-hidden="true" tabindex="-1"></a>          <span class="fu">identical</span>(<span class="fu">colnames</span>(grau_clean<span class="sc">$</span>distance_km), <span class="fu">levels</span>(grau_clean<span class="sc">$</span>data<span class="sc">$</span>site_id)))</span>
+<span id="cb65-9"><a href="#cb65-9" aria-hidden="true" tabindex="-1"></a>grau_spatial <span class="ot">&lt;-</span> <span class="fu">rma.mv</span>(</span>
+<span id="cb65-10"><a href="#cb65-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">yi =</span> d_Hedges, <span class="at">V =</span> var_Hedges,</span>
+<span id="cb65-11"><a href="#cb65-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">random =</span> <span class="fu">list</span>(<span class="sc">~</span> <span class="dv">1</span> <span class="sc">|</span> effect_id, <span class="sc">~</span> site_id <span class="sc">|</span> const),</span>
+<span id="cb65-12"><a href="#cb65-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">struct =</span> <span class="st">"SPEXP"</span>, <span class="at">dist =</span> <span class="fu">list</span>(<span class="at">site_id =</span> grau_clean<span class="sc">$</span>distance_km),</span>
+<span id="cb65-13"><a href="#cb65-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> grau_clean<span class="sc">$</span>data, <span class="at">method =</span> <span class="st">"REML"</span>, <span class="at">test =</span> <span class="st">"t"</span>, <span class="at">sparse =</span> <span class="cn">TRUE</span></span>
+<span id="cb65-14"><a href="#cb65-14" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb65-15"><a href="#cb65-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb65-16"><a href="#cb65-16" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">identical</span>(<span class="fu">rownames</span>(grau_clean<span class="sc">$</span>distance_km), <span class="fu">levels</span>(grau_clean<span class="sc">$</span>data<span class="sc">$</span>site_id)),</span>
+<span id="cb65-17"><a href="#cb65-17" aria-hidden="true" tabindex="-1"></a>          <span class="fu">identical</span>(<span class="fu">colnames</span>(grau_clean<span class="sc">$</span>distance_km), <span class="fu">levels</span>(grau_clean<span class="sc">$</span>data<span class="sc">$</span>site_id)))</span>
+<span id="cb65-18"><a href="#cb65-18" aria-hidden="true" tabindex="-1"></a>grau_combined <span class="ot">&lt;-</span> <span class="fu">rma.mv</span>(</span>
+<span id="cb65-19"><a href="#cb65-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">yi =</span> d_Hedges, <span class="at">V =</span> var_Hedges,</span>
+<span id="cb65-20"><a href="#cb65-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">random =</span> <span class="fu">list</span>(<span class="sc">~</span> <span class="dv">1</span> <span class="sc">|</span> effect_id, <span class="sc">~</span> <span class="dv">1</span> <span class="sc">|</span> study_id, <span class="sc">~</span> site_id <span class="sc">|</span> const),</span>
+<span id="cb65-21"><a href="#cb65-21" aria-hidden="true" tabindex="-1"></a>  <span class="at">struct =</span> <span class="st">"SPEXP"</span>, <span class="at">dist =</span> <span class="fu">list</span>(<span class="at">site_id =</span> grau_clean<span class="sc">$</span>distance_km),</span>
+<span id="cb65-22"><a href="#cb65-22" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> grau_clean<span class="sc">$</span>data, <span class="at">method =</span> <span class="st">"REML"</span>, <span class="at">test =</span> <span class="st">"t"</span>, <span class="at">sparse =</span> <span class="cn">TRUE</span></span>
+<span id="cb65-23"><a href="#cb65-23" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>The unstructured-only model estimates study-level heterogeneity without a spatial component. The spatial-only model is deliberately restricted: without an unstructured study-level component, its spatial term must represent heterogeneity that may not be genuinely spatial. The combined model separates unstructured study-level heterogeneity from a location-level spatial component.</p>
+<p>The unstructured-only model represents study-level heterogeneity without a spatial component. The spatial-only model is deliberately restrictive: it omits study-level heterogeneity, so its spatial term can represent heterogeneity that is not genuinely spatial. The combined model allows both study-level heterogeneity and location-level spatial covariance.</p>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 11%">
-<col style="width: 14%">
-<col style="width: 14%">
-<col style="width: 14%">
-<col style="width: 14%">
-<col style="width: 14%">
-<col style="width: 14%">
+<col style="width: 9%">
+<col style="width: 12%">
+<col style="width: 12%">
+<col style="width: 12%">
+<col style="width: 12%">
+<col style="width: 12%">
+<col style="width: 12%">
+<col style="width: 12%">
 </colgroup>
 <thead>
 <tr class="header">
 <th>Model</th>
 <th style="text-align: right;">Mean (95% CI)</th>
-<th style="text-align: right;">Effect-size variance</th>
+<th style="text-align: right;">Effect variance</th>
 <th style="text-align: right;">Study variance</th>
 <th style="text-align: right;">Spatial variance</th>
 <th style="text-align: right;">rho (km)</th>
+<th style="text-align: right;">REML logLik</th>
 <th style="text-align: right;">AIC</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td>Unstructured-only</td>
-<td style="text-align: right;">-0.345 (-0.470, -0.221)</td>
-<td style="text-align: right;">0.775</td>
-<td style="text-align: right;">1.242</td>
+<td style="text-align: right;">-0.364 (-0.484, -0.243)</td>
+<td style="text-align: right;">0.752</td>
+<td style="text-align: right;">1.138</td>
 <td style="text-align: right;">–</td>
 <td style="text-align: right;">–</td>
-<td style="text-align: right;">8042.979</td>
+<td style="text-align: right;">-3969.188</td>
+<td style="text-align: right;">7944.375</td>
 </tr>
 <tr class="even">
 <td>Spatial-only</td>
-<td style="text-align: right;">-0.334 (-0.460, -0.208)</td>
-<td style="text-align: right;">0.793</td>
+<td style="text-align: right;">-0.356 (-0.479, -0.233)</td>
+<td style="text-align: right;">0.763</td>
 <td style="text-align: right;">–</td>
-<td style="text-align: right;">1.231</td>
-<td style="text-align: right;">0.050</td>
-<td style="text-align: right;">8076.949</td>
+<td style="text-align: right;">1.149</td>
+<td style="text-align: right;">0.137</td>
+<td style="text-align: right;">-3980.247</td>
+<td style="text-align: right;">7968.495</td>
 </tr>
 <tr class="odd">
 <td>Combined</td>
-<td style="text-align: right;">-0.349 (-0.491, -0.206)</td>
-<td style="text-align: right;">0.775</td>
-<td style="text-align: right;">1.167</td>
-<td style="text-align: right;">0.0619</td>
-<td style="text-align: right;">384.96</td>
-<td style="text-align: right;">8045.604</td>
+<td style="text-align: right;">-0.362 (-0.545, -0.180)</td>
+<td style="text-align: right;">0.751</td>
+<td style="text-align: right;">1.094</td>
+<td style="text-align: right;">0.04785</td>
+<td style="text-align: right;">2058.91</td>
+<td style="text-align: right;">-3968.254</td>
+<td style="text-align: right;">7946.509</td>
 </tr>
 </tbody>
 </table>
-<p>The pooled mean is similar under all three covariance specifications. In contrast, variance allocation and conclusions about spatial structure depend strongly on the model. The spatial-only model has a large spatial variance, but its extremely short <code>rho</code> is poorly resolved; it should not be read as evidence for strong broad-scale spatial autocorrelation. In the combined model, the additional spatial component is weakly identified once unstructured study-level heterogeneity is included. A profile likelihood with spatial variance fixed to zero was only 0.687 log-likelihood units below the maximum, and <code>rho</code> values of approximately 200–3,000 km gave almost indistinguishable likelihoods. Therefore, the combined estimate of about 385 km is not evidence for a well-defined spatial correlation range.</p>
+<p>The pooled mean remains negative under all three covariance specifications. The variance allocation is more model-sensitive. In particular, the spatial-only model allocates substantial variance to an extremely short-range spatial term, but that result does not establish broad-scale spatial autocorrelation because the model omits study-level heterogeneity.</p>
 </section>
+<section id="profile-diagnostics-for-the-primary-analysis" class="level4">
+<h4 class="anchored" data-anchor-id="profile-diagnostics-for-the-primary-analysis">Profile diagnostics for the primary analysis</h4>
+<p>The following profile grids are identifiability diagnostics, not formal confidence intervals. The ranges below are tested values with nearly equivalent likelihoods.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Model and component</th>
+<th>Diagnostic result</th>
+<th>Interpretation</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Spatial-only spatial variance</td>
+<td>Fixing <span class="math inline">\(\tau^2=0\)</span> loses 381.047 log-likelihood units</td>
+<td>The spatial variance is separated from zero under this restricted model.</td>
+</tr>
+<tr class="even">
+<td>Spatial-only rho</td>
+<td>Tested values from about 0.005 to 0.5 km have nearly equivalent likelihoods</td>
+<td>The very short range is poorly resolved.</td>
+</tr>
+<tr class="odd">
+<td>Combined spatial variance</td>
+<td>Fixing <span class="math inline">\(\tau^2=0\)</span> loses only 0.933 log-likelihood units</td>
+<td>The additional spatial variance is weakly identified.</td>
+</tr>
+<tr class="even">
+<td>Combined rho</td>
+<td>Tested values from about 200 to 12,000 km have nearly equivalent likelihoods</td>
+<td>The free estimate of 2058.91 km is not a well-determined correlation range.</td>
+</tr>
+</tbody>
+</table>
+<p>The combined model’s profile-grid maximum near 385 km differs from its free estimate by only 0.017 log-likelihood units. This disagreement is further evidence that the combined rho should not receive substantive biological interpretation. A small spatial-variance estimate and weak identification are different claims: here, both apply to the additional combined spatial component.</p>
 </section>
-<section id="squared-exponential-kernel-concise-illustration" class="level4">
-<h4 class="anchored" data-anchor-id="squared-exponential-kernel-concise-illustration">Squared-exponential kernel (concise illustration)</h4>
-<p>The kernel can be changed without changing the recorded-coordinate grouping or the great-circle distance workflow. For example, this is the corresponding spatial-only Gaussian-kernel specification. It is an implementation illustration only: no numerical result is shown because the earlier projected-coordinate fit was not retained as an audited result.</p>
+<section id="sensitivity-to-influential-effect-exclusions" class="level4">
+<h4 class="anchored" data-anchor-id="sensitivity-to-influential-effect-exclusions">Sensitivity to influential-effect exclusions</h4>
+<p>The full <code>all_spatially_usable</code> dataset retains the six recoverable influential observations excluded above. Retaining them does not materially change the negative pooled conclusion, the within-dataset AIC ranking, or the qualitative identifiability interpretation. AIC values are compared only within each dataset.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 13%">
+<col style="width: 13%">
+<col style="width: 18%">
+<col style="width: 18%">
+<col style="width: 18%">
+<col style="width: 18%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Dataset</th>
+<th>Model</th>
+<th style="text-align: right;">Mean (95% CI)</th>
+<th style="text-align: right;">Spatial variance</th>
+<th style="text-align: right;">rho (km)</th>
+<th style="text-align: right;">Delta AIC within dataset</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>published_cleaned</code></td>
+<td>Unstructured-only</td>
+<td style="text-align: right;">-0.364 (-0.484, -0.243)</td>
+<td style="text-align: right;">–</td>
+<td style="text-align: right;">–</td>
+<td style="text-align: right;">0.000</td>
+</tr>
+<tr class="even">
+<td><code>published_cleaned</code></td>
+<td>Spatial-only</td>
+<td style="text-align: right;">-0.356 (-0.479, -0.233)</td>
+<td style="text-align: right;">1.149</td>
+<td style="text-align: right;">0.137</td>
+<td style="text-align: right;">24.120</td>
+</tr>
+<tr class="odd">
+<td><code>published_cleaned</code></td>
+<td>Combined</td>
+<td style="text-align: right;">-0.362 (-0.545, -0.180)</td>
+<td style="text-align: right;">0.04785</td>
+<td style="text-align: right;">2058.91</td>
+<td style="text-align: right;">2.134</td>
+</tr>
+<tr class="even">
+<td><code>all_spatially_usable</code></td>
+<td>Unstructured-only</td>
+<td style="text-align: right;">-0.345 (-0.470, -0.221)</td>
+<td style="text-align: right;">–</td>
+<td style="text-align: right;">–</td>
+<td style="text-align: right;">0.000</td>
+</tr>
+<tr class="odd">
+<td><code>all_spatially_usable</code></td>
+<td>Spatial-only</td>
+<td style="text-align: right;">-0.334 (-0.460, -0.208)</td>
+<td style="text-align: right;">1.231</td>
+<td style="text-align: right;">0.050</td>
+<td style="text-align: right;">33.970</td>
+</tr>
+<tr class="even">
+<td><code>all_spatially_usable</code></td>
+<td>Combined</td>
+<td style="text-align: right;">-0.349 (-0.491, -0.206)</td>
+<td style="text-align: right;">0.06188</td>
+<td style="text-align: right;">384.96</td>
+<td style="text-align: right;">2.625</td>
+</tr>
+</tbody>
+</table>
+<p>Both datasets rank the models unstructured-only, combined, then spatial-only. The combined rho changes substantially between datasets, which reinforces the profile-based conclusion that it is not a resolved spatial range.</p>
+</section>
+<section id="generalized-i2" class="level4">
+<h4 class="anchored" data-anchor-id="generalized-i2">Generalized <span class="math inline">\(I^2\)</span></h4>
+<p>For a multilevel meta-analysis, calculate a representative sampling variance from the actual sampling covariance matrix <span class="math inline">\(\mathbf{V}\)</span> and fixed-effect design matrix <span class="math inline">\(\mathbf{X}\)</span>:</p>
+<p>[ v = , =-(‘)^{-1}’, =^{-1}. ]</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb67"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb67-1"><a href="#cb67-1" aria-hidden="true" tabindex="-1"></a>spatial_only_gaussian <span class="ot">&lt;-</span> <span class="fu">rma.mv</span>(</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb66"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a>generalized_v_tilde <span class="ot">&lt;-</span> <span class="cf">function</span>(V, X) {</span>
+<span id="cb66-2"><a href="#cb66-2" aria-hidden="true" tabindex="-1"></a>  W <span class="ot">&lt;-</span> <span class="fu">solve</span>(V)</span>
+<span id="cb66-3"><a href="#cb66-3" aria-hidden="true" tabindex="-1"></a>  P <span class="ot">&lt;-</span> W <span class="sc">-</span> W <span class="sc">%*%</span> X <span class="sc">%*%</span> <span class="fu">solve</span>(<span class="fu">t</span>(X) <span class="sc">%*%</span> W <span class="sc">%*%</span> X) <span class="sc">%*%</span> <span class="fu">t</span>(X) <span class="sc">%*%</span> W</span>
+<span id="cb66-4"><a href="#cb66-4" aria-hidden="true" tabindex="-1"></a>  (<span class="fu">nrow</span>(V) <span class="sc">-</span> <span class="fu">ncol</span>(X)) <span class="sc">/</span> <span class="fu">sum</span>(<span class="fu">diag</span>(P))</span>
+<span id="cb66-5"><a href="#cb66-5" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb66-6"><a href="#cb66-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb66-7"><a href="#cb66-7" aria-hidden="true" tabindex="-1"></a>component_i2 <span class="ot">&lt;-</span> <span class="cf">function</span>(variance, fitted_variances, v_tilde) {</span>
+<span id="cb66-8"><a href="#cb66-8" aria-hidden="true" tabindex="-1"></a>  <span class="dv">100</span> <span class="sc">*</span> variance <span class="sc">/</span> (<span class="fu">sum</span>(fitted_variances) <span class="sc">+</span> v_tilde)</span>
+<span id="cb66-9"><a href="#cb66-9" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb66-10"><a href="#cb66-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb66-11"><a href="#cb66-11" aria-hidden="true" tabindex="-1"></a>V_grau_clean <span class="ot">&lt;-</span> <span class="fu">diag</span>(grau_clean<span class="sc">$</span>data<span class="sc">$</span>var_Hedges)</span>
+<span id="cb66-12"><a href="#cb66-12" aria-hidden="true" tabindex="-1"></a>X_grau_clean <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">1</span>, <span class="at">nrow =</span> <span class="fu">nrow</span>(grau_clean<span class="sc">$</span>data), <span class="at">ncol =</span> <span class="dv">1</span>)</span>
+<span id="cb66-13"><a href="#cb66-13" aria-hidden="true" tabindex="-1"></a>v_tilde_grau_clean <span class="ot">&lt;-</span> <span class="fu">generalized_v_tilde</span>(V_grau_clean, X_grau_clean)</span>
+<span id="cb66-14"><a href="#cb66-14" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">isTRUE</span>(<span class="fu">all.equal</span>(v_tilde_grau_clean, <span class="fl">0.110937235977794</span>,</span>
+<span id="cb66-15"><a href="#cb66-15" aria-hidden="true" tabindex="-1"></a>                           <span class="at">tolerance =</span> <span class="fl">1e-12</span>)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>For <code>published_cleaned</code>, <span class="math inline">\(\widetilde v=0.110937236\)</span>. Component <span class="math inline">\(I^2\)</span> is the proportion of typical marginal variance allocated to a fitted random component. It is not variance explained by geographic distance, pairwise spatial correlation, a spatial range, or evidence that the component is precisely identified.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 15%">
+<col style="width: 21%">
+<col style="width: 21%">
+<col style="width: 21%">
+<col style="width: 21%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Model</th>
+<th style="text-align: right;">Effect-size <span class="math inline">\(I^2\)</span></th>
+<th style="text-align: right;">Study <span class="math inline">\(I^2\)</span></th>
+<th style="text-align: right;">Spatial <span class="math inline">\(I^2\)</span></th>
+<th style="text-align: right;">Total <span class="math inline">\(I^2\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Unstructured-only</td>
+<td style="text-align: right;">37.563%</td>
+<td style="text-align: right;">56.892%</td>
+<td style="text-align: right;">–</td>
+<td style="text-align: right;">94.455%</td>
+</tr>
+<tr class="even">
+<td>Spatial-only</td>
+<td style="text-align: right;">37.709%</td>
+<td style="text-align: right;">–</td>
+<td style="text-align: right;">56.808%</td>
+<td style="text-align: right;">94.517%</td>
+</tr>
+<tr class="odd">
+<td>Combined</td>
+<td style="text-align: right;">37.486%</td>
+<td style="text-align: right;">54.592%</td>
+<td style="text-align: right;">2.387%</td>
+<td style="text-align: right;">94.465%</td>
+</tr>
+</tbody>
+</table>
+<p>The full-data combined spatial <span class="math inline">\(I^2\)</span> is 2.926%, compared with 2.387% for <code>published_cleaned</code>; total <span class="math inline">\(I^2\)</span> remains similar. This sensitivity comparison does not convert either combined rho estimate into a spatial correlation range.</p>
+</section>
+<section id="gaussian-kernel-sensitivity" class="level4">
+<h4 class="anchored" data-anchor-id="gaussian-kernel-sensitivity">Gaussian-kernel sensitivity</h4>
+<p>The Gaussian kernel provides a sensitivity analysis on the same <code>published_cleaned</code> observations:</p>
+<p>[ (d)=(-d<sup>2/</sup>2). ]</p>
+<p>For <code>SPGAU</code>, rho is the e-folding distance in kilometres. The model structure, response, sampling variances, and WGS84 ellipsoidal geodesic distance matrix are otherwise unchanged.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb67"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb67-1"><a href="#cb67-1" aria-hidden="true" tabindex="-1"></a>grau_gaussian_spatial <span class="ot">&lt;-</span> <span class="fu">rma.mv</span>(</span>
 <span id="cb67-2"><a href="#cb67-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">yi =</span> d_Hedges, <span class="at">V =</span> var_Hedges,</span>
 <span id="cb67-3"><a href="#cb67-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">random =</span> <span class="fu">list</span>(<span class="sc">~</span> <span class="dv">1</span> <span class="sc">|</span> effect_id, <span class="sc">~</span> site_id <span class="sc">|</span> const),</span>
-<span id="cb67-4"><a href="#cb67-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">struct =</span> <span class="st">"SPGAU"</span>, <span class="at">dist =</span> <span class="fu">list</span>(<span class="at">site_id =</span> distance_km),</span>
-<span id="cb67-5"><a href="#cb67-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> dat_Roger, <span class="at">method =</span> <span class="st">"REML"</span>, <span class="at">test =</span> <span class="st">"t"</span>, <span class="at">sparse =</span> <span class="cn">TRUE</span></span>
-<span id="cb67-6"><a href="#cb67-6" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb67-4"><a href="#cb67-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">struct =</span> <span class="st">"SPGAU"</span>, <span class="at">dist =</span> <span class="fu">list</span>(<span class="at">site_id =</span> grau_clean<span class="sc">$</span>distance_km),</span>
+<span id="cb67-5"><a href="#cb67-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> grau_clean<span class="sc">$</span>data, <span class="at">method =</span> <span class="st">"REML"</span>, <span class="at">test =</span> <span class="st">"t"</span>, <span class="at">sparse =</span> <span class="cn">TRUE</span></span>
+<span id="cb67-6"><a href="#cb67-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb67-7"><a href="#cb67-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb67-8"><a href="#cb67-8" aria-hidden="true" tabindex="-1"></a>grau_gaussian_combined <span class="ot">&lt;-</span> <span class="fu">rma.mv</span>(</span>
+<span id="cb67-9"><a href="#cb67-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">yi =</span> d_Hedges, <span class="at">V =</span> var_Hedges,</span>
+<span id="cb67-10"><a href="#cb67-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">random =</span> <span class="fu">list</span>(<span class="sc">~</span> <span class="dv">1</span> <span class="sc">|</span> effect_id, <span class="sc">~</span> <span class="dv">1</span> <span class="sc">|</span> study_id, <span class="sc">~</span> site_id <span class="sc">|</span> const),</span>
+<span id="cb67-11"><a href="#cb67-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">struct =</span> <span class="st">"SPGAU"</span>, <span class="at">dist =</span> <span class="fu">list</span>(<span class="at">site_id =</span> grau_clean<span class="sc">$</span>distance_km),</span>
+<span id="cb67-12"><a href="#cb67-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> grau_clean<span class="sc">$</span>data, <span class="at">method =</span> <span class="st">"REML"</span>, <span class="at">test =</span> <span class="st">"t"</span>, <span class="at">sparse =</span> <span class="cn">TRUE</span></span>
+<span id="cb67-13"><a href="#cb67-13" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 9%">
+<col style="width: 12%">
+<col style="width: 12%">
+<col style="width: 12%">
+<col style="width: 12%">
+<col style="width: 12%">
+<col style="width: 12%">
+<col style="width: 12%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Model or stationary solution</th>
+<th style="text-align: right;">Mean (95% CI)</th>
+<th style="text-align: right;">Effect variance</th>
+<th style="text-align: right;">Study variance</th>
+<th style="text-align: right;">Spatial variance</th>
+<th style="text-align: right;">rho (km)</th>
+<th style="text-align: right;">REML logLik</th>
+<th style="text-align: right;">AIC</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Spatial-only</td>
+<td style="text-align: right;">-0.358 (-0.481, -0.234)</td>
+<td style="text-align: right;">0.763</td>
+<td style="text-align: right;">–</td>
+<td style="text-align: right;">1.153</td>
+<td style="text-align: right;">0.346</td>
+<td style="text-align: right;">-3980.186</td>
+<td style="text-align: right;">7968.373</td>
+</tr>
+<tr class="even">
+<td>Combined, short-range solution</td>
+<td style="text-align: right;">-0.371 (-0.506, -0.235)</td>
+<td style="text-align: right;">0.752</td>
+<td style="text-align: right;">1.037</td>
+<td style="text-align: right;">0.08403</td>
+<td style="text-align: right;">306.47</td>
+<td style="text-align: right;">-3967.903</td>
+<td style="text-align: right;">7945.806</td>
+</tr>
+<tr class="odd">
+<td>Combined, long-range solution</td>
+<td style="text-align: right;">-0.353 (-0.559, -0.146)</td>
+<td style="text-align: right;">0.751</td>
+<td style="text-align: right;">1.104</td>
+<td style="text-align: right;">0.05016</td>
+<td style="text-align: right;">3673.79</td>
+<td style="text-align: right;">-3968.188</td>
+<td style="text-align: right;">7946.376</td>
+</tr>
+</tbody>
+</table>
+<p>The short- and intermediate-start fits reached the approximately 306-km solution. A long-range start reached the approximately 3674-km solution, only 0.285 log-likelihood units lower. Fixing Gaussian spatial variance to zero loses only 1.285 log-likelihood units relative to the best combined solution. Thus, the pooled biological inference is robust to kernel choice, whereas the additional Gaussian spatial component is weakly identified and its rho is optimizer-dependent. Neither Gaussian rho is a biological correlation-range estimate.</p>
 </section>
 </section>
-<section id="grau-andrés-et-al.-2024-regional-cross-package-implementation" class="level3">
-<h3 class="anchored" data-anchor-id="grau-andrés-et-al.-2024-regional-cross-package-implementation">2. Grau-Andrés et al.&nbsp;(2024): regional cross-package implementation</h3>
-<p>The global example above requires great-circle geometry because a single planar projection would distort distances across the full dataset. To demonstrate analogous model specifications in <code>metafor</code>, <code>glmmTMB</code>, and <code>brms</code>, we use the full Spain-labelled subset: 186 effect sizes from 30 studies at 32 recorded-coordinate locations. The geographically isolated singleton is retained. Spain was selected from objective geographic and data-structure criteria, before fitting: it is geographically coherent, retains multiple studies and locations, and can be represented with one regional projection with small distance distortion. It was not selected from model estimates or package agreement.</p>
-<p>The subset uses a WGS84 Lambert Conformal Conic projection with projected coordinates in kilometres. Its maximum pairwise distance distortion relative to WGS84 ellipsoidal great-circle distance is 0.103%.</p>
+<section id="grau-andrés-et-al.-2024-spain-cross-package-implementation" class="level3">
+<h3 class="anchored" data-anchor-id="grau-andrés-et-al.-2024-spain-cross-package-implementation">2. Grau-Andrés et al.&nbsp;(2024): Spain cross-package implementation</h3>
+<p>The global example above requires WGS84 ellipsoidal geodesic distances because a single planar projection would distort distances across the full dataset. To demonstrate analogous model specifications in <code>metafor</code>, <code>glmmTMB</code>, and <code>brms</code>, we use the full Spain-labelled subset: 186 effect sizes from 30 studies at 32 recorded-coordinate locations. The geographically isolated singleton is retained. Spain was selected from objective geographic and data-structure criteria, before fitting: it is geographically coherent, retains multiple studies and locations, and can be represented with one regional projection with small distance distortion. It was not selected from model estimates or package agreement.</p>
+<p>The subset uses a WGS84 Lambert Conformal Conic projection with projected coordinates in kilometres. Its maximum pairwise distance distortion relative to WGS84 ellipsoidal geodesic distance is 0.103%.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb68"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(sf)</span>
 <span id="cb68-2"><a href="#cb68-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(geosphere)</span>
@@ -2525,20 +2795,20 @@ Std.Dev.species.id.phyAcanthurus_nigricans_ott467313|g.1
 <span id="cb68-30"><a href="#cb68-30" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">identical</span>(<span class="fu">rownames</span>(D_spain_km), <span class="fu">levels</span>(dat_spain<span class="sc">$</span>site_id)))</span>
 <span id="cb68-31"><a href="#cb68-31" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">identical</span>(<span class="fu">colnames</span>(D_spain_km), <span class="fu">levels</span>(dat_spain<span class="sc">$</span>site_id)))</span>
 <span id="cb68-32"><a href="#cb68-32" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb68-33"><a href="#cb68-33" aria-hidden="true" tabindex="-1"></a>D_spain_gc_km <span class="ot">&lt;-</span> geosphere<span class="sc">::</span><span class="fu">distm</span>(</span>
+<span id="cb68-33"><a href="#cb68-33" aria-hidden="true" tabindex="-1"></a>D_spain_geodesic_km <span class="ot">&lt;-</span> geosphere<span class="sc">::</span><span class="fu">distm</span>(</span>
 <span id="cb68-34"><a href="#cb68-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.matrix</span>(spain_sites[<span class="fu">c</span>(<span class="st">"longitude"</span>, <span class="st">"latitude"</span>)]), <span class="at">fun =</span> geosphere<span class="sc">::</span>distGeo</span>
 <span id="cb68-35"><a href="#cb68-35" aria-hidden="true" tabindex="-1"></a>) <span class="sc">/</span> <span class="dv">1000</span></span>
 <span id="cb68-36"><a href="#cb68-36" aria-hidden="true" tabindex="-1"></a>distortion <span class="ot">&lt;-</span> <span class="fu">abs</span>(D_spain_km[<span class="fu">upper.tri</span>(D_spain_km)] <span class="sc">/</span></span>
-<span id="cb68-37"><a href="#cb68-37" aria-hidden="true" tabindex="-1"></a>                  D_spain_gc_km[<span class="fu">upper.tri</span>(D_spain_gc_km)] <span class="sc">-</span> <span class="dv">1</span>)</span>
+<span id="cb68-37"><a href="#cb68-37" aria-hidden="true" tabindex="-1"></a>                  D_spain_geodesic_km[<span class="fu">upper.tri</span>(D_spain_geodesic_km)] <span class="sc">-</span> <span class="dv">1</span>)</span>
 <span id="cb68-38"><a href="#cb68-38" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">max</span>(distortion) <span class="sc">*</span> <span class="dv">100</span> <span class="sc">&lt;</span> <span class="fl">0.11</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>All three implementations target the same spatial-only covariance decomposition:</p>
 <p><span class="math display">\[\mathbf{V} + \sigma^2_{\mathrm{effect}}\mathbf{I} + \tau^2_{\mathrm{spatial}}\mathbf{R}(\rho),\]</span></p>
 <p>where <span class="math inline">\(\mathbf{V}\)</span> is the known diagonal sampling-variance matrix and, for the exponential kernel,</p>
 <p><span class="math display">\[\operatorname{Cor}(d) = \exp(-d / \rho).\]</span></p>
-<p>No study-level random intercept is included in this regional comparison.</p>
-<section id="metafor-7" class="level4">
-<h4 class="anchored" data-anchor-id="metafor-7"><code>metafor</code></h4>
+<p>No study-level random intercept is included in this regional comparison. This spatial-only specification is a <strong>deliberately restricted common target</strong> for matching implementations across <code>metafor</code>, <code>glmmTMB</code>, and <code>brms</code>; it is <strong>not the preferred biological model</strong>. The preceding global example shows why omitting study-level heterogeneity can be restrictive.</p>
+<section id="metafor-6" class="level4">
+<h4 class="anchored" data-anchor-id="metafor-6"><code>metafor</code></h4>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb69"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true" tabindex="-1"></a>spain_metafor <span class="ot">&lt;-</span> <span class="fu">rma.mv</span>(</span>
 <span id="cb69-2"><a href="#cb69-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">yi =</span> d_Hedges, <span class="at">V =</span> var_Hedges,</span>
@@ -2569,7 +2839,7 @@ Std.Dev.species.id.phyAcanthurus_nigricans_ott467313|g.1
 <span id="cb70-14"><a href="#cb70-14" aria-hidden="true" tabindex="-1"></a>theta_spain <span class="ot">&lt;-</span> spain_glmmTMB<span class="sc">$</span>fit<span class="sc">$</span>par[<span class="fu">names</span>(spain_glmmTMB<span class="sc">$</span>fit<span class="sc">$</span>par) <span class="sc">==</span> <span class="st">"theta"</span>]</span>
 <span id="cb70-15"><a href="#cb70-15" aria-hidden="true" tabindex="-1"></a>rho_spain_km <span class="ot">&lt;-</span> <span class="fu">exp</span>(theta_spain[<span class="dv">2</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>Here <code>equalto()</code> supplies the known sampling-variance matrix. The Gaussian residual variance is the iid effect-size heterogeneity. For <code>exp</code>, <code>glmmTMB</code> parameterises correlation as <span class="math inline">\(\exp\{-\exp(-\theta_2)d\}\)</span>, so the common e-folding range is <code>rho_spain_km = exp(theta_spain[2])</code> km.</p>
+<p>Here <code>equalto()</code> supplies the known sampling-variance matrix. The Gaussian observation model’s residual variance estimates iid effect-size heterogeneity after that known sampling variance has been supplied. For <code>exp</code>, <code>glmmTMB</code> parameterises correlation as <span class="math inline">\(\exp\{-\exp(-\theta_2)d\}\)</span>, so the common e-folding range is <code>rho_spain_km = exp(theta_spain[2])</code> km.</p>
 </section>
 <section id="brms-6" class="level4">
 <h4 class="anchored" data-anchor-id="brms-6"><code>brms</code></h4>
@@ -2615,7 +2885,7 @@ Std.Dev.species.id.phyAcanthurus_nigricans_ott467313|g.1
 <thead>
 <tr class="header">
 <th>Package</th>
-<th style="text-align: right;">Mean (95% interval)</th>
+<th style="text-align: right;">Pooled mean (95% CI or CrI)</th>
 <th style="text-align: right;">iid effect variance</th>
 <th style="text-align: right;">Spatial variance</th>
 <th style="text-align: right;">rho (km)</th>
@@ -2625,36 +2895,37 @@ Std.Dev.species.id.phyAcanthurus_nigricans_ott467313|g.1
 <tbody>
 <tr class="odd">
 <td><code>metafor</code></td>
-<td style="text-align: right;">-0.097 (-0.489, 0.295)</td>
+<td style="text-align: right;">-0.097 (95% CI -0.489, 0.295)</td>
 <td style="text-align: right;">0.214</td>
 <td style="text-align: right;">0.626</td>
 <td style="text-align: right;">29.0</td>
-<td>completed</td>
+<td>REML logLik = -241.321; AIC = 490.641</td>
 </tr>
 <tr class="even">
 <td><code>glmmTMB</code></td>
-<td style="text-align: right;">-0.097 (-0.491, 0.296)</td>
+<td style="text-align: right;">-0.097 (95% CI -0.491, 0.296)</td>
 <td style="text-align: right;">0.214</td>
 <td style="text-align: right;">0.626</td>
 <td style="text-align: right;">29.0</td>
-<td>convergence code 0; positive-definite Hessian</td>
+<td>convergence code 0; positive-definite Hessian; AIC = 490.641</td>
 </tr>
 <tr class="odd">
 <td><code>brms</code></td>
-<td style="text-align: right;">-0.100 (-0.533, 0.388)</td>
-<td style="text-align: right;">0.220 (0.132–0.352)</td>
-<td style="text-align: right;">0.661 (0.251–1.671)</td>
-<td style="text-align: right;">36.6 (8.1–155.3)</td>
+<td style="text-align: right;">-0.100 (95% CrI -0.533, 0.388)</td>
+<td style="text-align: right;">0.220 (95% CrI 0.132–0.352)</td>
+<td style="text-align: right;">0.661 (95% CrI 0.251–1.671)</td>
+<td style="text-align: right;">36.6 (95% CrI 8.1–155.3)</td>
 <td>HMC diagnostics above</td>
 </tr>
 </tbody>
 </table>
-<p>Under this matched implementation, the <code>metafor</code> and <code>glmmTMB</code> parameter estimates and REML likelihood quantities agree to numerical precision. Their displayed intervals differ slightly because <code>metafor</code> uses a t-based interval here and <code>glmmTMB</code> uses a Wald z interval. The <code>brms</code> posterior estimates are broadly consistent with the frequentist estimates, but a credible interval and a confidence interval do not have the same inferential interpretation.</p>
+<p>Under this matched implementation, the <code>metafor</code> and <code>glmmTMB</code> parameter estimates and REML likelihood quantities agree to numerical precision. Their displayed intervals differ slightly because <code>metafor</code> uses a t-based interval here and <code>glmmTMB</code> uses a Wald z interval. The <code>brms</code> posterior estimates are broadly consistent with the frequentist estimates, but a credible interval and a confidence interval do not have the same inferential interpretation. Numerical similarity is a cross-package consistency check, not an equivalence of CI and CrI interpretations.</p>
+<p>The generalized <span class="math inline">\(I^2\)</span> results also agree closely for the frequentist implementations: total = 86.364%, iid effect-size = 21.988%, and spatial = 64.375%. For <code>brms</code>, the posterior median total, iid effect-size, and spatial <span class="math inline">\(I^2\)</span> are 86.999%, 21.533%, and 65.218%, respectively. These values describe marginal variance allocation in this deliberately restricted model; they do not show that spatial distance explains that proportion of heterogeneity.</p>
 </section>
 </section>
 <section id="scholer-et-al.-2020-advanced-hierarchical-spatial-meta-analysis" class="level3">
 <h3 class="anchored" data-anchor-id="scholer-et-al.-2020-advanced-hierarchical-spatial-meta-analysis">3. Scholer et al.&nbsp;(2020): advanced hierarchical spatial meta-analysis</h3>
-<p>The dataset accompanying <a href="https://doi.org/10.1111/ele.13573">Scholer et al.&nbsp;(2020)</a> contains 949 effect sizes from 205 references at 454 recorded-coordinate locations. This example illustrates a more complex setting in which effect-size heterogeneity, study-level heterogeneity, and location-level spatial covariance can all be considered. The three identifiers below remain distinct: <code>effect_id</code> identifies rows, <code>study_id</code> identifies references, and <code>site_id</code> identifies sorted recorded-coordinate pairs.</p>
+<p>The dataset accompanying <a href="https://doi.org/10.1111/ele.13573">Scholer et al.&nbsp;(2020)</a> contains 949 effect sizes from 205 references at 454 recorded-coordinate locations. Twenty-four references occur at multiple recorded-coordinate locations, and 30 recorded-coordinate locations occur in more than one reference. This example therefore illustrates a more complex setting in which effect-size heterogeneity, study-level heterogeneity, and location-level spatial covariance can all be considered. The three identifiers below remain distinct: <code>effect_id</code> identifies rows, <code>study_id</code> identifies references, and <code>site_id</code> identifies sorted recorded-coordinate pairs.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb72"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb72-1"><a href="#cb72-1" aria-hidden="true" tabindex="-1"></a>dat_scholer <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="fu">here</span>(<span class="st">"data"</span>, <span class="st">"Scholer_2020"</span>, <span class="st">"Scholer_2020.csv"</span>)) <span class="sc">|&gt;</span></span>
 <span id="cb72-2"><a href="#cb72-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
@@ -2680,6 +2951,7 @@ Std.Dev.species.id.phyAcanthurus_nigricans_ott467313|g.1
 <span id="cb72-22"><a href="#cb72-22" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">identical</span>(<span class="fu">colnames</span>(scholer_distance_km), <span class="fu">levels</span>(dat_scholer<span class="sc">$</span>site_id)))</span>
 <span id="cb72-23"><a href="#cb72-23" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">isTRUE</span>(<span class="fu">all.equal</span>(scholer_distance_km, <span class="fu">t</span>(scholer_distance_km), <span class="at">tolerance =</span> <span class="fl">1e-10</span>)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
+<p><code>scholer_distance_km</code> contains WGS84 ellipsoidal geodesic distances in kilometres. As in the primary Grau-Andrés analysis, the distance-matrix names are explicitly aligned to the sorted <code>site_id</code> levels before every spatial fit.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb73"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb73-1"><a href="#cb73-1" aria-hidden="true" tabindex="-1"></a>scholer_unstructured <span class="ot">&lt;-</span> <span class="fu">rma.mv</span>(</span>
 <span id="cb73-2"><a href="#cb73-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">yi =</span> logit_survival, <span class="at">V =</span> vi,</span>
@@ -2687,29 +2959,34 @@ Std.Dev.species.id.phyAcanthurus_nigricans_ott467313|g.1
 <span id="cb73-4"><a href="#cb73-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> dat_scholer, <span class="at">method =</span> <span class="st">"REML"</span>, <span class="at">test =</span> <span class="st">"t"</span>, <span class="at">sparse =</span> <span class="cn">TRUE</span></span>
 <span id="cb73-5"><a href="#cb73-5" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb73-6"><a href="#cb73-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb73-7"><a href="#cb73-7" aria-hidden="true" tabindex="-1"></a>scholer_spatial_only <span class="ot">&lt;-</span> <span class="fu">rma.mv</span>(</span>
-<span id="cb73-8"><a href="#cb73-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">yi =</span> logit_survival, <span class="at">V =</span> vi,</span>
-<span id="cb73-9"><a href="#cb73-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">random =</span> <span class="fu">list</span>(<span class="sc">~</span> <span class="dv">1</span> <span class="sc">|</span> effect_id, <span class="sc">~</span> site_id <span class="sc">|</span> const),</span>
-<span id="cb73-10"><a href="#cb73-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">struct =</span> <span class="st">"SPEXP"</span>, <span class="at">dist =</span> <span class="fu">list</span>(<span class="at">site_id =</span> scholer_distance_km),</span>
-<span id="cb73-11"><a href="#cb73-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> dat_scholer, <span class="at">method =</span> <span class="st">"REML"</span>, <span class="at">test =</span> <span class="st">"t"</span>, <span class="at">sparse =</span> <span class="cn">TRUE</span></span>
-<span id="cb73-12"><a href="#cb73-12" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb73-13"><a href="#cb73-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb73-14"><a href="#cb73-14" aria-hidden="true" tabindex="-1"></a>scholer_combined <span class="ot">&lt;-</span> <span class="fu">rma.mv</span>(</span>
-<span id="cb73-15"><a href="#cb73-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">yi =</span> logit_survival, <span class="at">V =</span> vi,</span>
-<span id="cb73-16"><a href="#cb73-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">random =</span> <span class="fu">list</span>(<span class="sc">~</span> <span class="dv">1</span> <span class="sc">|</span> effect_id, <span class="sc">~</span> <span class="dv">1</span> <span class="sc">|</span> study_id, <span class="sc">~</span> site_id <span class="sc">|</span> const),</span>
-<span id="cb73-17"><a href="#cb73-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">struct =</span> <span class="st">"SPEXP"</span>, <span class="at">dist =</span> <span class="fu">list</span>(<span class="at">site_id =</span> scholer_distance_km),</span>
-<span id="cb73-18"><a href="#cb73-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> dat_scholer, <span class="at">method =</span> <span class="st">"REML"</span>, <span class="at">test =</span> <span class="st">"t"</span>, <span class="at">sparse =</span> <span class="cn">TRUE</span></span>
-<span id="cb73-19"><a href="#cb73-19" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb73-7"><a href="#cb73-7" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">identical</span>(<span class="fu">rownames</span>(scholer_distance_km), <span class="fu">levels</span>(dat_scholer<span class="sc">$</span>site_id)),</span>
+<span id="cb73-8"><a href="#cb73-8" aria-hidden="true" tabindex="-1"></a>          <span class="fu">identical</span>(<span class="fu">colnames</span>(scholer_distance_km), <span class="fu">levels</span>(dat_scholer<span class="sc">$</span>site_id)))</span>
+<span id="cb73-9"><a href="#cb73-9" aria-hidden="true" tabindex="-1"></a>scholer_spatial_only <span class="ot">&lt;-</span> <span class="fu">rma.mv</span>(</span>
+<span id="cb73-10"><a href="#cb73-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">yi =</span> logit_survival, <span class="at">V =</span> vi,</span>
+<span id="cb73-11"><a href="#cb73-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">random =</span> <span class="fu">list</span>(<span class="sc">~</span> <span class="dv">1</span> <span class="sc">|</span> effect_id, <span class="sc">~</span> site_id <span class="sc">|</span> const),</span>
+<span id="cb73-12"><a href="#cb73-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">struct =</span> <span class="st">"SPEXP"</span>, <span class="at">dist =</span> <span class="fu">list</span>(<span class="at">site_id =</span> scholer_distance_km),</span>
+<span id="cb73-13"><a href="#cb73-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> dat_scholer, <span class="at">method =</span> <span class="st">"REML"</span>, <span class="at">test =</span> <span class="st">"t"</span>, <span class="at">sparse =</span> <span class="cn">TRUE</span></span>
+<span id="cb73-14"><a href="#cb73-14" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb73-15"><a href="#cb73-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb73-16"><a href="#cb73-16" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">identical</span>(<span class="fu">rownames</span>(scholer_distance_km), <span class="fu">levels</span>(dat_scholer<span class="sc">$</span>site_id)),</span>
+<span id="cb73-17"><a href="#cb73-17" aria-hidden="true" tabindex="-1"></a>          <span class="fu">identical</span>(<span class="fu">colnames</span>(scholer_distance_km), <span class="fu">levels</span>(dat_scholer<span class="sc">$</span>site_id)))</span>
+<span id="cb73-18"><a href="#cb73-18" aria-hidden="true" tabindex="-1"></a>scholer_combined <span class="ot">&lt;-</span> <span class="fu">rma.mv</span>(</span>
+<span id="cb73-19"><a href="#cb73-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">yi =</span> logit_survival, <span class="at">V =</span> vi,</span>
+<span id="cb73-20"><a href="#cb73-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">random =</span> <span class="fu">list</span>(<span class="sc">~</span> <span class="dv">1</span> <span class="sc">|</span> effect_id, <span class="sc">~</span> <span class="dv">1</span> <span class="sc">|</span> study_id, <span class="sc">~</span> site_id <span class="sc">|</span> const),</span>
+<span id="cb73-21"><a href="#cb73-21" aria-hidden="true" tabindex="-1"></a>  <span class="at">struct =</span> <span class="st">"SPEXP"</span>, <span class="at">dist =</span> <span class="fu">list</span>(<span class="at">site_id =</span> scholer_distance_km),</span>
+<span id="cb73-22"><a href="#cb73-22" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> dat_scholer, <span class="at">method =</span> <span class="st">"REML"</span>, <span class="at">test =</span> <span class="st">"t"</span>, <span class="at">sparse =</span> <span class="cn">TRUE</span></span>
+<span id="cb73-23"><a href="#cb73-23" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 11%">
-<col style="width: 14%">
-<col style="width: 14%">
-<col style="width: 14%">
-<col style="width: 14%">
-<col style="width: 14%">
-<col style="width: 14%">
+<col style="width: 9%">
+<col style="width: 12%">
+<col style="width: 12%">
+<col style="width: 12%">
+<col style="width: 12%">
+<col style="width: 12%">
+<col style="width: 12%">
+<col style="width: 12%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -2719,6 +2996,7 @@ Std.Dev.species.id.phyAcanthurus_nigricans_ott467313|g.1
 <th style="text-align: right;">Study variance</th>
 <th style="text-align: right;">Spatial variance</th>
 <th style="text-align: right;">rho (km)</th>
+<th style="text-align: right;">REML logLik</th>
 <th style="text-align: right;">AIC</th>
 </tr>
 </thead>
@@ -2730,6 +3008,7 @@ Std.Dev.species.id.phyAcanthurus_nigricans_ott467313|g.1
 <td style="text-align: right;">0.476</td>
 <td style="text-align: right;">–</td>
 <td style="text-align: right;">–</td>
+<td style="text-align: right;">-825.239</td>
 <td style="text-align: right;">1656.479</td>
 </tr>
 <tr class="even">
@@ -2739,6 +3018,7 @@ Std.Dev.species.id.phyAcanthurus_nigricans_ott467313|g.1
 <td style="text-align: right;">–</td>
 <td style="text-align: right;">0.323</td>
 <td style="text-align: right;">168.7</td>
+<td style="text-align: right;">-928.304</td>
 <td style="text-align: right;">1864.607</td>
 </tr>
 <tr class="odd">
@@ -2748,14 +3028,107 @@ Std.Dev.species.id.phyAcanthurus_nigricans_ott467313|g.1
 <td style="text-align: right;">0.449</td>
 <td style="text-align: right;">0.0204</td>
 <td style="text-align: right;">535.6</td>
+<td style="text-align: right;">-823.545</td>
 <td style="text-align: right;">1657.090</td>
 </tr>
 </tbody>
 </table>
-<p>The spatial-only model has a clearly identified spatial component under its restricted covariance structure, but its AIC is 208.129 units higher than the unstructured-only model. It is therefore a poor description of these data relative to the model with study-level heterogeneity.</p>
-<p>In the combined model, the spatial variance is small and weakly identified. Fixing <span class="math inline">\(\tau^2\)</span> to zero reduces the profile log-likelihood by only 1.694 units. Every tested rho between 10 and 12,000 km lies within 1.92 log-likelihood units of the profile maximum. The primary estimate of rho = 535.6 km agrees with the profile maximum, but it is not a precise correlation range.</p>
+<p>The spatial-only model has a clearly identified spatial component under its deliberately restrictive covariance structure, but its AIC is 208.129 units higher than the unstructured-only model. It is therefore a poor description of these data relative to the model with study-level heterogeneity.</p>
+<section id="profile-diagnostics-and-generalized-i2" class="level4">
+<h4 class="anchored" data-anchor-id="profile-diagnostics-and-generalized-i2">Profile diagnostics and generalized <span class="math inline">\(I^2\)</span></h4>
+<p>The profile grids below are identifiability diagnostics, not formal confidence intervals.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Model and component</th>
+<th>Diagnostic result</th>
+<th>Interpretation</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Spatial-only spatial variance</td>
+<td>Fixing <span class="math inline">\(\tau^2=0\)</span> loses 126.498 log-likelihood units</td>
+<td>Spatial variance is separated from zero in the restricted model.</td>
+</tr>
+<tr class="even">
+<td>Spatial-only rho</td>
+<td>The profile has a distinct maximum near 168.7 km</td>
+<td>The restricted model estimates a finite spatial scale.</td>
+</tr>
+<tr class="odd">
+<td>Combined spatial variance</td>
+<td>Fixing <span class="math inline">\(\tau^2=0\)</span> loses only 1.694 log-likelihood units</td>
+<td>The additional spatial variance is weakly identified.</td>
+</tr>
+<tr class="even">
+<td>Combined rho</td>
+<td>Tested values from 10 to 12,000 km are within 1.92 log-likelihood units of the profile maximum</td>
+<td>The primary estimate of 535.6 km is not a precise correlation range.</td>
+</tr>
+</tbody>
+</table>
+<p>For the same generalized definition used above, <span class="math inline">\(\widetilde v=0.000725865\)</span>. The component <span class="math inline">\(I^2\)</span> values are marginal variance allocations and need to be read with the fitted variance and profile diagnostics.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb74"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true" tabindex="-1"></a>V_scholer <span class="ot">&lt;-</span> <span class="fu">diag</span>(dat_scholer<span class="sc">$</span>vi)</span>
+<span id="cb74-2"><a href="#cb74-2" aria-hidden="true" tabindex="-1"></a>X_scholer <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">1</span>, <span class="at">nrow =</span> <span class="fu">nrow</span>(dat_scholer), <span class="at">ncol =</span> <span class="dv">1</span>)</span>
+<span id="cb74-3"><a href="#cb74-3" aria-hidden="true" tabindex="-1"></a>v_tilde_scholer <span class="ot">&lt;-</span> <span class="fu">generalized_v_tilde</span>(V_scholer, X_scholer)</span>
+<span id="cb74-4"><a href="#cb74-4" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">isTRUE</span>(<span class="fu">all.equal</span>(v_tilde_scholer, <span class="fl">0.000725865052242</span>,</span>
+<span id="cb74-5"><a href="#cb74-5" aria-hidden="true" tabindex="-1"></a>                           <span class="at">tolerance =</span> <span class="fl">1e-12</span>)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 15%">
+<col style="width: 21%">
+<col style="width: 21%">
+<col style="width: 21%">
+<col style="width: 21%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Model</th>
+<th style="text-align: right;">Effect-size <span class="math inline">\(I^2\)</span></th>
+<th style="text-align: right;">Study <span class="math inline">\(I^2\)</span></th>
+<th style="text-align: right;">Spatial <span class="math inline">\(I^2\)</span></th>
+<th style="text-align: right;">Total <span class="math inline">\(I^2\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Unstructured-only</td>
+<td style="text-align: right;">32.585%</td>
+<td style="text-align: right;">67.312%</td>
+<td style="text-align: right;">–</td>
+<td style="text-align: right;">99.897%</td>
+</tr>
+<tr class="even">
+<td>Spatial-only</td>
+<td style="text-align: right;">46.435%</td>
+<td style="text-align: right;">–</td>
+<td style="text-align: right;">53.445%</td>
+<td style="text-align: right;">99.880%</td>
+</tr>
+<tr class="odd">
+<td>Combined</td>
+<td style="text-align: right;">32.433%</td>
+<td style="text-align: right;">64.526%</td>
+<td style="text-align: right;">2.937%</td>
+<td style="text-align: right;">99.896%</td>
+</tr>
+</tbody>
+</table>
 <p>The spatial-only model can absorb heterogeneity that is better represented as study-level variation. Once study-level heterogeneity is included, these data provide little support for a distinct additional spatial component. This does not show that spatial autocorrelation is absent; it shows that the additional spatial component is weakly identified under this covariance decomposition.</p>
 </section>
+</section>
+</section>
+<section id="reporting-a-spatial-meta-analysis" class="level2">
+<h2 class="anchored" data-anchor-id="reporting-a-spatial-meta-analysis">Reporting a spatial meta-analysis</h2>
+<p>For each spatial analysis, report the coordinate source and units, how <code>site_id</code> was constructed, the distance definition, the order checks for the distance matrix, the sampling-variance structure, and every random component. Compare a spatial-only model with an unstructured or combined alternative when study and location are distinct grouping structures. Finally, report whether profile diagnostics identify the spatial variance and rho; neither a large spatial-only variance nor a single fitted rho alone establishes broad-scale spatial autocorrelation.</p>
 </section>
 </section>
 <section id="software-and-package-versions" class="level1">
@@ -2765,7 +3138,7 @@ Std.Dev.species.id.phyAcanthurus_nigricans_ott467313|g.1
 Click to view version info
 </summary>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb74"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb75"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb75-1"><a href="#cb75-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </details>
 </section>
