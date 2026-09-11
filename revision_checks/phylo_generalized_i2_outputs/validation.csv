@@ -1,0 +1,10 @@
+"check","value","passed"
+"same_effect_sizes",1,TRUE
+"same_sampling_variances",1,TRUE
+"same_fixed_effect_design",1,TRUE
+"diagonal_sampling_V",1,TRUE
+"direct_vs_shortcut_trace_P",9.89530235528946e-10,TRUE
+"same_generalized_v_tilde",1,TRUE
+"BM_I2_partitions_total",0,TRUE
+"OU_Model_A_I2_partitions_total",-1.4210854715202e-14,TRUE
+"BM_Hphylo2_in_unit_interval",0.479239006288454,TRUE

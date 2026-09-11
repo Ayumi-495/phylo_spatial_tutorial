@@ -936,24 +936,49 @@ confint(phylo_eg1_meta_ma_BM)
 # sigma^2.4   0.0512 0.0179 0.1792 
 # sigma.4     0.2263 0.1336 0.4233 
 
-# calculate I2 estimate
-orchaRd::i2_ml(phylo_eg1_meta_ma_BM)
-# I2_Total       I2_study.id I2_effect.size.id     I2_species.id I2_species.id.phy 
-# 97.30527          13.26902          10.00808          38.55098          35.47718 
+# Generalized I2: use the sampling V and fixed-effect X from this fit.
+# This is equations 11--13, not an arithmetic mean sampling variance.
+phylo_generalized_v_tilde <- function(V, X) {
+  W <- solve(V)
+  P <- W - W %*% X %*% solve(t(X) %*% W %*% X) %*% t(X) %*% W
+  (nrow(V) - ncol(X)) / sum(diag(P))
+}
 
-# estimate phylogenetic heritability
-phylo_heritability <- phylo_eg1_meta_ma_BM$sigma2[4] / (phylo_eg1_meta_ma_BM$sigma2[4] + phylo_eg1_meta_ma_BM$sigma2[3])
-phylo_heritability
-# [1] 0.479239
+V_phylo <- diag(phylo_eg1_meta_ma_BM$vi)
+X_phylo <- phylo_eg1_meta_ma_BM$X
+v_tilde_phylo <- phylo_generalized_v_tilde(V_phylo, X_phylo)
+stopifnot(isTRUE(all.equal(v_tilde_phylo, 0.00389078664311631,
+                           tolerance = 1e-12)))
+
+bm_h <- c(study = phylo_eg1_meta_ma_BM$sigma2[1],
+          effect_size = phylo_eg1_meta_ma_BM$sigma2[2],
+          species_nonphylogenetic = phylo_eg1_meta_ma_BM$sigma2[3],
+          species_phylogenetic = phylo_eg1_meta_ma_BM$sigma2[4])
+bm_i2 <- 100 * c(bm_h, total = sum(bm_h)) / (sum(bm_h) + v_tilde_phylo)
+round(bm_i2, 4)
+# study effect_size species_nonphylogenetic species_phylogenetic total
+# 13.2690 10.0081 38.5510 35.4772 97.3053
+
+# BM phylogenetic heritability: allocation within fitted among-species variance.
+H2_phylo_BM <- unname(bm_h["species_phylogenetic"] /
+  (bm_h["species_phylogenetic"] + bm_h["species_nonphylogenetic"]))
+H2_phylo_BM
+# 0.479239
 ```
 
 The overall estimate $\beta_0$ is 0.368 (95% CI 0.113, 0.623) on the Fisher's Z scale. Back transforming to the Pearson's r, this corresponds to a correlation of roughly 0.35 - which indicates a positive correlation between mates in body size across species. On average, larger males tend to pair with larger females across species.
 
-The $I^2$ ($\approx$ 97.31%) indicate that there is high heterogeneity among studies, effect sizes, species, and phylogenetic relatedness. About 35.48% of the total variance can be attributed to phylogenetic relatedness among species, indicating a moderate phylogenetic signal in mate size correlation. Biologically, this means that different species tend to have different average levels of mate size correlation, and closely related species tend to have more similar levels of mate size correlation than distantly related species.
+For this BM fit, the generalised representative sampling variance is $\widetilde v=0.00389078664311631$. Total $I^2=97.3053\%$ is the proportion of typical marginal variation not attributed to the assumed sampling-error variance under this fitted model. Component-specific $I^2$ is a marginal variance allocation under the fitted model, not variance explained by phylogeny or a measure of pairwise phylogenetic correlation.
 
-By partitioning species level variance into phylogenetic and non-phylogenetic components, we can estimate the phylogenetic heritability (or Pagel's $\lambda$) of mate size correlation. This implies that about 48 percent of the differences among species in assortative mating strength are explained by phylogenetic relatedness.
+| Component | BM $I^2$ |
+|---|---:|
+| Study | 13.2690% |
+| Effect size | 10.0081% |
+| Species, non-phylogenetic | 38.5510% |
+| Species, phylogenetic | 35.4772% |
+| Total | 97.3053% |
 
-In other words, closely related species tend to have similar levels of size assortative mating, but nearly half of the variation is species specific and not explained by shared ancestry.
+The BM phylogenetic heritability is $H^2_{\rm phylo}=0.479239$. It is the proportion of fitted among-species variance allocated to the phylogenetically structured species component under the BM model, conditional on this constructed Grafen-scaled tree and covariance specification. It is not the proportion of variance explained by phylogenetic relatedness.
 
 ###### brms
 
@@ -1662,6 +1687,15 @@ summary(phy_ou_meta_reg2)
 A fixed-$\rho$ profile that re-estimated the remaining parameters at 101 values had an interior maximum at $\rho=0.03640768$. The 95% likelihood-ratio support interval was approximately 0.02113--0.06783 on the constructed branch-length scale (the grid-supported values were 0.02277--0.06296). Thus, the range parameter is locally identified in this dataset, but its interpretation remains limited to covariance decay on constructed Grafen branch lengths. Across the grid-supported range, the pooled mean varied from 0.3446 to 0.3540, whereas its standard error varied from 0.0293 to 0.0461.
 
 The pooled mean changed from 0.3682 (95% confidence interval 0.1131--0.6232) under BM to 0.3514 (0.2819--0.4210) under Model A. The much larger change in uncertainty reflects the fitted covariance structures. The mean off-diagonal species covariance was 0.0170 under BM but 0.000959 under the exponential model; their mean off-diagonal correlations were 0.332 and 0.0093, respectively. The OU/exponential fit allocated approximately 0.1029 to the phylogenetically structured species component and essentially zero to the non-phylogenetic species component, whereas the BM fit allocated 0.0512 and 0.0557, respectively. These allocations and the precision of the pooled mean are sensitive to the covariance specification. The central lesson is that a pooled mean may be relatively stable while its uncertainty and allocation of heterogeneity change substantially under different plausible phylogenetic covariance models.
+
+The sampling-variance matrix and intercept-only fixed-effect design are unchanged between BM and Model A, so both use the same $\widetilde v=0.00389078664311631$. Total $I^2$ also remains almost unchanged, but its allocation among fitted components changes substantially:
+
+| Model | Study $I^2$ | Effect-size $I^2$ | Non-phylogenetic species $I^2$ | Phylogenetic species $I^2$ | Total $I^2$ |
+|---|---:|---:|---:|---:|---:|
+| BM | 13.2690% | 10.0081% | 38.5510% | 35.4772% | 97.3053% |
+| OU Model A | 11.4857% | 10.5264% | approximately 0% | 75.1475% | 97.1596% |
+
+These component-specific $I^2$ values describe marginal variance allocation under each fitted model. They do not show variance explained by phylogeny, nor do they themselves explain the different confidence intervals: the primary explanation for that difference remains the fitted correlation and covariance structure described above.
 
 The reproducible numerical audit, including the direct-distance checks, `corMartins()` comparison, fitted models, and rho profile, is saved in `revision_checks/OU_CORRECTNESS_AUDIT_2026-09-11.md` and `revision_checks/ou_correctness_outputs/`.
 

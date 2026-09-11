@@ -1,0 +1,5 @@
+Generalized representative sampling variance follows equations (11)-(13) in the revised manuscript.
+BM and OU Model A use the same yi, diagonal sampling V, and fixed-effect X, so v_tilde is common.
+Each h_j is the diagonal marginal variance of its fitted random-effect covariance component.
+BM Hphylo2 is phylogenetic species variance divided by total fitted among-species variance; it is not variance explained by phylogeny.
+No model was refitted or altered by this script.
