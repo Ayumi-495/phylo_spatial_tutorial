@@ -2655,6 +2655,22 @@ The unstructured-only model represents study-level heterogeneity without a spati
 
 The pooled mean remains negative under all three covariance specifications. The variance allocation is more model-sensitive. In particular, the spatial-only model allocates substantial variance to an extremely short-range spatial term, but that result does not establish broad-scale spatial autocorrelation because the model omits study-level heterogeneity.
 
+#### Results figures
+
+The figures below use the tutorial's usual two-panel result-figure layout: an orchard plot of the pooled effect and precision-weighted effect sizes above, followed by the fitted variance components below. Error bars in the variance panels are 95% profile-likelihood intervals; an arrow marks an interval whose upper endpoint exceeds the common display scale, and an absent point denotes a component that is not part of that model. The common axes make the three covariance specifications directly comparable.
+
+##### Unstructured-only
+
+![Grau-Andrés published-cleaned, unstructured-only model](figs/tutorial/grau_andres_unstructured_only_results.png){width="85%"}
+
+##### Spatial-only
+
+![Grau-Andrés published-cleaned, spatial-only model](figs/tutorial/grau_andres_spatial_only_results.png){width="85%"}
+
+##### Combined
+
+![Grau-Andrés published-cleaned, combined model](figs/tutorial/grau_andres_combined_results.png){width="85%"}
+
 #### Profile diagnostics for the primary analysis
 
 The following profile grids are identifiability diagnostics, not formal confidence intervals. The ranges below are tested values with nearly equivalent likelihoods.
@@ -2899,6 +2915,12 @@ The audited run used four chains and ten Stan threads per chain on Totoro. Its d
 
 Under this matched implementation, the `metafor` and `glmmTMB` parameter estimates and REML likelihood quantities agree to numerical precision. Their displayed intervals differ slightly because `metafor` uses a t-based interval here and `glmmTMB` uses a Wald z interval. The `brms` posterior estimates are broadly consistent with the frequentist estimates, but a credible interval and a confidence interval do not have the same inferential interpretation. Numerical similarity is a cross-package consistency check, not an equivalence of CI and CrI interpretations.
 
+#### Cross-package result figure
+
+This figure retains the same pooled-effect/variance-component layout while directly comparing the three packages. The upper panel labels frequentist 95% confidence intervals separately from the `brms` 95% credible interval. In the lower panel, the `brms` error bars are posterior 95% credible intervals; frequentist points are the audited point estimates. This is a deliberately restricted spatial-only common target for implementation comparison, not the preferred biological model for the full dataset.
+
+![Spain regional subset: matched three-package spatial-only comparison](figs/tutorial/spain_cross_package_results.png){width="85%"}
+
 The generalized $I^2$ results also agree closely for the frequentist implementations: total = 86.364%, iid effect-size = 21.988%, and spatial = 64.375%. For `brms`, the posterior median total, iid effect-size, and spatial $I^2$ are 86.999%, 21.533%, and 65.218%, respectively. These values describe marginal variance allocation in this deliberately restricted model; they do not show that spatial distance explains that proportion of heterogeneity.
 
 ### 3. Scholer et al. (2020): advanced hierarchical spatial meta-analysis
@@ -2970,6 +2992,22 @@ scholer_combined <- rma.mv(
 | Combined | 0.657 (0.536, 0.778) | 0.225 | 0.449 | 0.0204 | 535.6 | -823.545 | 1657.090 |
 
 The spatial-only model has a clearly identified spatial component under its deliberately restrictive covariance structure, but its AIC is 208.129 units higher than the unstructured-only model. It is therefore a poor description of these data relative to the model with study-level heterogeneity.
+
+#### Results figures
+
+The three figures use identical effect-size and variance-axis limits and the same component order (effect-size, study, spatial). They are therefore a descriptive comparison of the fitted structures, not a display designed around a prespecified conclusion. Error bars in the variance panels are 95% profile-likelihood intervals; an arrow marks an interval whose upper endpoint exceeds the common display scale, and an absent point denotes a component that is not part of that model.
+
+##### Unstructured-only
+
+![Scholer unstructured-only model](figs/tutorial/scholer_unstructured_only_results.png){width="85%"}
+
+##### Spatial-only
+
+![Scholer spatial-only model](figs/tutorial/scholer_spatial_only_results.png){width="85%"}
+
+##### Combined
+
+![Scholer combined model](figs/tutorial/scholer_combined_results.png){width="85%"}
 
 #### Profile diagnostics and generalized $I^2$
 

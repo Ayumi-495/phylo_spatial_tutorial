@@ -1,0 +1,2 @@
+"model","parameter_type","parameter_index","estimate","ci_lb","ci_ub","elapsed_seconds","source_model"
+"spatial_only","sigma2",1,0.280333288569452,0.248219676513037,0.317206270422295,564.91791844368,"/home/amizuno/phylo_spatial_tutorial_revision/revision_checks/scholer_spatial_audit_outputs/spatial_only.rds"

@@ -195,6 +195,12 @@ window.Quarto = {
   <ul>
   <li><a href="#primary-and-sensitivity-datasets" id="toc-primary-and-sensitivity-datasets" class="nav-link" data-scroll-target="#primary-and-sensitivity-datasets">Primary and sensitivity datasets</a></li>
   <li><a href="#primary-exponential-models" id="toc-primary-exponential-models" class="nav-link" data-scroll-target="#primary-exponential-models">Primary exponential models</a></li>
+  <li><a href="#results-figures" id="toc-results-figures" class="nav-link" data-scroll-target="#results-figures">Results figures</a>
+  <ul>
+  <li><a href="#unstructured-only" id="toc-unstructured-only" class="nav-link" data-scroll-target="#unstructured-only">Unstructured-only</a></li>
+  <li><a href="#spatial-only" id="toc-spatial-only" class="nav-link" data-scroll-target="#spatial-only">Spatial-only</a></li>
+  <li><a href="#combined" id="toc-combined" class="nav-link" data-scroll-target="#combined">Combined</a></li>
+  </ul></li>
   <li><a href="#profile-diagnostics-for-the-primary-analysis" id="toc-profile-diagnostics-for-the-primary-analysis" class="nav-link" data-scroll-target="#profile-diagnostics-for-the-primary-analysis">Profile diagnostics for the primary analysis</a></li>
   <li><a href="#sensitivity-to-influential-effect-exclusions" id="toc-sensitivity-to-influential-effect-exclusions" class="nav-link" data-scroll-target="#sensitivity-to-influential-effect-exclusions">Sensitivity to influential-effect exclusions</a></li>
   <li><a href="#generalized-i2" id="toc-generalized-i2" class="nav-link" data-scroll-target="#generalized-i2">Generalized <span class="math inline">\(I^2\)</span></a></li>
@@ -205,9 +211,16 @@ window.Quarto = {
   <li><a href="#metafor-6" id="toc-metafor-6" class="nav-link" data-scroll-target="#metafor-6"><code>metafor</code></a></li>
   <li><a href="#glmmtmb-6" id="toc-glmmtmb-6" class="nav-link" data-scroll-target="#glmmtmb-6"><code>glmmTMB</code></a></li>
   <li><a href="#brms-6" id="toc-brms-6" class="nav-link" data-scroll-target="#brms-6"><code>brms</code></a></li>
+  <li><a href="#cross-package-result-figure" id="toc-cross-package-result-figure" class="nav-link" data-scroll-target="#cross-package-result-figure">Cross-package result figure</a></li>
   </ul></li>
   <li><a href="#scholer-et-al.-2020-advanced-hierarchical-spatial-meta-analysis" id="toc-scholer-et-al.-2020-advanced-hierarchical-spatial-meta-analysis" class="nav-link" data-scroll-target="#scholer-et-al.-2020-advanced-hierarchical-spatial-meta-analysis">3. Scholer et al.&nbsp;(2020): advanced hierarchical spatial meta-analysis</a>
   <ul>
+  <li><a href="#results-figures-1" id="toc-results-figures-1" class="nav-link" data-scroll-target="#results-figures-1">Results figures</a>
+  <ul>
+  <li><a href="#unstructured-only-1" id="toc-unstructured-only-1" class="nav-link" data-scroll-target="#unstructured-only-1">Unstructured-only</a></li>
+  <li><a href="#spatial-only-1" id="toc-spatial-only-1" class="nav-link" data-scroll-target="#spatial-only-1">Spatial-only</a></li>
+  <li><a href="#combined-1" id="toc-combined-1" class="nav-link" data-scroll-target="#combined-1">Combined</a></li>
+  </ul></li>
   <li><a href="#profile-diagnostics-and-generalized-i2" id="toc-profile-diagnostics-and-generalized-i2" class="nav-link" data-scroll-target="#profile-diagnostics-and-generalized-i2">Profile diagnostics and generalized <span class="math inline">\(I^2\)</span></a></li>
   </ul></li>
   </ul></li>
@@ -2498,6 +2511,37 @@ Reproducibility note on influential-effect exclusions
 </table>
 <p>The pooled mean remains negative under all three covariance specifications. The variance allocation is more model-sensitive. In particular, the spatial-only model allocates substantial variance to an extremely short-range spatial term, but that result does not establish broad-scale spatial autocorrelation because the model omits study-level heterogeneity.</p>
 </section>
+<section id="results-figures" class="level4">
+<h4 class="anchored" data-anchor-id="results-figures">Results figures</h4>
+<p>The figures below use the tutorial’s usual two-panel result-figure layout: an orchard plot of the pooled effect and precision-weighted effect sizes above, followed by the fitted variance components below. Error bars in the variance panels are 95% profile-likelihood intervals; an arrow marks an interval whose upper endpoint exceeds the common display scale, and an absent point denotes a component that is not part of that model. The common axes make the three covariance specifications directly comparable.</p>
+<section id="unstructured-only" class="level5">
+<h5 class="anchored" data-anchor-id="unstructured-only">Unstructured-only</h5>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="figs/tutorial/grau_andres_unstructured_only_results.png" class="img-fluid figure-img" style="width:85.0%"></p>
+<figcaption>Grau-Andrés published-cleaned, unstructured-only model</figcaption>
+</figure>
+</div>
+</section>
+<section id="spatial-only" class="level5">
+<h5 class="anchored" data-anchor-id="spatial-only">Spatial-only</h5>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="figs/tutorial/grau_andres_spatial_only_results.png" class="img-fluid figure-img" style="width:85.0%"></p>
+<figcaption>Grau-Andrés published-cleaned, spatial-only model</figcaption>
+</figure>
+</div>
+</section>
+<section id="combined" class="level5">
+<h5 class="anchored" data-anchor-id="combined">Combined</h5>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="figs/tutorial/grau_andres_combined_results.png" class="img-fluid figure-img" style="width:85.0%"></p>
+<figcaption>Grau-Andrés published-cleaned, combined model</figcaption>
+</figure>
+</div>
+</section>
+</section>
 <section id="profile-diagnostics-for-the-primary-analysis" class="level4">
 <h4 class="anchored" data-anchor-id="profile-diagnostics-for-the-primary-analysis">Profile diagnostics for the primary analysis</h4>
 <p>The following profile grids are identifiability diagnostics, not formal confidence intervals. The ranges below are tested values with nearly equivalent likelihoods.</p>
@@ -2920,6 +2964,16 @@ Reproducibility note on influential-effect exclusions
 </tbody>
 </table>
 <p>Under this matched implementation, the <code>metafor</code> and <code>glmmTMB</code> parameter estimates and REML likelihood quantities agree to numerical precision. Their displayed intervals differ slightly because <code>metafor</code> uses a t-based interval here and <code>glmmTMB</code> uses a Wald z interval. The <code>brms</code> posterior estimates are broadly consistent with the frequentist estimates, but a credible interval and a confidence interval do not have the same inferential interpretation. Numerical similarity is a cross-package consistency check, not an equivalence of CI and CrI interpretations.</p>
+</section>
+<section id="cross-package-result-figure" class="level4">
+<h4 class="anchored" data-anchor-id="cross-package-result-figure">Cross-package result figure</h4>
+<p>This figure retains the same pooled-effect/variance-component layout while directly comparing the three packages. The upper panel labels frequentist 95% confidence intervals separately from the <code>brms</code> 95% credible interval. In the lower panel, the <code>brms</code> error bars are posterior 95% credible intervals; frequentist points are the audited point estimates. This is a deliberately restricted spatial-only common target for implementation comparison, not the preferred biological model for the full dataset.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="figs/tutorial/spain_cross_package_results.png" class="img-fluid figure-img" style="width:85.0%"></p>
+<figcaption>Spain regional subset: matched three-package spatial-only comparison</figcaption>
+</figure>
+</div>
 <p>The generalized <span class="math inline">\(I^2\)</span> results also agree closely for the frequentist implementations: total = 86.364%, iid effect-size = 21.988%, and spatial = 64.375%. For <code>brms</code>, the posterior median total, iid effect-size, and spatial <span class="math inline">\(I^2\)</span> are 86.999%, 21.533%, and 65.218%, respectively. These values describe marginal variance allocation in this deliberately restricted model; they do not show that spatial distance explains that proportion of heterogeneity.</p>
 </section>
 </section>
@@ -3034,6 +3088,37 @@ Reproducibility note on influential-effect exclusions
 </tbody>
 </table>
 <p>The spatial-only model has a clearly identified spatial component under its deliberately restrictive covariance structure, but its AIC is 208.129 units higher than the unstructured-only model. It is therefore a poor description of these data relative to the model with study-level heterogeneity.</p>
+<section id="results-figures-1" class="level4">
+<h4 class="anchored" data-anchor-id="results-figures-1">Results figures</h4>
+<p>The three figures use identical effect-size and variance-axis limits and the same component order (effect-size, study, spatial). They are therefore a descriptive comparison of the fitted structures, not a display designed around a prespecified conclusion. Error bars in the variance panels are 95% profile-likelihood intervals; an arrow marks an interval whose upper endpoint exceeds the common display scale, and an absent point denotes a component that is not part of that model.</p>
+<section id="unstructured-only-1" class="level5">
+<h5 class="anchored" data-anchor-id="unstructured-only-1">Unstructured-only</h5>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="figs/tutorial/scholer_unstructured_only_results.png" class="img-fluid figure-img" style="width:85.0%"></p>
+<figcaption>Scholer unstructured-only model</figcaption>
+</figure>
+</div>
+</section>
+<section id="spatial-only-1" class="level5">
+<h5 class="anchored" data-anchor-id="spatial-only-1">Spatial-only</h5>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="figs/tutorial/scholer_spatial_only_results.png" class="img-fluid figure-img" style="width:85.0%"></p>
+<figcaption>Scholer spatial-only model</figcaption>
+</figure>
+</div>
+</section>
+<section id="combined-1" class="level5">
+<h5 class="anchored" data-anchor-id="combined-1">Combined</h5>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="figs/tutorial/scholer_combined_results.png" class="img-fluid figure-img" style="width:85.0%"></p>
+<figcaption>Scholer combined model</figcaption>
+</figure>
+</div>
+</section>
+</section>
 <section id="profile-diagnostics-and-generalized-i2" class="level4">
 <h4 class="anchored" data-anchor-id="profile-diagnostics-and-generalized-i2">Profile diagnostics and generalized <span class="math inline">\(I^2\)</span></h4>
 <p>The profile grids below are identifiability diagnostics, not formal confidence intervals.</p>
