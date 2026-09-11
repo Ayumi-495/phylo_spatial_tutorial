@@ -1,0 +1,233 @@
+exit_status: 0
+
+
+processing file: tutorial_v2.qmd
+1/171
+2/171 [unnamed-chunk-1]
+3/171
+4/171 [unnamed-chunk-2]
+5/171
+6/171 [way 1 - phylometa]
+7/171
+8/171 [unnamed-chunk-3]
+9/171
+10/171 [unnamed-chunk-4]
+11/171
+12/171 [unnamed-chunk-5]
+13/171
+14/171 [unnamed-chunk-6]
+15/171
+16/171 [unnamed-chunk-7]
+17/171
+18/171 [unnamed-chunk-8]
+19/171
+20/171 [unnamed-chunk-9]
+21/171
+22/171 [unnamed-chunk-10]
+23/171
+24/171 [unnamed-chunk-11]
+25/171
+26/171 [unnamed-chunk-12]
+27/171
+28/171 [unnamed-chunk-13]
+29/171
+30/171 [unnamed-chunk-14]
+31/171
+32/171 [unnamed-chunk-15]
+33/171
+34/171 [unnamed-chunk-16]
+35/171
+36/171 [unnamed-chunk-17]
+37/171
+38/171 [unnamed-chunk-18]
+39/171
+40/171 [unnamed-chunk-19]
+41/171
+42/171 [unnamed-chunk-20]
+43/171
+44/171 [unnamed-chunk-21]
+45/171
+46/171 [unnamed-chunk-22]
+47/171
+48/171 [unnamed-chunk-23]
+49/171
+50/171 [unnamed-chunk-24]
+51/171
+52/171 [unnamed-chunk-25]
+53/171
+54/171 [unnamed-chunk-26]
+55/171
+56/171 [unnamed-chunk-27]
+57/171
+58/171 [unnamed-chunk-28]
+59/171
+60/171 [unnamed-chunk-29]
+61/171
+62/171 [unnamed-chunk-30]
+63/171
+64/171 [unnamed-chunk-31]
+65/171
+66/171 [unnamed-chunk-32]
+67/171
+68/171 [unnamed-chunk-33]
+69/171
+70/171 [unnamed-chunk-34]
+71/171
+72/171 [unnamed-chunk-35]
+73/171
+74/171 [unnamed-chunk-36]
+75/171
+76/171 [unnamed-chunk-37]
+77/171
+78/171 [unnamed-chunk-38]
+79/171
+80/171 [unnamed-chunk-39]
+81/171
+82/171 [unnamed-chunk-40]
+83/171
+84/171 [unnamed-chunk-41]
+85/171
+86/171 [unnamed-chunk-42]
+87/171
+88/171 [unnamed-chunk-43]
+89/171
+90/171 [unnamed-chunk-44]
+91/171
+92/171 [unnamed-chunk-45]
+93/171
+94/171 [unnamed-chunk-46]
+95/171
+96/171 [unnamed-chunk-47]
+97/171
+98/171 [unnamed-chunk-48]
+99/171
+100/171 [unnamed-chunk-49]
+101/171
+102/171 [unnamed-chunk-50]
+103/171
+104/171 [unnamed-chunk-51]
+105/171
+106/171 [unnamed-chunk-52]
+107/171
+108/171 [unnamed-chunk-53]
+109/171
+110/171 [unnamed-chunk-54]
+111/171
+112/171 [unnamed-chunk-55]
+113/171
+114/171 [unnamed-chunk-56]
+115/171
+116/171 [unnamed-chunk-57]
+117/171
+118/171 [unnamed-chunk-58]
+119/171
+120/171 [unnamed-chunk-59]
+121/171
+122/171 [unnamed-chunk-60]
+123/171
+124/171 [unnamed-chunk-61]
+125/171
+126/171 [unnamed-chunk-62]
+127/171
+128/171 [unnamed-chunk-63]
+129/171
+130/171 [unnamed-chunk-64]
+131/171
+132/171 [unnamed-chunk-65]
+133/171
+134/171 [unnamed-chunk-66]
+135/171
+136/171 [unnamed-chunk-67]
+137/171
+138/171 [unnamed-chunk-68]
+139/171
+140/171 [unnamed-chunk-69]
+141/171
+142/171 [unnamed-chunk-70]
+143/171
+144/171 [unnamed-chunk-71]
+145/171
+146/171 [unnamed-chunk-72]
+147/171
+148/171 [unnamed-chunk-73]
+149/171
+150/171 [unnamed-chunk-74]
+151/171
+152/171 [unnamed-chunk-75]
+153/171
+154/171 [unnamed-chunk-76]
+155/171
+156/171 [unnamed-chunk-77]
+157/171
+158/171 [unnamed-chunk-78]
+159/171
+160/171 [unnamed-chunk-79]
+161/171
+162/171 [unnamed-chunk-80]
+163/171
+164/171 [unnamed-chunk-81]
+165/171
+166/171 [unnamed-chunk-82]
+167/171
+168/171 [unnamed-chunk-83]
+169/171
+170/171 [unnamed-chunk-84]
+171/171
+output file: tutorial_v2.knit.md
+
+pandoc
+  to: html
+  output-file: index.html
+  standalone: true
+  embed-resources: false
+  section-divs: true
+  html-math-method: mathjax
+  wrap: none
+  default-image-extension: png
+  toc: true
+  toc-depth: 8
+  number-sections: false
+  variables: {}
+
+metadata
+  document-css: false
+  link-citations: true
+  date-format: long
+  lang: en
+  engines:
+    - path: /Applications/quarto/share/extension-subtrees/julia-engine/_extensions/julia-engine/julia-engine.js
+  title: 'TUTORIAL: A unified framework for phylogenetic and spatial meta-analysis'
+  subtitle: concepts, implementation, and practical guidance
+  date: today
+  title-block-banner: '#778899'
+  title-block-banner-color: '#FFFAFA'
+  authors:
+    - name: Ayumi Mizuno
+      orcid: 0000-0003-0822-5637
+    - name: Coralie Williams
+      orcid: 0000-0003-1312-4953
+    - name: Malgorzata Lagisz
+      orcid: 0000-0002-3993-6127
+    - name: Alistair M. Senior
+      orcid: 0000-0001-9805-7280
+    - name: Shinichi Nakagawa
+      orcid: 0000-0002-7765-5182
+  crossref:
+    fig-title: Figure
+    tbl-title: Table
+    title-delim: —
+    fig-prefix: Fig.
+    tbl-prefix: Table.
+  editor_options:
+    chunk_output_type: console
+  toc-location: left
+  toc-float: false
+  toc-title: '**CONTENTS**'
+  fontsize: '12'
+  mainfont: Roboto
+  monofont: Roboto
+  page-layout: full
+  df_print: paged
+  theme: united
+
+Output created: index.html

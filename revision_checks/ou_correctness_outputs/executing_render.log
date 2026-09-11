@@ -1,0 +1,114 @@
+exit_status: 1
+
+
+processing file: tutorial_v2.qmd
+1/171
+2/171 [unnamed-chunk-1]
+3/171
+4/171 [unnamed-chunk-2]
+5/171
+6/171 [way 1 - phylometa]
+7/171
+8/171 [unnamed-chunk-3]
+9/171
+10/171 [unnamed-chunk-4]
+11/171
+12/171 [unnamed-chunk-5]
+13/171
+14/171 [unnamed-chunk-6]
+15/171
+16/171 [unnamed-chunk-7]
+17/171
+18/171 [unnamed-chunk-8]
+19/171
+20/171 [unnamed-chunk-9]
+21/171
+22/171 [unnamed-chunk-10]
+23/171
+24/171 [unnamed-chunk-11]
+25/171
+26/171 [unnamed-chunk-12]
+27/171
+28/171 [unnamed-chunk-13]
+29/171
+30/171 [unnamed-chunk-14]
+31/171
+32/171 [unnamed-chunk-15]
+33/171
+34/171 [unnamed-chunk-16]
+35/171
+36/171 [unnamed-chunk-17]
+37/171
+38/171 [unnamed-chunk-18]
+39/171
+40/171 [unnamed-chunk-19]
+41/171
+42/171 [unnamed-chunk-20]
+43/171
+44/171 [unnamed-chunk-21]
+45/171
+46/171 [unnamed-chunk-22]
+47/171
+48/171 [unnamed-chunk-23]
+49/171
+50/171 [unnamed-chunk-24]
+51/171
+52/171 [unnamed-chunk-25]
+53/171
+54/171 [unnamed-chunk-26]
+55/171
+56/171 [unnamed-chunk-27]
+57/171
+58/171 [unnamed-chunk-28]
+59/171
+60/171 [unnamed-chunk-29]
+61/171
+62/171 [unnamed-chunk-30]
+63/171
+64/171 [unnamed-chunk-31]
+65/171
+66/171 [unnamed-chunk-32]
+67/171
+68/171 [unnamed-chunk-33]
+69/171
+70/171 [unnamed-chunk-34]
+71/171
+72/171 [unnamed-chunk-35]
+73/171
+74/171 [unnamed-chunk-36]
+75/171
+76/171 [unnamed-chunk-37]
+77/171
+78/171 [unnamed-chunk-38]
+79/171
+80/171 [unnamed-chunk-39]
+81/171
+82/171 [unnamed-chunk-40]
+83/171
+84/171 [unnamed-chunk-41]
+85/171
+86/171 [unnamed-chunk-42]
+87/171
+88/171 [unnamed-chunk-43]
+89/171
+90/171 [unnamed-chunk-44]
+91/171
+92/171 [unnamed-chunk-45]
+93/171
+94/171 [unnamed-chunk-46]
+95/171
+96/171 [unnamed-chunk-47]
+97/171
+98/171 [unnamed-chunk-48]
+99/171
+100/171 [unnamed-chunk-49]
+Error in `gzfile()`:
+! cannot open the connection
+Backtrace:
+    ▆
+ 1. └─base::readRDS(here("Rdata", "tutorial_v2", "moura2021_BM_meta_reg.rds"))
+ 2.   └─base::gzfile(file, "rb")
+
+Quitting from tutorial_v2.qmd:1343-1348 [unnamed-chunk-49]
+Execution halted
+WARN: Error encountered when rendering files

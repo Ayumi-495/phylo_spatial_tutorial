@@ -1,0 +1,9 @@
+Saved object: moura2021_BM_meta_reg
+Object class: rma.mv
+Source fit name in tutorial code: phylo_eg1.1_meta_BM
+Relationship: the saved object is that same fitted model, saved under the loader name moura2021_BM_meta_reg.
+Specification: rma.mv(yi, vi, mods = ~ temporally.pooled; random study.id, effect.size.id, species.id, species.id.phy; R species.id.phy = vcv(compute.brlen(dat.moura2021$tree), corr = TRUE); sparse = TRUE; method = REML).
+R version: R version 4.6.0 (2026-04-24)
+metafor version: 5.0.1
+ape version: 5.8.1
+metadat version: 1.6.0

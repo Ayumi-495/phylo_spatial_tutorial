@@ -830,7 +830,7 @@ n_levels # shows how many levels each categorical variable has
 
 The dataset contains 1,828 effect sizes (`effect.size.id`) drawn from 457 independent studies (`study.id`) and 341 animal species (`species.id.phy`). This provides replication at both the study and species levels, which is generally important for estimating random-effects variance components. There is, however, no universal rule for what constitutes sufficient replication, because this depends on the number of levels, the distribution of observations across levels, and the magnitudes of the variance components. As a general guide, variance components are more likely to be estimable when each random effect has multiple levels and when at least some levels contribute repeated observations. In the present dataset, the relatively large number of species particularly supports the inclusion of species-level random effects, including both non-phylogenetic (`species.id`) and phylogenetic (`species.id.phy`) terms.
 
-Let's move on to compute the phylogenetic correlation matrix. A matching tree is supplied as a data object in the `metadat` package, so we just load it and can compute the matrix without additional checking and processing
+We next construct the phylogenetic inputs. The matching topology is supplied with the `metadat` data object. We assign branch lengths with `ape::compute.brlen()` using its default Grafen-type scaling, then check the data, tree, and matrix order explicitly. These branch lengths are constructed scaling units, not estimated divergence times.
 
 ```{r}
 #| eval: false
@@ -841,14 +841,28 @@ tree <- dat.moura2021$tree
 # calculate r-to-z transformed correlations and corresponding sampling variances
 dat_moura2021 <- escalc(measure = "ZCOR", ri = ri, ni = ni, data = dat_moura2021)
 
-# turn tree into an ultrametric onevusing the default "Grafen" method (Grafen 1989)
+# construct ultrametric Grafen-type branch lengths (not divergence times)
 tree <- compute.brlen(tree)
+tree_height <- max(node.depth.edgelength(tree)[seq_along(tree$tip.label)])
 
-# compute phylogenetic correlation matrix
+# BM correlation matrix and direct patristic distance matrix
 A <- vcv(tree, corr = TRUE)
+D_phylo <- cophenetic.phylo(tree)
+tip_order <- rownames(A)
 
-# check ultrametricity
-is.ultrametric(tree)
+# Match taxa and order to the grouping factor used by rma.mv().
+observed_taxa <- unique(as.character(dat_moura2021$species.id.phy))
+stopifnot(is.ultrametric(tree),
+          !anyDuplicated(tip_order),
+          identical(tip_order, colnames(A)),
+          setequal(observed_taxa, tip_order))
+dat_moura2021$species.id.phy <- factor(dat_moura2021$species.id.phy,
+                                        levels = tip_order)
+D_phylo <- D_phylo[tip_order, tip_order]
+stopifnot(identical(rownames(D_phylo), tip_order),
+          identical(colnames(D_phylo), tip_order),
+          isTRUE(all.equal(D_phylo, t(D_phylo), tolerance = 0)),
+          all(diag(D_phylo) == 0), !anyNA(D_phylo))
 
 ```
 
@@ -875,11 +889,12 @@ phylo_eg1_meta_ma_BM <- rma.mv(yi, vi,
                      ~ 1 | effect.size.id,　# additional effect-size-level variation
                      ~ 1 | species.id, # species-specific, non-phylogenetic variation
                      ~ 1 | species.id.phy), # species-specific, phylogenetic variation
-                     R = list(species.id.phy = A), # Brownian motion phylogenetic correlation matrix
-                 data = dat_moura2021,
-                 verbose = TRUE,
-                 sparse = TRUE,
-                 method = "REML"
+	                     R = list(species.id.phy = A), # Brownian motion phylogenetic correlation matrix
+	                 data = dat_moura2021,
+	                 verbose = TRUE,
+	                 sparse = TRUE,
+	                 method = "REML",
+	                 test = "t"
                        )
 
 summary(phylo_eg1_meta_ma_BM)
@@ -901,8 +916,8 @@ summary(phylo_eg1_meta_ma_BM)
 # 
 # Model Results:
 # 
-# estimate      se    zval    pval   ci.lb   ci.ub     
-#   0.3682  0.1300  2.8311  0.0046  0.1133  0.6230  ** 
+# estimate      se    tval    pval   ci.lb   ci.ub
+#   0.3682  0.1300  2.8311  0.0046  0.1131  0.6232  **
 
 confint(phylo_eg1_meta_ma_BM)
 #           estimate  ci.lb  ci.ub 
@@ -1328,6 +1343,8 @@ The very low marginal $R^2$ indicates that temporal pooling explains only a negl
 ```{r}
 #| echo: false
 
+# This RDS contains the exact rma.mv fit created above as phylo_eg1.1_meta_BM.
+# It is loaded under moura2021_BM_meta_reg only for the downstream plotting code.
 moura2021_BM_meta_reg <- readRDS(here("Rdata", "tutorial_v2", "moura2021_BM_meta_reg.rds"))
 
 ```
@@ -1478,60 +1495,48 @@ exp(phylo_eg1.1_tmb$fit$par)
 
 #### Ornstein-Uhlenbeck
 
-We next fit a phylogenetic meta-analysis model under an Ornstein-Uhlenbeck (OU) model of trait evolution. The OU model is useful here because it implies that correlation between species declines with phylogenetic distance, and this decay can be represented using an exponential correlation function.
+We next compare the BM covariance specification with an exponential phylogenetic covariance specification. This is a comparison of candidate statistical covariance models. It does not establish that an OU process generated the data.
 
-Under an OU model, the phylogenetic covariance between species $i$ and $j$ can be written as
-
-$$
-\operatorname{Cov}_{ij} = \sigma^2 \exp(-\alpha d_{ij}),
-$$
-
-where $d_{ij}$ is the phylogenetic distance between species $i$ and $j$, $\sigma^2$ is the trait variance, and $\alpha$ controls how quickly correlation decays with distance. Larger values of $\alpha$ imply faster decay of phylogenetic correlation, corresponding to a stronger pull towards a species-specific optimum.
-
-This has the same functional form as the exponential correlation structure often used in distance-based models:
+For a direct patristic distance $d_{ij}$, the exponential correlation used here is
 
 $$
-\operatorname{Cov}_{ij} = \sigma^2 \exp(-\rho d_{ij}),
+\operatorname{cor}_{ij} = \exp(-d_{ij}/\rho).
 $$
 
-which allows the OU model to be fitted by exploiting this equivalence.
+This is the `SPEXP` parameterisation in `metafor`. If the same distance matrix and branch-length scale are used, it can be written as $\exp(-\alpha d_{ij})$ with $\alpha=1/\rho$. Thus, $\rho$ has units of the constructed Grafen branch-length units and $\alpha$ has units per constructed Grafen branch-length unit. They are not parameters in units of estimated divergence time or direct estimates of stabilising selection.
 
-Let $\mathbf{A}$ be the Brownian motion phylogenetic correlation matrix derived from the tree, where each entry represents phylogenetic similarity based on shared branch length. We then define a distance matrix $\mathbf{D}$ as
-
-$$
-\mathbf{D} = \mathbf{I} - \mathbf{A},
-$$
-
-where $\mathbf{I}$ is the identity matrix. The entries of $\mathbf{D}$ represent phylogenetic distances between species, scaled between 0 and 1. Closely related species have smaller distances, whereas distantly related species have larger distances.
-
-We fit the OU phylogenetic model using a two-stage procedure. First, we estimate the rate at which phylogenetic correlation decays with distance by fitting a meta-analysis model with an exponential correlation structure, using $\mathbf{D}$ as the phylogenetic distance matrix. Second, we use this fitted decay structure to construct an OU based phylogenetic correlation matrix for the final meta-analysis or meta-regression model. This provides a practical way to incorporate OU style phylogenetic dependence within the standard multilevel meta-analytic framework implemented in `metafor`.
-
-We first fit a meta-analysis model with an exponential correlation structure, using $\mathbf{D}$ as the phylogenetic distance matrix:
+The primary distance matrix is constructed directly from the tree:
 
 ```{r}
 #| eval: false
 
-# create phylogenetic distance matrix
-dat_moura2021$const <- 1
-I  <- matrix(1, nrow = length(tree$tip.label), ncol = length(tree$tip.label))
-D <- I-A
+# D_phylo was constructed above with ape::cophenetic.phylo(tree).
+# It is in the same tip order as the phylogenetic grouping factor.
+D_phylo[1:5, 1:5]
+```
 
-D[1:5, 1:5]
+The previous executable code formed an all-ones matrix minus the BM correlation matrix, although the accompanying prose called the first matrix an identity matrix. For this specific ultrametric, unit-height Grafen tree, the old quantity happens to satisfy $\mathbf{1}-\mathbf{A}=\mathbf{D}_{\mathrm{phylo}}/(2h)$, where $h=1$. The maximum numerical difference in the audit was $6.66\times10^{-16}$. This equivalence is a property verified for this tree, not a reason to substitute $1-\mathbf{A}$ for direct patristic distance in general.
+
+We fit **Model A**, which jointly estimates $\rho$ with the other model parameters, using the direct unscaled patristic distances:
+
+```{r}
+#| eval: false
+
+# Model A: rho is estimated jointly with all variance components.
+dat_moura2021$const <- factor(1)
 
 phy_ou_meta <- rma.mv(yi, vi,
-                 random = list(~ 1 | study.id, 
-                 ~ 1 | effect.size.id, 
-                 ~ 1 | species.id, 
-                 ~ species.id.phy | const),
-                 dist = list(D), 
-                 struct = "SPEXP",
-                 control = list(rho.init = 1),
-                 data = dat_moura2021,
-                 verbose = TRUE,
-                 sparse = TRUE,
-                 method = "REML",
-                 test = "t"
-                 )
+  random = list(~ 1 | study.id,
+                ~ 1 | effect.size.id,
+                ~ 1 | species.id,
+                ~ species.id.phy | const),
+  dist = list(species.id.phy = D_phylo),
+  struct = "SPEXP",
+  control = list(rho.init = 0.04),
+  data = dat_moura2021,
+  sparse = TRUE,
+  method = "REML",
+  test = "t")
 
 summary(phy_ou_meta)
 # Multivariate Meta-Analysis Model (k = 1828; method: REML)
@@ -1550,8 +1555,8 @@ summary(phy_ou_meta)
 # inner term:   ~species.id.phy (nlvls = 341)
 
 #             estim    sqrt  fixed 
-# tau^2      0.1029  0.3208     no 
-# rho        0.0182             no 
+# tau^2      0.1029  0.3208     no
+# rho        0.0364             no
 
 # Test for Heterogeneity:
 # Q(df = 1827) = 10743.8076, p-val < .0001
@@ -1559,61 +1564,53 @@ summary(phy_ou_meta)
 # Model Results:
 
 # estimate      se    zval    pval   ci.lb   ci.ub      
-#   0.3514  0.0355  9.9090  <.0001  0.2819  0.4209  *** 
+#   0.3514  0.0355  9.9090  <.0001  0.2819  0.4210  ***
 
 # ---
 # Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 ```
 
-This model estimates the exponential decay parameter governing how quickly phylogenetic correlation declines with distance. Using this fitted decay parameter, we then construct an OU based phylogenetic correlation matrix as
+For the present data, Model A gave $\hat\rho=0.03640768$ and $\hat\alpha=27.46673$ per constructed Grafen branch-length unit. Its REML log-likelihood was -160.37833 and AIC was 332.75666 (six estimated parameters). The otherwise matched BM model had REML log-likelihood -167.67263 and AIC 345.34527 (five parameters), so $\Delta\mathrm{AIC}_{\mathrm{OU-BM}}=-12.58860$. This is relative fit under these candidate covariance specifications, not evidence for a particular evolutionary process.
 
-$$
-\mathbf{A}_{OU} = \exp(-\alpha \mathbf{D}).
-$$
-
-This matrix represents the phylogenetic correlation structure implied by the fitted OU model. We then refit the meta-analysis, supplying $\mathbf{A}_{OU}$ as a fixed phylogenetic correlation matrix:
+Using the same tree, species order, distance scale, and $\alpha$, the direct exponential matrix agrees with `ape::corMartins()` to numerical precision:
 
 ```{r}
 #| eval: false
 
-rho <- phy_ou_meta$rho  #[1] 0.01820382
-alpha <- 1/rho # 54.93351
-A_OU <- exp(-alpha*D)
+rho <- phy_ou_meta$rho
+alpha <- 1 / rho
+A_OU <- exp(-D_phylo / rho)
 
+martins <- corMartins(value = alpha, phy = tree, form = ~ species, fixed = TRUE)
+martins <- nlme::Initialize(martins, data = data.frame(species = tip_order))
+A_martins <- nlme::corMatrix(martins)[tip_order, tip_order]
+stopifnot(identical(rownames(A_OU), rownames(A_martins)),
+          identical(colnames(A_OU), colnames(A_martins)),
+          max(abs(A_OU - A_martins)) < 1e-10)
+# Audit result: maximum absolute difference = 5.55e-17;
+# mean absolute difference = 1.77e-19.
+```
+
+It can still be useful to form **Model B**, in which the matrix built with $\hat\rho$ is treated as fixed, for example when passing the covariance structure to a subsequent meta-regression. Model B is not an independent AIC competitor of BM because its nominal AIC omits the previously estimated $\rho$ parameter. Therefore, BM is compared with Model A, not with this fixed-matrix refit.
+
+```{r}
+#| eval: false
+
+# Model B: useful for a downstream fixed-correlation fit, not the BM AIC comparison.
 phy_ou_meta1 <- rma.mv(yi, vi,
-     random = list(~ 1 | study.id, 
-    ~ 1 | effect.size.id, 
-    ~ 1 | species.id, 
-    ~ 1 | species.id.phy),
-    R = list(species.id.phy = A_OU), 
-    data = dat_moura2021,
-    verbose = TRUE,
-    sparse = TRUE,
-    method = "REML",
-    test = "t"
-    )
+  random = list(~ 1 | study.id,
+                ~ 1 | effect.size.id,
+                ~ 1 | species.id,
+                ~ 1 | species.id.phy),
+  R = list(species.id.phy = A_OU),
+  data = dat_moura2021,
+  sparse = TRUE,
+  method = "REML",
+  test = "t")
 
-summary(phy_ou_meta1)
-# Multivariate Meta-Analysis Model (k = 1828; method: REML)
-# 
-#    logLik   Deviance        AIC        BIC       AICc   
-# -160.3783   320.7567   330.7567   358.3088   330.7896   
-# 
-# Variance Components:
-# 
-#             estim    sqrt  nlvls  fixed          factor    R 
-# sigma^2.1  0.0157  0.1254    457     no        study.id   no 
-# sigma^2.2  0.0144  0.1201   1828     no  effect.size.id   no 
-# sigma^2.3  0.0000  0.0001    341     no      species.id   no 
-# sigma^2.4  0.1029  0.3208    341     no  species.id.phy  yes 
-# 
-# Test for Heterogeneity:
-# Q(df = 1827) = 10743.8076, p-val < .0001
-# 
-# Model Results:
-# 
-# estimate      se    tval    df    pval   ci.lb   ci.ub      
-#   0.3514  0.0355  9.9090  1827  <.0001  0.2819  0.4210  *** 
+AIC(phylo_eg1_meta_ma_BM) # 345.34527
+AIC(phy_ou_meta)          # 332.75666: valid BM comparison (Model A)
+AIC(phy_ou_meta1)         # 330.75666: Model B; do not use for that comparison
 ```
 
 We can extend the same correlation structure to a meta-regression model by including moderators while retaining the OU based phylogenetic random effect:
@@ -1627,7 +1624,7 @@ phy_ou_meta_reg2 <- rma.mv(yi, vi,
                   ~ 1 | effect.size.id, 
                   ~ 1 | species.id, 
                   ~ 1 | species.id.phy),
-                  R = list(species.id.phy = A_OU), 
+                  R = list(species.id.phy = A_OU),
                   data = dat_moura2021,
                   verbose = TRUE,
                   sparse = TRUE,
@@ -1662,11 +1659,11 @@ summary(phy_ou_meta_reg2)
 # temporally.pooledyes    0.0293  0.0215  1.3641  1826  0.1727  -0.0128  0.0713   
 ```
 
-The OU phylogenetic model fitted the data substantially better than the BM model (AIC = 330.76 vs 345.35), indicating that phylogenetic similarity in assortative mating strength decays rapidly with evolutionary distance. In other words, closely related species tend to resemble one another in mate size correlation, but this resemblance weakens quickly as phylogenetic distance increases. This pattern is consistent with an OU process in which species are pulled towards their own lineage-specific optima, rather than retaining strong similarity over deep evolutionary time-scales.
+A fixed-$\rho$ profile that re-estimated the remaining parameters at 101 values had an interior maximum at $\rho=0.03640768$. The 95% likelihood-ratio support interval was approximately 0.02113--0.06783 on the constructed branch-length scale (the grid-supported values were 0.02277--0.06296). Thus, the range parameter is locally identified in this dataset, but its interpretation remains limited to covariance decay on constructed Grafen branch lengths. Across the grid-supported range, the pooled mean varied from 0.3446 to 0.3540, whereas its standard error varied from 0.0293 to 0.0461.
 
-Although the pooled effect size (meta-analysis) and moderator effect(meta-regression) was similar under both models, the uncertainty around this estimate was slightly smaller under OU, as reflected by the narrower confidence interval and smaller standard error. Under the OU model, species-level variation was captured almost entirely by the OU-structured phylogenetic term, whereas the BM model partitioned this variation between phylogenetic and non-phylogenetic species effects. Together, these results suggest that assortative mating strength shows only limited deep phylogenetic inertia and is instead dominated by relatively shallow phylogenetic resemblance and species-specific variation.
+The pooled mean changed from 0.3682 (95% confidence interval 0.1131--0.6232) under BM to 0.3514 (0.2819--0.4210) under Model A. The much larger change in uncertainty reflects the fitted covariance structures. The mean off-diagonal species covariance was 0.0170 under BM but 0.000959 under the exponential model; their mean off-diagonal correlations were 0.332 and 0.0093, respectively. The OU/exponential fit allocated approximately 0.1029 to the phylogenetically structured species component and essentially zero to the non-phylogenetic species component, whereas the BM fit allocated 0.0512 and 0.0557, respectively. These allocations and the precision of the pooled mean are sensitive to the covariance specification. The central lesson is that a pooled mean may be relatively stable while its uncertainty and allocation of heterogeneity change substantially under different plausible phylogenetic covariance models.
 
-Note: We cannot currently fit this OU model directly in `brms` or `glmmTMB`.
+The reproducible numerical audit, including the direct-distance checks, `corMartins()` comparison, fitted models, and rho profile, is saved in `revision_checks/OU_CORRECTNESS_AUDIT_2026-09-11.md` and `revision_checks/ou_correctness_outputs/`.
 
 #### Visualisations
 

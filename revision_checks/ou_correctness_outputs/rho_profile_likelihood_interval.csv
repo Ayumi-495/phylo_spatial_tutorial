@@ -1,0 +1,2 @@
+"likelihood_ratio_cutoff","peak_rho","peak_alpha","lower_rho_grid_supported","upper_rho_grid_supported","lower_rho_log_interpolated","upper_rho_log_interpolated","optimum_interior","lower_alpha_log_interpolated","upper_alpha_log_interpolated"
+1.92072941034706,0.0364076803368505,27.4667320397185,0.0227675662430393,0.0629576936475535,0.0211283052302154,0.0678272739709928,TRUE,14.7433317226882,47.3298728461149

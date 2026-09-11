@@ -1,0 +1,2 @@
+"rho_joint_REML","alpha_joint_REML","profile_grid_peak_rho","profile_grid_peak_logLik","LR95_grid_lower_rho","LR95_grid_upper_rho","interval_bracketed_by_grid","n_profile_points","workers","profile_shape","profile_boundary_note"
+0.0364076803368505,27.4667320397185,0.0364076803368505,-160.378331951326,0.0227675662430393,0.0629576936475535,TRUE,101,100,"comparatively concentrated on evaluated grid","Grid falls below LR threshold on both sides."

@@ -1,0 +1,6 @@
+"file","path","reference_type","exists"
+"phylo_eg1_meta_BM.rds","Rdata/tutorial_v2/phylo_eg1_meta_BM.rds","readRDS",FALSE
+"moura2021_BM_meta_reg.rds","Rdata/tutorial_v2/moura2021_BM_meta_reg.rds","readRDS",TRUE
+"moura2021_BM_brms.rds","Rdata/tutorial_v2/moura2021_BM_brms.rds","readRDS",FALSE
+"phylo_eg2_metafor_BM_mr.rds","Rdata/tutorial_v2/phylo_eg2_metafor_BM_mr.rds","path_only",FALSE
+"phylo_eg2_brms_mr.rds","Rdata/tutorial_v2/phylo_eg2_brms_mr.rds","readRDS",FALSE
