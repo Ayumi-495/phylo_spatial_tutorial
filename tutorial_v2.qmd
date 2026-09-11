@@ -143,12 +143,12 @@ tree <- trees[[1]]
 
 #### Step 2. Basic structural checks
 
-Before using the tree in analyses, it is good practice to perform some basic checks to ensure that the tree structure is appropriate for the intended analysis (i.e. in this case, is the tree ultrametric and binary – see below).
+Before using the tree in analyses, it is good practice to inspect its topology and branch lengths and to consider whether they are appropriate for the intended covariance model. Here, we check ultrametricity and bifurcation as useful properties of the tree structure, but neither property is a universal prerequisite for phylogenetic covariance modelling.
 
 ```{r}
 #| eval: false
 
-# Check whether the tree is ultrametric (time-calibrated)
+# Check whether all tips are equidistant from the root
 is.ultrametric(tree)
 # [1] TRUE
 
@@ -178,7 +178,7 @@ setdiff(tree$tip.label, species_data) # species names from the tree not found in
 
 ```
 
-Given that we only have 10 species in the dataset and 294 species in the tree, most species from tree will not be present in the dataset. At this point, it is also very important to look at the other mismatch result, which checks whether all of the species in our dataset can be matched to the tree. If mismatches occur, we need to consider whether it is a truly missing species, typographical errors, outdated taxonomy, hybrid species which do not fit on binomial tree, or differences in naming conventions (e.g. using underscores vs spaces between name segments, or using subspecies names). These issues must be resolved manually before proceeding. In our example, we have a dataset with species names that match the tree, si we do not need to deal with such issues.
+Given that we only have 10 species in the dataset and 294 species in the tree, most species from tree will not be present in the dataset. At this point, it is also very important to look at the other mismatch result, which checks whether all of the species in our dataset can be matched to the tree. If mismatches occur, we need to consider whether it is a truly missing species, typographical errors, outdated taxonomy, hybrid species which do not fit on binomial tree, or differences in naming conventions (e.g. using underscores vs spaces between name segments, or using subspecies names). These issues must be resolved manually before proceeding. In our example, we have a dataset with species names that match the tree, so we do not need to deal with such issues.
 
 #### Step 4. Prune the tree to include only species in the dataset
 
@@ -230,7 +230,7 @@ is.ultrametric(tree_pruned)
 
 #### Step 5. Compute the phylogenetic correlation matrix
 
-Once the tree is time-calibrated (= ultrametric), fully bifurcating (= binary), and pruned to match the dataset, you can compute the phylogenetic correlation matrix under a Brownian motion model using the `vcv()` function from the `ape` package.
+Once the species names have been matched, the tree has been pruned to the taxa in the dataset, and the branch lengths are appropriate for the intended covariance model, you can compute the phylogenetic correlation matrix under a Brownian motion model using the `vcv()` function from the `ape` package.
 
 ```{r}
 #| eval: false
@@ -241,7 +241,7 @@ dim(A)
 
 ```
 
-This matrix represents the expected pirwise correlation among species due to shared evolutionary history and can be used directly in phylogenetic comparative or meta-analytic models.
+This matrix represents the pairwise correlations implied by the Brownian-motion model for the supplied tree and branch lengths and can be used directly in phylogenetic comparative or meta-analytic models.
 
 ### Using the `rotl` package (Open Tree of Life) {#using-the-rotl-package-open-tree-of-life}
 
@@ -441,7 +441,7 @@ At this point, you should confirm that: - All species have a valid `ott_id`. - t
 
 #### Step 4. Retrieve the phylogenetic tree from OpenTree
 
-Once you are satisfied with the matched OpenTree identifiers, you can request a trimmed subtree from the OpenTree synthetic tree using `tol_induced_subtree()`. At this stage, the OpenTree subtree provides a convenient phylogenetic topology for the matched taxa. However, before using it in comparative or meta-analytic models, you should still check whether the tip labels are appropriate, whether branch lengths are available, and whether the tree satisfies assumptions such as bifurcation and ultrametricity.
+Once you are satisfied with the matched OpenTree identifiers, you can request a trimmed subtree from the OpenTree synthetic tree using `tol_induced_subtree()`. At this stage, the OpenTree subtree provides a convenient phylogenetic topology for the matched taxa. However, before using it in comparative or meta-analytic models, you should still check whether the tip labels are appropriate, whether branch lengths are available and what they represent, and whether the topology and branch-length structure are appropriate for the intended covariance model and software implementation.
 
 ```{r}
 #| eval: false
@@ -566,7 +566,7 @@ setdiff(as.character(tree$tip.label), myspecies_fixed)
 
 #### Step 7. Compute the phylogenetic correlation matrix (handling missing branch lengths)
 
-At this point, the tree topology may be usable for plotting or simple inspection, but it is not yet guaranteed to be suitable for phylogenetic covariance calculations. In particular, `vcv()` requires branch lengths, and many comparative models additionally assume a fully bifurcating and often ultrametric tree. The Open Tree of Life synthetic tree often provides a well-resolved topology, but it does not always include branch lengths.
+At this point, the tree topology may be usable for plotting or simple inspection, but it is not yet guaranteed to be suitable for phylogenetic covariance calculations. In particular, `vcv()` requires branch lengths. Additional requirements depend on the covariance model and software implementation, so properties such as bifurcation and ultrametricity should be checked rather than imposed automatically. The Open Tree of Life synthetic tree often provides a well-resolved topology, but it does not always include branch lengths.
 
 To compute a phylogenetic variance-covariance (VCV) or correlation matrix under a Brownian motion (BM) process, we use `vcv()` from the `ape` package. If the tree has no branch lengths, `vcv()` will fail with:
 
@@ -615,13 +615,20 @@ A[1:5, 1:5]
 
 ### What if there are polytomies or non-ultrametric trees?
 
-The subtree returned by OpenTree may be sufficient for demonstration purposes, but many phylogenetic models require additional assumptions about branching structure and branch lengths. We therefore illustrate how to diagnose and handle two common issues: *polytomies* and *non-ultrametric* trees.
+<!-- The subtree returned by OpenTree may be sufficient for demonstration purposes, but many phylogenetic models require additional assumptions about branching structure and branch lengths. We therefore illustrate how to diagnose and handle two common issues: *polytomies* and *non-ultrametric* trees. -->
 
-A polytomy occurs when an internal node has more than two descendant branches (a multifurcation).
+<!-- A polytomy occurs when an internal node has more than two descendant branches (a multifurcation). -->
 
-A non-ultrametric tree is a tree in which not all tips are equidistant from the root, meaning that the tree is not time-calibrated.
+<!-- A non-ultrametric tree is a tree in which not all tips are equidistant from the root, meaning that the tree is not time-calibrated. -->
 
-Many phylogenetic comparative and meta-analytic models assume a fully bifurcating and ultrametric tree, because the expected covariance among species is defined under a continuous-time branching process (for example Brownian motion or Ornstein–Uhlenbeck evolution). Here we illustrate what these issues mean, and how they can be handled, using a simple toy example.
+<!-- Many phylogenetic comparative and meta-analytic models assume a fully bifurcating and ultrametric tree, because the expected covariance among species is defined under a continuous-time branching process (for example Brownian motion or Ornstein–Uhlenbeck evolution). Here we illustrate what these issues mean, and how they can be handled, using a simple toy example. -->
+
+The suitability of a phylogenetic tree for covariance modelling depends on what its branch lengths represent, the covariance model being assumed, and any requirements of the software implementation. Two properties that are useful to inspect are polytomies and ultrametricity, but neither should be treated as a problem that always requires correction.
+
+A polytomy occurs when an internal node has more than two descendant branches. A polytomy may represent simultaneous divergence or unresolved branching order. Importantly, a multifurcating tree is not automatically incompatible with Brownian-motion covariance: covariance can still be defined from the shared branch lengths in the supplied tree. Some methods or software may nevertheless require a bifurcating tree, in which case any resolution of a polytomy introduces an additional analytical assumption.
+
+A tree is ultrametric when all tips are equally distant from the root. Ultrametricity does not by itself imply that branch lengths are estimated divergence times, and a non-ultrametric tree is not automatically unsuitable for phylogenetic modelling. Non-ultrametricity may arise, for example, in trees containing fossil tips or serially sampled taxa, in trees whose branch lengths represent expected sequence substitutions, or from small numerical deviations in a tree intended to be ultrametric. Whether such a tree is appropriate depends on the intended evolutionary covariance model and the interpretation of its branch lengths.
+
 
 #### Create a toy tree with a polytomy
 
@@ -645,12 +652,13 @@ is.binary(tree_poly)
 
 Here, species A, B, and C form a polytomy because their common ancestor has three descendants instead of two…
 
-Under a Brownian motion or OU model, the phylogenetic covariance matrix is derived from branch lengths along a fully specified bifurcating tree.\
-When a node is a polytomy, the relative order of divergence among its descendants is undefined, which means that their shared evolutionary history cannot be uniquely translated into a covariance structure.
+<!-- Under a Brownian motion or OU model, the phylogenetic covariance matrix is derived from branch lengths along a fully specified bifurcating tree.\ -->
+<!-- When a node is a polytomy, the relative order of divergence among its descendants is undefined, which means that their shared evolutionary history cannot be uniquely translated into a covariance structure. -->
 
 #### Resolving polytomies
 
-`multi2di()` resolves a polytomy by inserting very short branches, creating an arbitrary but fully bifurcating tree. This corresponds to assuming that the true branching order is unknown but occurred over a very short evolutionary time.
+If a particular analysis requires a fully bifurcating tree, a polytomy can be resolved using functions such as `multi2di()`. Such a resolution should not be regarded as recovering the true branching order. When the branching order is uncertain and the choice could affect the results, sensitivity analyses across plausible resolutions are preferable to relying on a single arbitrary resolution.
+<!-- `multi2di()` resolves a polytomy by inserting very short branches, creating an arbitrary but fully bifurcating tree. This corresponds to assuming that the true branching order is unknown but occurred over a very short evolutionary time. -->
 
 ```{r}
 
@@ -714,10 +722,13 @@ plot(tree_nonultra)
 
 ```
 
-As you can see, the tips do not all end at the same distance from the root, so the tree is not ultrametric. This means that branch lengths cannot be interpreted directly as shared evolutionary time, which is required for Brownian motion or Ornstein–Uhlenbeck based phylogenetic covariance models.
+As you can see, the tips do not all end at the same distance from the root, so the tree is not ultrametric. 
+<!-- This means that branch lengths cannot be interpreted directly as shared evolutionary time, which is required for Brownian motion or Ornstein–Uhlenbeck based phylogenetic covariance models. -->
+Unequal root-to-tip distances can have several meanings, so non-ultrametricity should first be interpreted rather than automatically corrected. If the intended covariance model specifically requires branch lengths representing elapsed evolutionary time among contemporaneous tips, a suitable time-calibrated phylogeny should be used where possible.
 
-`chronos()` estimates branch lengths under a relaxed molecular clock, producing a tree in which all tips represent the same present time.\
-This is required when phylogenetic covariance is interpreted as shared evolutionary time.
+<!-- `chronos()` estimates branch lengths under a relaxed molecular clock, producing a tree in which all tips represent the same present time.\ -->
+<!-- This is required when phylogenetic covariance is interpreted as shared evolutionary time. -->
+When a time-calibrated ultrametric tree is scientifically required and appropriate calibration information is available, methods such as `chronos()` can be used to estimate a dated tree under explicit clock assumptions. This is a modelling step rather than a generic correction for non-ultrametricity.
 
 ```{r}
 
@@ -740,7 +751,8 @@ tree_ultra1 <- chronos(tree_nonultra)
 plot(tree_ultra1)
 ```
 
-Or, you can use `force.ultrametric()` from the `phytools` package to coerce a tree into an ultrametric form by extending branch lengths.
+<!-- Or, you can use `force.ultrametric()` from the `phytools` package to coerce a tree into an ultrametric form by extending branch lengths. -->
+If a tree is already intended to be ultrametric and fails the check only because of small numerical or rounding differences, `force.ultrametric()` can be used as a numerical correction. It should not be used to convert a legitimately non-ultrametric tree, such as a tree containing fossil or serially sampled tips, into an ultrametric tree.
 
 ```{r}
 #| eval: FALSE
@@ -760,12 +772,21 @@ plot(tree_ultra2)
 
 In practice, the typical workflow is:
 
-1.  Check whether the tree is binary and ultrametric.
-2.  If polytomies are present, resolve them using `multi2di()`, ideally multiple times.
-3.  If the tree is not ultrametric, apply a dating method such as `chronos()` or use a time-calibrated tree from the literature.
-4.  Only then compute the phylogenetic covariance or correlation matrix using `vcv()`.
+<!-- 1.  Check whether the tree is binary and ultrametric. -->
+<!-- 2.  If polytomies are present, resolve them using `multi2di()`, ideally multiple times. -->
+<!-- 3.  If the tree is not ultrametric, apply a dating method such as `chronos()` or use a time-calibrated tree from the literature. -->
+<!-- 4.  Only then compute the phylogenetic covariance or correlation matrix using `vcv()`. -->
+In practice, a more general workflow is:
+
+1. Check that species names and tree tips are matched correctly.
+2. Inspect the topology and branch lengths, including what the branch lengths represent.
+3. Check whether properties such as polytomies or non-ultrametricity are compatible with the intended covariance model and software implementation.
+4. Resolve polytomies or modify branch lengths only when this is scientifically or computationally justified, and treat these choices as sources of analytical uncertainty.
+5. Where plausible alternative trees or preprocessing choices exist, assess the sensitivity of the results to those alternatives.
+6. Construct the phylogenetic covariance or correlation matrix from the resulting tree and verify that its row and column names match the model data.
 
 This ensures that the phylogenetic random effect used in meta-analysis corresponds to a well-defined evolutionary model.
+
 ::::
 
 ## Examples from real meta-analyses
@@ -1151,34 +1172,29 @@ Nice - the outputs are very similar to the previous model using `se()`, as expec
 
 The small differences in the estimates arise because this model is fitted in a Bayesian framework.
 
-An $I^2$ calculation requires an explicit choice of the variance components and denominator. That definition is not fixed in this tutorial yet, so the calculation is deferred.
-
-```{r}
-#| eval: false
-
-# Define the chosen variance-partitioning and I2 denominator here before
-# calculating I2. The earlier code referred to undefined objects and has been
-# removed rather than imposing a definition.
-
-```
+For consistency across the worked examples, we use the generalised \(I^2\) definition introduced above. A separate posterior \(I^2\) summary is not calculated for this Bayesian fit here.
 
 ###### glmmTMB
 
-`glmmTMB` is a popular package for fitting generalised linear mixed models. Unlike dedicated meta-analytic packages such as `metafor`, it does not allow to easily account for known sampling variances of effect sizes - so when we implement a meta-analysis in `glmmTMB`, we need explicitly specify the sampling error structure of the effect sizes.
+`glmmTMB` is a popular package for fitting generalised linear mixed models. 
+<!-- Unlike dedicated meta-analytic packages such as `metafor`, it does not allow to easily account for known sampling variances of effect sizes - so when we implement a meta-analysis in `glmmTMB`, we need explicitly specify the sampling error structure of the effect sizes. -->
+`glmmTMB` is a general-purpose package for fitting mixed models rather than a dedicated meta-analysis package, so known sampling variances are specified differently from in `metafor`. Here, we supply the known sampling variance-covariance matrix through the `equalto()` covariance structure.
 
-In practice, this require three steps:
+In practice, this requires three steps:
 
 *1. Treating each effect size as a unique random-effect level*
 
 ```{r}
 #| eval: false
 
-# random effects in glmmTMB are defined over factor levels. By converting the effect-size identifier into a factor, each effect size (i) is assigned its own random effect (e_i), which will represent its sampling error - this is what allows the model to attach the correlation variance (v_i) to each observation
+# equalto() operates over factor levels. Treating the effect-size identifier
+# as a factor allows the supplied sampling variance-covariance matrix to be
+# aligned with the individual effect-size estimates.
 
 dat_moura2021$effect.size.id <- as.factor(dat_moura2021$effect.size.id)
 ```
 
-In `glmmTMB`, grouping variables for random effects must be factors. By converting `effect_size_ID` to a factor, we ensure that each effect size is treated as a distinct level in the random-effects structure. This step is required for the model to correctly associate each observation with its corresponding sampling variance.
+In `glmmTMB`, the levels of the factor identify the elements of the supplied covariance matrix. Converting the effect-size identifier to a factor therefore allows each observation to be matched to its corresponding known sampling variance. This is a computational representation of the known sampling-error covariance structure, not an additional estimated heterogeneity component.
 
 *2. Specifying the random effect independent grouping structure*
 
@@ -1195,16 +1211,17 @@ dat_moura2021$g <- 1
 ```{r}
 #| eval: false
 
-# this creates a variance-covariance matrix - diagonal elements are the known sampling variances of the effect sizes. The off-diagonal elements are zero, reflecting the usual assumption that effect sizes are independent. This matrix plays the same rule as V = vi in metafor
+# The diagonal contains the known sampling variances.
+# Off-diagonal elements are zero because this worked example assumes independent sampling errors for simplicity.
 
 VCV <- diag(dat_moura2021$vi, nrow = nrow(dat_moura2021)) 
 rownames(VCV)<- colnames(VCV)<- dat_moura2021$effect.size.id
 
 ```
 
-We create a variance–covariance matrix whose diagonal elements are the known sampling variances of the effect sizes. Off-diagonal elements are set to zero, reflecting the assumption that effect sizes are independent. This mirrors the standard assumption made in most meta-analyses.
+We create a sampling variance-covariance matrix whose diagonal elements are the known sampling variances of the effect sizes. Off-diagonal elements are zero in this worked example because we assume independent sampling errors for simplicity. If effect-size estimates have correlated sampling errors, those covariances need to be represented in the off-diagonal elements of this matrix or by another justified approximation.
 
-The `equalto()` term in `glmmTMB` requires a grouping factor. The dummy variable `g` serves this purpose, which we set to a single level (one group), i.e. all observations are assigned to the same group. If the grouping factor had more than one level, each group would have a separate independent random-effect vector with the same variance-covariance parameters. For meta-analysis, this grouping factor should always have one level.
+The `equalto()` term in `glmmTMB` requires a grouping factor. The dummy variable `g` serves this purpose, which we set to a single level (one group), i.e. all observations are assigned to the same group. If the grouping factor had more than one level, each group would have a separate independent random-effect vector with the same variance-covariance parameters. In this implementation, we use a single level so that the supplied covariance matrix applies to the full vector of effect-size estimates.
 
 For more details, you can also refer to this vignette: <https://cran.r-project.org/web/packages/glmmTMB/vignettes/covstruct.html>
 
@@ -1228,7 +1245,7 @@ system.time(
                          propto(0 + species.id.phy|g, A), 
                        data = dat_moura2021,
                        REML = TRUE)
-　　　　　　　)
+                      )
 
 ```
 
@@ -1298,7 +1315,7 @@ But be careful - the meaning of theta can be changed. It depends on what random 
 
 #### Brownian motion (meta-regression)
 
-We next extend the meta-analysis model by including the categorical moderator as a fixed effect (predictor). We will use variable called `temporally.pooled`　(yes/no) as our moderator - it codes whether effect sizes were calculated from data pooled across multiple sampling periods. The resulting meta-regression model will allows us to examine whether methodological features of the primary studies help explain some of the variation among effect sizes, over and above the hierarchical and phylogenetic structure already accounted for.
+We next extend the meta-analysis model by including the categorical moderator as a fixed effect (predictor). We next extend the meta-analysis model by including `temporally.pooled` (yes/no) as a categorical moderator. This variable indicates whether effect sizes were calculated from data pooled across multiple sampling periods. The meta-regression allows us to examine whether this methodological feature is associated with variation in effect sizes after accounting for the fitted hierarchical and phylogenetic random-effects structure.
 
 ::: panel-tabset
 ##### metafor
@@ -1351,7 +1368,8 @@ summary(phylo_eg1.1_meta_BM)
 
 For studies without temporal pooling, the intercept $\beta_0$ represents the estimated mean effect size and was 0.356 (95% CI 0.099, 0.613) on the Fisher's Z scale. Relative to this baseline, temporally pooled studies tended to show slightly larger effect sizes on average, but the uncertainty interval overlapped zero ($\beta_{\text{temporally.pooled}_{\text{yes}}}$ = 0.040, 95% CI = \[-0.004, 0.083\]).
 
-Importantly, this inference is made while accounting for non-independence among effect sizes arising from shared studies, repeated measurements, species identity, and phylogenetic relatedness. Thus, the moderator effect reflects systematic differences associated with temporal pooling rather than confounding hierarchical structure.
+<!-- Importantly, this inference is made while accounting for non-independence among effect sizes arising from shared studies, repeated measurements, species identity, and phylogenetic relatedness. Thus, the moderator effect reflects systematic differences associated with temporal pooling rather than confounding hierarchical structure. -->
+This moderator association is estimated conditional on the fitted study-, effect-size-, species-, and phylogenetic random-effects structure. As elsewhere in this worked example, sampling errors are assumed to be independent. If repeated measurements or other shared data sources induce correlated sampling errors, those covariances would need to be represented separately in the sampling variance-covariance matrix. The fitted covariance structure also does not, by itself, remove confounding by unmeasured variables associated with temporal pooling, study identity, or phylogeny.
 
 ```{r}
 #| eval: false
@@ -1703,7 +1721,8 @@ The reproducible numerical audit, including the direct-distance checks, `corMart
 
 Visualising results often makes them much easier to understand than presenting them only in tables or in text. We want to visualise both the overall effect size estimate and the variance components from the random effects - but how to do this nicely?
 
-Traditionally, forest plots have bee used to report the pooled estimate and confidence intervals. However, forest plots does not clearly convey each study's contribution to the overall estimates (that is, the relative precision or inverse-variance weight of each effect size). The [`orchaRd`](https://doi.org/10.1111/2041-210X.14152) package provides a nice alternative, the orchard plot, which visualises the overall effect size along with the precision of each effect size estimate.
+Traditionally, forest plots have been used to report pooled estimates and confidence intervals. However, forest plots do not always clearly convey the contribution of individual effect sizes to the overall estimate, such as their relative precision or inverse-variance weights.
+The [`orchaRd`](https://doi.org/10.1111/2041-210X.14152) package provides a nice alternative, the orchard plot, which visualises the overall effect size along with the precision of each effect size estimate.
 
 Although orchard plots provide an effective summary of model-based estimates, they are not designed to display variance-component decomposition. We therefore construct custom visualisations in `ggplot2` to present the pooled effect size alongside the estimated variance components.
 
@@ -2182,7 +2201,7 @@ Across `metafor`, `brms`, and `glmmTMB`, this example yielded highly consistent 
 
 Biologically, the negative mean effect suggests a tendency for larger offspring size to be associated with fewer offspring, consistent with the classic offspring size-number trade-off. At the same time, the non-zero phylogenetic and species-level variance components indicate that the strength of this relationship differs among taxa and is only partly explained by shared evolutionary history.
 
-#### Brawnian motion (meta-regression)
+#### Brownian motion (meta-regression)
 
 ::: panel-tabset
 ##### metafor
