@@ -1,0 +1,6 @@
+"component","old_displayed_value","new_posterior_median","difference_new_minus_old_display","comparison_note"
+"pooled_mean",0.37,0.3608,-0.00919999999999999,"Old value is rounded display; variance is squared from displayed SD."
+"study_variance",0.0196,0.019974734225,0.000374734224999996,"Old value is rounded display; variance is squared from displayed SD."
+"effect_size_variance",0.0144,0.0144743757905,7.43757905000003e-05,"Old value is rounded display; variance is squared from displayed SD."
+"species_nonphylogenetic_variance",0.0529,0.0528174622405,-8.25377595000051e-05,"Old value is rounded display; variance is squared from displayed SD."
+"species_phylogenetic_variance",0.0729,0.0614675494025,-0.0114324505975,"Old value is rounded display; variance is squared from displayed SD."

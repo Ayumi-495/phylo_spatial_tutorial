@@ -1,0 +1,12 @@
+Lim et al. BM meta-regression
+Formula: structure(list(formula = yi ~ 1 + environment + (1 | species) +
+Formula:     (1 | gr(phy, cov = A)) + (1 | gr(id, cov = V)), pforms = list(),
+Formula:     pfix = list(), resp = "yi", family = NULL), class = c("brmsformula",
+Formula: "bform"))
+Priors: normal(0, 1) for intercept and moderators; exponential(1) for estimated SDs; fixed VCV sampling term constant(1) where used.
+chains 4
+iter 6000
+warmup 2000
+seed 20260915
+adapt_delta 0.95
+max_treedepth 15

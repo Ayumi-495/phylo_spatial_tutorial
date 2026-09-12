@@ -1,0 +1,13 @@
+Moura et al. BM meta-regression
+Formula: structure(list(formula = yi | se(sqrt(vi), sigma = TRUE) ~ 1 +
+Formula:     temporally.pooled + (1 | study.id) + (1 | species.id) + (1 |
+Formula:     gr(species.id.phy, cov = A)), pforms = list(), pfix = list(),
+Formula:     resp = "yi", family = NULL), class = c("brmsformula", "bform"
+Formula: ))
+Priors: normal(0, 1) for intercept and moderators; exponential(1) for estimated SDs; fixed VCV sampling term constant(1) where used.
+chains 4
+iter 6000
+warmup 2000
+seed 20260912
+adapt_delta 0.95
+max_treedepth 15

@@ -1,0 +1,12 @@
+Lim et al. BM meta-analysis (se formulation)
+Formula: structure(list(formula = yi | se(sqrt(vi), sigma = TRUE) ~ 1 +
+Formula:     (1 | species) + (1 | gr(phy, cov = A)), pforms = list(),
+Formula:     pfix = list(), resp = "yi", family = NULL), class = c("brmsformula",
+Formula: "bform"))
+Priors: normal(0, 1) for intercept and moderators; exponential(1) for estimated SDs; fixed VCV sampling term constant(1) where used.
+chains 4
+iter 6000
+warmup 2000
+seed 20260914
+adapt_delta 0.99
+max_treedepth 15

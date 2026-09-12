@@ -1,0 +1,18 @@
+Moura BM brms precomputation
+Formula: yi | se(sqrt(vi), sigma = FALSE) ~ 1 + (1 | study.id) + (1 | effect.size.id) + (1 | species.id) + (1 | gr(species.id.phy, cov = A))
+Known sampling variances: vi enters as fixed observation-level variance through se(sqrt(vi)); sigma is fixed to zero.
+Priors: Intercept normal(0, 1); each group-level SD exponential(1).
+Chains: 4
+Cores: 4
+Iterations per chain: 6000
+Warmup per chain: 2000
+Seed: 20260911
+adapt_delta: 0.99
+max_treedepth: 15
+R: R version 4.6.0 (2026-04-24)
+brms: 2.23.0
+cmdstanr: 0.9.0
+CmdStan: 2.38.0
+posterior: 1.7.0
+metafor: 5.0.1
+glmmTMB: 1.1.15

@@ -1,0 +1,6 @@
+"component","estimate","lower_95","upper_95","interval"
+"pooled_mean",0.3608,0.04474324,0.66796095,"95% credible interval"
+"study_variance",0.019974734225,0.010979440416175,0.033821416836,"95% credible interval"
+"effect_size_variance",0.0144743757905,0.012081928253925,0.0172546745848,"95% credible interval"
+"species_nonphylogenetic_variance",0.0528174622405,0.029721423973075,0.076437319768,"95% credible interval"
+"species_phylogenetic_variance",0.0614675494025,0.020354300902,0.2206407307764,"95% credible interval"

@@ -1,0 +1,5 @@
+"parameter","brms_posterior_median","metafor_estimate","difference"
+"Pooled mean (Fisher's Z)",-0.125788,-0.130754073832277,0.00496607383227657
+"IID effect-size variance",0.067646808104,0.0629793344264729,0.00466747367752714
+"Non-phylogenetic species variance",0.072043391906,0.0777193785188557,-0.00567598661285565
+"Phylogenetic species variance",0.062963355689,0.0533847896695334,0.00957856601946656

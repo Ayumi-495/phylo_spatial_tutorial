@@ -38,18 +38,25 @@ pick_summary <- function(pattern, label) {
              stringsAsFactors = FALSE)
 }
 
+summarise_draws <- function(x, label) {
+  data.frame(
+    parameter = label,
+    estimate = stats::median(x),
+    est_error = stats::sd(x),
+    ci_lb = unname(stats::quantile(x, .025)),
+    ci_ub = unname(stats::quantile(x, .975)),
+    stringsAsFactors = FALSE
+  )
+}
+
+# Transform SD draws before summarising, so the reported variance median and
+# credible interval are posterior summaries on the variance scale.
 summary_rows <- rbind(
-  pick_summary("^b_Intercept$", "pooled_mean"),
-  pick_summary("^sigma$", "iid_effect_sd"),
-  pick_summary("^sdgp_gpx_kmy_km$|^sdgp\\(gpx_kmy_km\\)$", "spatial_sd"),
-  pick_summary("^lscale_gpx_kmy_km$|^lscale\\(gpx_kmy_km\\)$", "rho_km")
+  summarise_draws(post$b_Intercept, "pooled_mean"),
+  summarise_draws(post$sigma^2, "iid_effect_variance"),
+  summarise_draws(post$sdgp_gpx_kmy_km^2, "spatial_variance"),
+  summarise_draws(post$lscale_gpx_kmy_km, "rho_km")
 )
-summary_rows$spatial_variance <- NA_real_
-summary_rows$iid_effect_variance <- NA_real_
-summary_rows$spatial_variance[summary_rows$parameter == "spatial_sd"] <-
-  summary_rows$estimate[summary_rows$parameter == "spatial_sd"]^2
-summary_rows$iid_effect_variance[summary_rows$parameter == "iid_effect_sd"] <-
-  summary_rows$estimate[summary_rows$parameter == "iid_effect_sd"]^2
 write.csv(summary_rows, file.path(out_dir, "brms_spatial_only_result.csv"), row.names = FALSE)
 
 diag <- posterior::summarise_draws(post,
@@ -61,6 +68,11 @@ sampler <- as.data.frame(brms::nuts_params(fit))
 divergences <- sum(sampler$Parameter == "divergent__" & sampler$Value > 0)
 treedepth_values <- sampler$Value[sampler$Parameter == "treedepth__"]
 max_treedepth_seen <- if (length(treedepth_values)) max(treedepth_values) else NA_real_
+energy_by_chain <- split(
+  sampler$Value[sampler$Parameter == "energy__"],
+  sampler$Chain[sampler$Parameter == "energy__"]
+)
+bfmi <- vapply(energy_by_chain, function(x) mean(diff(x)^2) / stats::var(x), numeric(1))
 max_rhat <- max(diag_rhat, na.rm = TRUE)
 min_bulk_ess <- min(diag_bulk, na.rm = TRUE)
 min_tail_ess <- min(diag_tail, na.rm = TRUE)
@@ -68,6 +80,7 @@ diagnostics <- data.frame(
   max_rhat = max_rhat, min_bulk_ess = min_bulk_ess,
   min_tail_ess = min_tail_ess, divergences = divergences,
   max_treedepth_seen = max_treedepth_seen, max_treedepth = 12L,
+  min_bfmi = min(bfmi),
   rhat_ok = is.finite(max_rhat) && max_rhat < 1.01,
   ess_ok = is.finite(min_bulk_ess) && is.finite(min_tail_ess) &&
     min_bulk_ess >= 400 && min_tail_ess >= 400,
@@ -77,6 +90,28 @@ diagnostics <- data.frame(
 )
 write.csv(diagnostics, file.path(out_dir, "brms_diagnostics.csv"), row.names = FALSE)
 write.csv(as.data.frame(diag), file.path(out_dir, "brms_draw_diagnostics.csv"), row.names = FALSE)
+write.csv(data.frame(chain = as.integer(names(bfmi)), bfmi = unname(bfmi)),
+          file.path(out_dir, "brms_bfmi_by_chain.csv"), row.names = FALSE)
+
+# Human-labelled parameter distributions: report both heterogeneity terms on
+# the variance scale, with medians and central 50%/95% credible intervals.
+parameter_draws <- rbind(
+  data.frame(value = post$b_Intercept, parameter = "Pooled mean (Hedges' d)", panel = "Fixed effect"),
+  data.frame(value = post$sigma^2, parameter = "IID effect-size variance", panel = "Variance"),
+  data.frame(value = post$sdgp_gpx_kmy_km^2, parameter = "Spatial variance", panel = "Variance"),
+  data.frame(value = post$lscale_gpx_kmy_km, parameter = "Spatial range (km)", panel = "Range")
+)
+parameter_draws$parameter <- factor(parameter_draws$parameter, levels = rev(unique(parameter_draws$parameter)))
+parameter_plot <- ggplot(parameter_draws, aes(x = value, y = parameter)) +
+  tidybayes::stat_halfeye(.width = c(0.5, 0.95), point_interval = "median_qi",
+                           fill = "#73A9AD", color = "#24535A") +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "grey35") +
+  facet_grid(panel ~ ., scales = "free_x", space = "free_y") +
+  labs(x = "Posterior distribution (median, 50% and 95% credible intervals)", y = NULL) +
+  theme_classic(base_size = 12)
+ggsave(file.path(out_dir, "brms_parameter_distributions.png"), parameter_plot,
+       width = 10, height = 7, dpi = 180)
+write.csv(parameter_draws, file.path(out_dir, "brms_parameter_draws.csv"), row.names = FALSE)
 
 pp <- brms::posterior_predict(fit, ndraws = min(200L, nrow(post)), seed = seed + 1L)
 write.csv(pp, file.path(out_dir, "brms_posterior_predictive_draws.csv"), row.names = FALSE)
@@ -88,6 +123,7 @@ writeLines(c(
   paste("max R-hat:", max_rhat), paste("minimum bulk ESS:", min_bulk_ess),
   paste("minimum tail ESS:", min_tail_ess), paste("divergences:", divergences),
   paste("maximum treedepth seen:", max_treedepth_seen),
+  paste("minimum BFMI:", min(bfmi)),
   "The known sampling standard errors were combined with the additional iid heterogeneity as sqrt(se_i^2 + sigma^2).",
   "The exponential GP range is lscale in km because scale=FALSE and x_km/y_km were supplied."
 ), file.path(out_dir, "brms_diagnostics.txt"))

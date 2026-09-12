@@ -77,7 +77,7 @@ Set up parallel processing for `brms` - please adjust according to your computer
 #| eval: false
 
 max_cores <- 10
-num_chains <- 2
+num_chains <- 4
 threads_per_chain <- floor(max_cores / num_chains)
 options(mc.cores = num_chains) 
 
@@ -1003,174 +1003,89 @@ The BM phylogenetic heritability is $H^2_{\rm phylo}=0.479239$. It is the propor
 
 ###### brms
 
-We show two ways of specifying sampling error in brms:
+The Bayesian model is the same BM meta-analytic model used above for `metafor` and below for `glmmTMB`: a common mean plus independent study-, effect-size-, and non-phylogenetic species-level random intercepts, and a phylogenetic species-level random intercept with Brownian-motion correlation matrix `A`. Known sampling variances enter the Gaussian likelihood directly through `se(sqrt(vi), sigma = FALSE)`. Thus `vi` is not another estimated variance component, and `sigma = FALSE` fixes the additional residual SD at zero rather than estimating it.
 
-1.  Using `se(sqrt(vi))` to supply known standard errors.
+The model uses explicit weakly informative priors. `normal(0, 1)` for the intercept is broad on the Fisher's Z scale (where values near zero correspond to no correlation), while retaining most prior mass on values plausible for a correlation-derived outcome. Each group-level SD has `exponential(1)`, with prior mean 1 on the Fisher's Z scale. This is weak relative to the observed heterogeneity components while regularising the non-negative boundary; it is not selected to reproduce the frequentist estimates. There is no prior for a residual `sigma`, because it is not a parameter in this model.
 
-2.  Representing sampling error explicitly via a group level term with a known variance covariance structure. In this formulation, the term `(1 | gr(effect.size.id, cov = vcv))` defines a random effect whose covariance matrix is fixed to the diagonal matrix of sampling variances for lnRR. This is mathematically equivalent to providing a sampling variance matrix to `metafor::rma.mv()`, but implemented within brms.
-
-Because sampling variances are treated as known in meta analysis, the standard deviation of this group level term is fixed to **1**. Consequently, the magnitude of sampling error is fully determined by the supplied variance covariance matrix and is not estimated from the data.
-
-The second approach is less common, but it can be much faster than usual (see more detailed information: [link](https://itchyshin.github.io/location-scale_meta-analysis/#brms)).
-
-If you are not familiar with `brms`, we highly recommend checking out the instruction of [brms](https://paulbuerkner.com/brms/index.html) first.
-
-**1. Using `se(sqrt(vi))`**
-
-In this specification, sampling error is modelled by supplying known standard errors via `se()` in the model formula. The expression `yi|se(sqrt(vi))` indicates that the response variable `yi` has known standard errors equal to the square root of the sampling variances `vi`. Under this formulation, brms treats the observed effect sizes as noisy measurements of latent true effects. The remaining terms in the model specify sources of between study and between species variation in these latent true effects. Specifically, `(1 | study.id)` and `(1 | effect.size.id)` model study level and effect size level heterogeneity, `(1 | species.id)` and `(1 | gr(species.id.phy, cov = A))` model non phylogenetic and phylogenetic species level variation, respectively.
+The full MCMC fit is generated once by the version-controlled script [moura_bm_brms_precompute.R](revision_checks/moura_bm_brms_precompute.R), which saves the Git-ignored fitted object `Rdata/tutorial_v2/moura2021_BM_brms.rds` only after the diagnostic checks complete. To keep tutorial rendering reproducible and practical, this document loads that validated RDS rather than refitting MCMC on every render.
 
 ```{r}
-#| eval: false
+#| echo: false
 
-fit_phylo_eg1_brms_ma <- bf(yi | se(sqrt(vi)) ~ 1 +
-                     (1 | study.id) + 
-                     (1 | effect.size.id) + 
-                     (1 | species.id) + 
-                     (1 | gr(species.id.phy, cov = A))
-                     )
-
-# set prior
-prior_brms1 <- get_prior(
-  formula = fit_phylo_eg1_brms_ma,
-  data = dat_moura2021,
-  data2 = list(A = A),
-  family = gaussian()
-  )
-
-phylo_eg1_brms_ma <- brm(
-    formula = fit_phylo_eg1_brms_ma,
-    family = gaussian(),
-    data = dat_moura2021,
-    data2 = list(A = A),
-    prior = prior_brms1,
-    iter = 10000, 
-    warmup = 7000,  
-    chains = num_chains,
-    backend = "cmdstanr",
-    threads = threading(threads_per_chain), 
-    control = list(adapt_delta = 0.95, max_treedepth = 15)
-    )
-
-summary(phylo_eg1_brms_ma)
-#  Family: gaussian 
-#   Links: mu = identity 
-# Formula: yi | se(sqrt(vi)) ~ 1 + (1 | study.id) + (1 | effect.size.id) + (1 | species.id) + (1 | gr(species.id.phy, cov = A)) 
-#    Data: dat_moura2021 (Number of observations: 1828) 
-#   Draws: 2 chains, each with iter = 10000; warmup = 7000; thin = 1;
-#          total post-warmup draws = 6000
-# 
-# Multilevel Hyperparameters:
-# ~effect.size.id (Number of levels: 1828) 
-#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sd(Intercept)     0.12      0.01     0.11     0.13 1.00     2091     3894
-# 
-# ~species.id (Number of levels: 341) 
-#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sd(Intercept)     0.23      0.03     0.17     0.28 1.00      795     1292
-# 
-# ~species.id.phy (Number of levels: 341) 
-#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sd(Intercept)     0.27      0.09     0.14     0.50 1.00     1158      954
-# 
-# ~study.id (Number of levels: 457) 
-#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sd(Intercept)     0.14      0.02     0.11     0.18 1.00      661     1223
-# 
-# Regression Coefficients:
-#           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# Intercept     0.37      0.16     0.05     0.70 1.00     3504     2965
-# 
-# Further Distributional Parameters:
-#       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sigma     0.00      0.00     0.00     0.00   NA       NA       NA
-
+moura2021_BM_brms <- readRDS(here("Rdata", "tutorial_v2", "moura2021_BM_brms.rds"))
 ```
 
-**2. Using `gr(…, vcv = vcv)`**
-
-In this alternative specification, sampling error is represented explicitly as a group level effect with a known variance covariance structure. The term `(1 | gr(effect.size.id, cov = vcv))` defines a random effect for each effect size whose covariance matrix is fixed to vcv, a diagonal matrix containing the sampling variances `v_i` on the diagonal. This implies the following hierarchical formulation:
-
-$\text{Sampling error} \sim \mathcal{N}(0, V),$
-
-where \mathbf{V} is the supplied variance covariance matrix vcv. In this setup, sampling error is modelled as a latent random effect rather than being placed directly in the likelihood via `se()`.
-
-Because sampling variances are treated as known in meta analysis, the standard deviation of this group level term is fixed to **1** using `constant(1)`. As a result, the magnitude of the sampling error is entirely determined by the supplied matrix V and is not estimated from the data.
-
-This formulation is mathematically equivalent to providing a sampling variance matrix to `metafor::rma.mv()`, but implemented here within the brms modeling framework. It also yields the same likelihood for the observed effect sizes as the `se(sqrt(vi))` approach, differing only in how sampling error is represented in the model.
+The illustrative fitting code below is intentionally not evaluated during rendering. It records the exact specification used to create the precomputed object.
 
 ```{r}
 #| eval: false
 
-vcv <- diag(dat_moura2021$vi)
-rownames(vcv) <- colnames(vcv) <- dat_moura2021$effect.size.id
-
-fit_phylo_eg1.1_brms_ma <-  bf(yi ~ 1 + 
-                               (1 | study.id) + 
-                               (1 | species.id) + 
-                               (1 | gr(species.id.phy, cov = A)) +
-                               (1 | gr(effect.size.id, cov = vcv))
-                             )
-
-prior_brms1.1 <- c(
-  default_prior(fit_phylo_eg1.1_brms_ma,
-                data = dat_moura2021,
-                data2 = list(A = A, vcv = vcv),
-                family = gaussian()),
-  set_prior("constant(1)", class = "sd", group = "effect.size.id"),
-  replace = TRUE
+moura_bm_formula <- bf(
+  yi | se(sqrt(vi), sigma = FALSE) ~ 1 +
+    (1 | study.id) +
+    (1 | effect.size.id) +
+    (1 | species.id) +
+    (1 | gr(species.id.phy, cov = A))
 )
 
-phylo_eg1.1_brms_ma <- brm(
-    formula = fit_phylo_eg1.1_brms_ma,
-    family = gaussian(),
-    data = dat_moura2021,
-    data2 = list(A = A, vcv = vcv),
-    prior = prior_brms1.1,
-    iter = 18000, 
-    warmup = 10000,  
-    chains = num_chains,
-    backend = "cmdstanr",
-    threads = threading(threads_per_chain), 
-    control = list(adapt_delta = 0.98, max_treedepth = 18)
-    )
+moura_bm_priors <- c(
+  set_prior("normal(0, 1)", class = "Intercept"),
+  set_prior("exponential(1)", class = "sd", group = "study.id"),
+  set_prior("exponential(1)", class = "sd", group = "effect.size.id"),
+  set_prior("exponential(1)", class = "sd", group = "species.id"),
+  set_prior("exponential(1)", class = "sd", group = "species.id.phy")
+)
 
-summary(phylo_eg1.1_brms_ma)
-# Family: gaussian 
-#   Links: mu = identity 
-# Formula: yi ~ 1 + (1 | study.id) + (1 | species.id) + (1 | gr(species.id.phy, cov = A)) + (1 | gr(effect.size.id, cov = vcv)) 
-#    Data: dat_moura2021 (Number of observations: 1828) 
-#   Draws: 2 chains, each with iter = 18000; warmup = 10000; thin = 1;
-#          total post-warmup draws = 16000
-# 
-# Multilevel Hyperparameters:
-# ~effect.size.id (Number of levels: 1828) 
-#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sd(Intercept)     1.00      0.00     1.00     1.00   NA       NA       NA
-# 
-# ~species.id (Number of levels: 341) 
-#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sd(Intercept)     0.23      0.03     0.17     0.28 1.00     1390     1570
-# 
-# ~species.id.phy (Number of levels: 341) 
-#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sd(Intercept)     0.27      0.09     0.15     0.50 1.00     1788     1515
-# 
-# ~study.id (Number of levels: 457) 
-#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sd(Intercept)     0.14      0.02     0.11     0.18 1.00     1068     1500
-# 
-# Regression Coefficients:
-#           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# Intercept     0.37      0.16     0.03     0.70 1.00     6398     6604
-# 
-# Further Distributional Parameters:
-#       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sigma     0.12      0.01     0.11     0.13 1.00     1801     3462
+moura2021_BM_brms <- brm(
+  formula = moura_bm_formula,
+  family = gaussian(),
+  data = dat_moura2021,
+  data2 = list(A = A),
+  prior = moura_bm_priors,
+  backend = "cmdstanr",
+  chains = 4,
+  cores = 4,
+  iter = 6000,
+  warmup = 2000,
+  seed = 20260911,
+  control = list(adapt_delta = 0.99, max_treedepth = 15)
+)
+
+saveRDS(moura2021_BM_brms,
+        here("Rdata", "tutorial_v2", "moura2021_BM_brms.rds"))
 ```
 
-Nice - the outputs are very similar to the previous model using `se()`, as expected and also consistent with the `metafor` results. In this fit, the phylogenetic species-level variance is slightly larger than the non-phylogenetic component, whereas the opposite pattern was observed in the `metafor` model.
+The final fit retained 4,000 post-warmup draws per chain (16,000 in total). The maximum rank-normalised R-hat over monitored parameters was 1.003; the minimum bulk and tail effective sample sizes were 2,060 and 3,460. The table shows mixing diagnostics for the pooled mean and each heterogeneity SD, rather than relying on a single global statement.
 
-The small differences in the estimates arise because this model is fitted in a Bayesian framework.
+| Parameter | R-hat | Bulk ESS | Tail ESS |
+|---|---:|---:|---:|
+| Intercept | 1.000 | 15,328 | 10,786 |
+| Study SD | 1.001 | 2,060 | 3,711 |
+| Effect-size SD | 1.001 | 4,994 | 8,837 |
+| Non-phylogenetic species SD | 1.001 | 2,431 | 3,460 |
+| Phylogenetic species SD | 1.001 | 3,669 | 4,228 |
+
+There were no divergent transitions. The largest observed tree depth was 11 of the configured maximum 15, and the minimum energy-BFMI across chains was 0.743 (chain-specific values: 0.762, 0.743, 0.783, and 0.817). These MCMC diagnostics indicate satisfactory sampling for this fit. If R-hat is materially above 1, effective sample sizes are low, divergences occur, the maximum tree depth is reached, or BFMI is poor, posterior summaries should not be interpreted until the sampling problem has been diagnosed and the fit rechecked.
+
+The posterior medians and 95% credible intervals are:
+
+| Component | Posterior median | 95% credible interval |
+|---|---:|---:|
+| Pooled mean (Fisher's Z) | 0.3608 | 0.0447, 0.6680 |
+| Study variance | 0.0200 | 0.0110, 0.0338 |
+| Effect-size variance | 0.0145 | 0.0121, 0.0173 |
+| Species variance, non-phylogenetic | 0.0528 | 0.0297, 0.0764 |
+| Species variance, phylogenetic | 0.0615 | 0.0204, 0.2206 |
+
+These posterior estimates are close to the matched REML point estimates from `metafor` and `glmmTMB` (pooled mean 0.3682; variances 0.0192, 0.0145, 0.0557, and 0.0512). This numerical agreement is a cross-package implementation check, not an equivalence of interval interpretations: the frequentist confidence intervals and Bayesian credible intervals answer different inferential questions.
+
+![Posterior distributions for the validated Moura BM `brms` fit. Points are posterior medians; thick and thin intervals are central 50% and 95% credible intervals, respectively.](revision_checks/moura_bm_brms_precompute_outputs/moura_bm_brms_parameter_distributions.png){fig-alt="Posterior distributions of the pooled Fisher's Z mean and four variance components." width="85%"}
+
+MCMC sampling adequacy does not by itself establish posterior predictive adequacy. The density-overlay check below compares the observed Fisher's Z distribution with replicated data from the fitted model. The observed marginal SD was 0.360; the posterior-predictive median was 0.341 (95% posterior-predictive interval 0.327--0.356), with only 0.002 of replicated SDs at least as large as observed. Thus this BM model slightly under-represents marginal outcome dispersion. We retain the matched model and report this mismatch rather than changing the model to tune the check away.
+
+![Posterior-predictive density overlay for the Moura BM brms model.](revision_checks/moura_bm_brms_precompute_outputs/moura_bm_brms_ppc_ecdf_overlay.png){fig-alt="Observed Fisher's Z values are shown with distributions of posterior-predictive replicated values." width="75%"}
+
+If a posterior predictive check identifies a mismatch, it should be reported and investigated as a model-adequacy issue; it is not fixed merely by obtaining more MCMC draws. The machine-readable parameter, HMC, and posterior-predictive summaries used here are saved under `revision_checks/moura_bm_brms_precompute_outputs/`.
 
 For consistency across the worked examples, we use the generalised \(I^2\) definition introduced above. A separate posterior \(I^2\) summary is not calculated for this Bayesian fit here.
 
@@ -1412,80 +1327,61 @@ orchard_plot(res1,
 
 ##### brms
 
+The validated Bayesian meta-regression uses the same known sampling variances and study/species/phylogenetic structure as the matched `metafor` model. Here `se(sqrt(vi), sigma = TRUE)` supplies `vi` and estimates one iid effect-size SD as `sigma`; no separate effect-size random intercept is included.
+
 ```{r}
 #| eval: false
 
-vcv <- diag(dat_moura2021$vi)
-rownames(vcv) <- colnames(vcv) <- dat_moura2021$effect.size.id
-fit_phylo_eg1_brms_mr <-  bf(yi ~ 1 + temporally.pooled + 
-                     (1 | study.id) + 
-                     (1 | species.id) + 
-                     (1 | gr(species.id.phy, cov = A)) +
-                     (1 | gr(effect.size.id, cov = vcv))
-                     )
-
-prior_mr <- default_prior(fit_phylo_eg1_brms_mr, 
-                data = dat_moura2021, 
-                data2 = list(A = A, vcv = vcv), 
-                family = gaussian())
-
-prior_mr <- c(
-  prior_mr,
-  set_prior("constant(1)", class = "sd", group = "effect.size.id"),
-  replace = TRUE
+fit_phylo_eg1_brms_mr <- bf(
+  yi | se(sqrt(vi), sigma = TRUE) ~ 1 + temporally.pooled +
+    (1 | study.id) +
+    (1 | species.id) +
+    (1 | gr(species.id.phy, cov = A))
 )
 
-system.time(
-  phylo_eg1_brms_mr <- brm(
-    formula = fit_phylo_eg1_brms_mr,
-    family = gaussian(),
-    data = dat_moura2021,
-    data2 = list(A = A, vcv = vcv),
-    prior = prior_mr,
-    iter = 12000, 
-    warmup = 8000,  
-    chains = num_chains,
-    backend = "cmdstanr",
-    threads = threading(threads_per_chain), 
-    control = list(adapt_delta = 0.95, max_treedepth = 15)
-    )
-  )
+prior_mr <- c(
+  set_prior("normal(0, 1)", class = "Intercept"),
+  set_prior("normal(0, 1)", class = "b"),
+  set_prior("exponential(1)", class = "sigma"),
+  set_prior("exponential(1)", class = "sd", group = "study.id"),
+  set_prior("exponential(1)", class = "sd", group = "species.id"),
+  set_prior("exponential(1)", class = "sd", group = "species.id.phy")
+)
 
-summary(phylo_eg1_brms_mr)
-# Family: gaussian 
-#   Links: mu = identity 
-# Formula: yi ~ 1 + temporally.pooled + (1 | study.id) + (1 | species.id) + (1 | gr(species.id.phy, cov = A)) + (1 | gr(effect.size.id, cov = vcv)) 
-#    Data: dat_moura2021 (Number of observations: 1828) 
-#   Draws: 2 chains, each with iter = 12000; warmup = 8000; thin = 1;
-#          total post-warmup draws = 8000
-# 
-# Multilevel Hyperparameters:
-# ~effect.size.id (Number of levels: 1828) 
-#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sd(Intercept)     1.00      0.00     1.00     1.00   NA       NA       NA
-# 
-# ~species.id (Number of levels: 341) 
-#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sd(Intercept)     0.22      0.03     0.16     0.27 1.00      733      941
-# 
-# ~species.id.phy (Number of levels: 341) 
-#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sd(Intercept)     0.28      0.10     0.15     0.52 1.00      925      798
-# 
-# ~study.id (Number of levels: 457) 
-#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sd(Intercept)     0.14      0.02     0.11     0.19 1.01      569      887
-# 
-# Regression Coefficients:
-#                      Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# Intercept                0.35      0.16     0.01     0.68 1.00     4844     3939
-# temporally.pooledyes     0.04      0.02    -0.00     0.08 1.00     4646     5357
-# 
-# Further Distributional Parameters:
-#       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sigma     0.12      0.01     0.11     0.13 1.00      914     2060
-
+phylo_eg1_brms_mr <- brm(
+  formula = fit_phylo_eg1_brms_mr, family = gaussian(), data = dat_moura2021,
+  data2 = list(A = A), prior = prior_mr, backend = "cmdstanr",
+  chains = 4, cores = 4, iter = 6000, warmup = 2000, seed = 20260912,
+  control = list(adapt_delta = 0.95, max_treedepth = 15)
+)
 ```
+
+The online tutorial loads the validated precomputed fit rather than rerunning MCMC.
+
+```{r}
+#| echo: false
+
+phylo_eg1_brms_mr <- readRDS(here("Rdata", "tutorial_v2", "moura2021_BM_meta_reg_brms.rds"))
+```
+
+The final fit had max R-hat = 1.0043, minimum bulk ESS = 1,107, minimum tail ESS = 1,614, no divergences, maximum treedepth = 9/15, and minimum BFMI = 0.714. These diagnostics indicate adequate sampling; they do not assess whether the model reproduces the outcome distribution.
+
+| Parameter | Posterior median | 95% credible interval |
+|---|---:|---:|
+| Pooled mean (Fisher's Z) | 0.3456 | 0.0112, 0.6649 |
+| Temporally pooled contrast | 0.0391 | -0.0039, 0.0842 |
+| Study variance | 0.0201 | 0.0115, 0.0351 |
+| IID effect-size variance | 0.0146 | 0.0122, 0.0173 |
+| Non-phylogenetic species variance | 0.0512 | 0.0267, 0.0744 |
+| Phylogenetic species variance | 0.0635 | 0.0212, 0.2501 |
+
+The posterior medians are close to the matched `metafor` estimates (0.3562 for the intercept, 0.0395 for the moderator, and 0.0194, 0.0145, 0.0540, and 0.0520 for the variance components). This is an implementation check only: frequentist confidence intervals and Bayesian credible intervals have different interpretations.
+
+![Posterior distributions for the validated Moura BM meta-regression. Points are medians; thick and thin intervals are central 50% and 95% credible intervals.](revision_checks/brms_consistency_outputs/moura_mr/posterior_parameter_distributions.png){fig-alt="Posterior distributions for fixed effects and variance components in the Moura meta-regression." width="85%"}
+
+The PPC recovers the observed mean and temporal-pooling contrast, but the observed Fisher's Z SD is 0.360 versus a replicated median of 0.341 (95% interval 0.327--0.358; posterior probability of a replicated SD at least this large = 0.010). Thus the fitted model mildly under-represents marginal dispersion. This is a posterior-predictive finding, not an MCMC convergence problem.
+
+![Posterior-predictive density overlay for the validated Moura BM meta-regression.](revision_checks/brms_consistency_outputs/moura_mr/posterior_predictive_density_overlay.png){fig-alt="Observed Fisher's Z values and posterior-predictive replicated distributions for the Moura meta-regression." width="75%"}
 
 ##### glmmTMB
 
@@ -1798,6 +1694,7 @@ In `brms`, we can extract posterior samples for both fixed and random effects, a
 
 ```{r}
 #| eval: false
+#| echo: false
 
 moura_BM_brms1 <- readRDS(here("Rdata", "tutorial_v2", "moura2021_BM_brms.rds"))
 get_variables(moura_BM_brms1)
@@ -1866,7 +1763,7 @@ brms_eg1_1 <- brms_p1 / brms_p2
 brms_eg1_1
 ```
 
-![moura_brms](figs/tutorial/brms_moura2021.png){width="80%"}
+![Posterior distributions for the validated Moura BM `brms` fit.](revision_checks/moura_bm_brms_precompute_outputs/moura_bm_brms_parameter_distributions.png){width="85%"}
 
 ##### glmmTMB
 
@@ -1988,131 +1885,73 @@ summary(fit_phylo_eg2_metafor_ma)
 
 ##### brms
 
+The following two `brms` formulations target the same Lim BM meta-analysis and use the same explicit priors. Both fits use four chains, 6,000 iterations, 2,000 warmup iterations, `adapt_delta = 0.99`, and `max_treedepth = 15`; the code is non-executing because the tutorial loads validated RDS files.
+
+##### VCV formulation
+
 ```{r}
 #| eval: false
 
-lim_vcv <- vcv.phylo(tre_lim2014, corr = TRUE)
-vcv <- diag(dat_lim2014$vi)
-rownames(vcv) <- colnames(vcv) <- dat_lim2014$id
+A <- vcv.phylo(tre_lim2014, corr = TRUE)
+V <- diag(dat_lim2014$vi)
+rownames(V) <- colnames(V) <- dat_lim2014$id
 
-fit_phylo_eg2_brms_ma <-  bf(yi ~ 1 +
-                     (1 | species) +
-                     (1 | gr(phy, cov = lim_vcv)) +
-                     (1 | gr(id, cov = vcv))
-                     )
+lim_vcv_formula <- bf(yi ~ 1 + (1 | species) +
+  (1 | gr(phy, cov = A)) + (1 | gr(id, cov = V)))
+lim_vcv_priors <- c(set_prior("normal(0, 1)", class = "Intercept"),
+  set_prior("exponential(1)", class = "sigma"),
+  set_prior("exponential(1)", class = "sd", group = "species"),
+  set_prior("exponential(1)", class = "sd", group = "phy"),
+  set_prior("constant(1)", class = "sd", group = "id"))
 
-prior_ma <- default_prior(fit_phylo_eg2_brms_ma,
-                data = dat_lim2014,
-                data2 = list(lim_vcv = lim_vcv, vcv = vcv),
-                family = gaussian())
-
-prior_ma <- c(
-  prior_ma,
-  set_prior("constant(1)", class = "sd", group = "id"),
-  replace = TRUE
-)
-
-system.time(
-  phylo_eg2_brms_ma <- brm(
-    formula = fit_phylo_eg2_brms_ma,
-    family = gaussian(),
-    data = dat_lim2014,
-    data2 = list(lim_vcv = lim_vcv, vcv = vcv),
-    prior = prior_ma,
-    iter = 5000,
-    warmup = 2000,
-    chains = 4,
-    backend = "cmdstanr",
-    threads = threading(threads_per_chain),
-    control = list(adapt_delta = 0.98, max_treedepth = 15)
-    )
-  )
-
-summary(phylo_eg2_brms_ma)
-#  Family: gaussian 
-#   Links: mu = identity 
-# Formula: yi ~ 1 + (1 | species) + (1 | gr(phy, cov = lim_vcv)) + (1 | gr(id, cov = vcv)) 
-#    Data: dat_lim2014 (Number of observations: 170) 
-#   Draws: 4 chains, each with iter = 5000; warmup = 2000; thin = 1;
-#          total post-warmup draws = 12000
-# 
-# Multilevel Hyperparameters:
-# ~id (Number of levels: 170) 
-#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sd(Intercept)     1.00      0.00     1.00     1.00   NA       NA       NA
-# 
-# ~phy (Number of levels: 120) 
-#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sd(Intercept)     0.29      0.12     0.09     0.57 1.00     1935     2772
-# 
-# ~species (Number of levels: 120) 
-#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sd(Intercept)     0.26      0.07     0.10     0.37 1.00      896      978
-# 
-# Regression Coefficients:
-#           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# Intercept    -0.13      0.16    -0.45     0.19 1.00     6557     6385
-# 
-# Further Distributional Parameters:
-#       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sigma     0.26      0.04     0.19     0.35 1.00      870     1995
-
-
-fit_phylo_eg2_brms_ma <-  bf(yi | se(sqrt(vi)) ~ 1+
-                     (1 | species) +
-                     (1 | gr(phy, cov = lim_vcv)) +
-                     (1 | id))
-
-prior_ma <- default_prior(fit_phylo_eg2_brms_ma,
-                data = dat_lim2014,
-                data2 = list(lim_vcv = lim_vcv),
-                family = gaussian())
-
-system.time(
-  phylo_eg2_brms_ma_2 <- brm(
-    formula = fit_phylo_eg2_brms_ma,
-    family = gaussian(),
-    data = dat_lim2014,
-    data2 = list(lim_vcv = lim_vcv),
-    prior = prior_ma,
-    iter = 5000,
-    warmup = 2000,
-    chains = 4,
-    backend = "cmdstanr",
-    threads = threading(threads_per_chain),
-    control = list(adapt_delta = 0.98, max_treedepth = 15)
-    )
-  )
-
-summary(phylo_eg2_brms_ma_2)
-#  Family: gaussian 
-#   Links: mu = identity 
-# Formula: yi | se(sqrt(vi)) ~ 1 + (1 | species) + (1 | gr(phy, cov = lim_vcv)) + (1 | id) 
-#    Data: dat_lim2014 (Number of observations: 170) 
-#   Draws: 4 chains, each with iter = 5000; warmup = 2000; thin = 1;
-#          total post-warmup draws = 12000
-# 
-# Multilevel Hyperparameters:
-# ~id (Number of levels: 170) 
-#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sd(Intercept)     0.26      0.04     0.19     0.35 1.00     1311     1410
-# 
-# ~phy (Number of levels: 120) 
-#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sd(Intercept)     0.29      0.12     0.09     0.58 1.00     1732     3147
-# 
-# ~species (Number of levels: 120) 
-#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sd(Intercept)     0.26      0.07     0.08     0.37 1.01     1010      714
-# 
-# Regression Coefficients:
-#           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# Intercept    -0.13      0.16    -0.44     0.18 1.00     5189     6304
-# 
-# Further Distributional Parameters:
-#       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sigma     0.00      0.00     0.00     0.00   NA       NA       NA
+lim_vcv_brms <- brm(lim_vcv_formula, family = gaussian(), data = dat_lim2014,
+  data2 = list(A = lim_vcv, V = V), prior = lim_vcv_priors, backend = "cmdstanr",
+  chains = 4, cores = 4, iter = 6000, warmup = 2000, seed = 20260913,
+  control = list(adapt_delta = 0.99, max_treedepth = 15))
 ```
+
+```{r}
+#| echo: false
+lim_vcv_brms <- readRDS(here("Rdata", "tutorial_v2", "lim2014_BM_brms_vcv.rds"))
+```
+
+The final VCV fit had max R-hat = 1.0014, minimum bulk/tail ESS = 1,139/1,764, zero divergences, treedepth = 7/15, and minimum BFMI = 0.411. The checked mean and SD PPC summaries match the observed data; this check does not prove model adequacy.
+
+![Posterior distributions for the validated Lim VCV formulation.](revision_checks/brms_consistency_outputs/lim_vcv_ma_adapt_delta_0.99/posterior_parameter_distributions.png){fig-alt="Posterior distributions for the Lim pooled mean and variance components using the VCV formulation." width="85%"}
+
+##### Corrected `se()` formulation
+
+```{r}
+#| eval: false
+lim_se_formula <- bf(yi | se(sqrt(vi), sigma = TRUE) ~ 1 +
+  (1 | species) + (1 | gr(phy, cov = A)))
+lim_se_priors <- c(set_prior("normal(0, 1)", class = "Intercept"),
+  set_prior("exponential(1)", class = "sigma"),
+  set_prior("exponential(1)", class = "sd", group = "species"),
+  set_prior("exponential(1)", class = "sd", group = "phy"))
+lim_se_brms <- brm(lim_se_formula, family = gaussian(), data = dat_lim2014,
+  data2 = list(A = lim_vcv), prior = lim_se_priors, backend = "cmdstanr",
+  chains = 4, cores = 4, iter = 6000, warmup = 2000, seed = 20260914,
+  control = list(adapt_delta = 0.99, max_treedepth = 15))
+```
+
+```{r}
+#| echo: false
+lim_se_brms <- readRDS(here("Rdata", "tutorial_v2", "lim2014_BM_brms_se.rds"))
+```
+
+`se(sqrt(vi), sigma = TRUE)` supplies known sampling variance and estimates residual `sigma^2` as iid effect-size heterogeneity. `(1 | species)` and `(1 | gr(phy, cov = A))` represent non-phylogenetic and phylogenetic species heterogeneity. There is no ID-level random effect, so row-level heterogeneity is represented exactly once. This parameterisation and the VCV formulation target the same covariance model and gave compatible posterior estimates.
+
+The corrected `se()` fit had max R-hat = 1.0020, minimum bulk/tail ESS = 1,374/1,933, zero divergences, treedepth = 7/15, and minimum BFMI = 0.435. Its PPC similarly reproduces the checked mean and marginal SD without establishing general adequacy.
+
+| Formulation | Pooled mean | IID variance | Species variance | Phylogenetic variance |
+|---|---:|---:|---:|---:|
+| VCV | -0.1265 | 0.0670 | 0.0721 | 0.0649 |
+| Corrected `se()` | -0.1258 | 0.0676 | 0.0720 | 0.0630 |
+
+![Posterior distributions for the validated corrected Lim `se()` formulation.](revision_checks/brms_consistency_outputs/lim_se_ma_adapt_delta_0.99/posterior_parameter_distributions.png){fig-alt="Posterior distributions for the Lim pooled mean and variance components using the corrected se formulation." width="85%"}
+
+![Posterior-predictive density overlay for the corrected Lim `se()` formulation.](revision_checks/brms_consistency_outputs/lim_se_ma_adapt_delta_0.99/posterior_predictive_density_overlay.png){fig-alt="Observed and posterior-predictive Fisher's Z distributions for the corrected Lim se model." width="75%"}
 
 ##### glmmTMB
 
@@ -2249,74 +2088,48 @@ summary(fit_phylo_eg2_metafor_mr)
 
 ##### brms
 
+The validated Bayesian meta-regression uses the same known diagonal sampling covariance `V` as the matched frequentist model, a fixed unit-scale `id` term to encode that covariance, and residual `sigma^2` as iid effect-size heterogeneity.
+
 ```{r}
 #| eval: false
 
-fit_phylo_eg2_brms_mr <-  bf(yi ~ 1 + environment +
-                             (1 | species) +
-                             (1 | gr(phy, cov = lim_vcv)) +
-                             (1 | gr(id, cov = vcv))
-                             )
-
-prior_mr <- default_prior(fit_phylo_eg2_brms_mr,
-                data = dat_lim2014,
-                data2 = list(lim_vcv = lim_vcv, vcv = vcv),
-                family = gaussian())
-
-prior_mr <- c(
-  prior_mr,
-  set_prior("constant(1)", class = "sd", group = "id"),
-  replace = TRUE
-)
-
-phylo_eg2_brms_mr <- brm(
-        formula = fit_phylo_eg2_brms_mr,
-        family = gaussian(),
-        data = dat_lim2014,
-        data2 = list(lim_vcv = lim_vcv, vcv = vcv),
-        prior = prior_mr,
-        iter = 5000,
-        warmup = 2000,
-        chains = 4,
-        backend = "cmdstanr",
-        threads = threading(threads_per_chain),
-        control = list(adapt_delta = 0.98, max_treedepth = 15)
-        )
-
-summary(phylo_eg2_brms_mr)
-#  Family: gaussian 
-#   Links: mu = identity 
-# Formula: yi ~ 1 + environment + (1 | species) + (1 | gr(phy, cov = lim_vcv)) + (1 | gr(id, cov = vcv)) 
-#    Data: dat_lim2014 (Number of observations: 170) 
-#   Draws: 4 chains, each with iter = 5000; warmup = 2000; thin = 1;
-#          total post-warmup draws = 12000
-# 
-# Multilevel Hyperparameters:
-# ~id (Number of levels: 170) 
-#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sd(Intercept)     1.00      0.00     1.00     1.00   NA       NA       NA
-# 
-# ~phy (Number of levels: 120) 
-#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sd(Intercept)     0.28      0.12     0.08     0.57 1.00     2150     2926
-# 
-# ~species (Number of levels: 120) 
-#               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sd(Intercept)     0.26      0.07     0.10     0.37 1.00     1017     1099
-# 
-# Regression Coefficients:
-#                 Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# Intercept          -0.14      0.16    -0.46     0.19 1.00     9372     7645
-# environmentwild     0.02      0.09    -0.15     0.18 1.00    10459     8813
-# 
-# Further Distributional Parameters:
-#       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-# sigma     0.26      0.04     0.19     0.35 1.00      949     1860
-# 
-# Draws were sampled using sample(hmc). For each parameter, Bulk_ESS
-# and Tail_ESS are effective sample size measures, and Rhat is the potential
-# scale reduction factor on split chains (at convergence, Rhat = 1).
+V <- diag(dat_lim2014$vi)
+rownames(V) <- colnames(V) <- dat_lim2014$id
+fit_phylo_eg2_brms_mr <- bf(yi ~ 1 + environment + (1 | species) +
+  (1 | gr(phy, cov = A)) + (1 | gr(id, cov = V)))
+prior_mr <- c(set_prior("normal(0, 1)", class = "Intercept"),
+  set_prior("normal(0, 1)", class = "b"), set_prior("exponential(1)", class = "sigma"),
+  set_prior("exponential(1)", class = "sd", group = "species"),
+  set_prior("exponential(1)", class = "sd", group = "phy"),
+  set_prior("constant(1)", class = "sd", group = "id"))
+phylo_eg2_brms_mr <- brm(fit_phylo_eg2_brms_mr, family = gaussian(), data = dat_lim2014,
+  data2 = list(A = lim_vcv, V = V), prior = prior_mr, backend = "cmdstanr",
+  chains = 4, cores = 4, iter = 6000, warmup = 2000, seed = 20260915,
+  control = list(adapt_delta = 0.99, max_treedepth = 15))
 ```
+
+```{r}
+#| echo: false
+phylo_eg2_brms_mr <- readRDS(here("Rdata", "tutorial_v2", "phylo_eg2_brms_mr.rds"))
+```
+
+The final fit had max R-hat = 1.0019, minimum bulk/tail ESS = 1,199/1,774, zero divergences, maximum treedepth = 8/15, and minimum BFMI = 0.413. These are satisfactory sampling diagnostics, separate from the PPC.
+
+| Parameter | Posterior median | 95% credible interval |
+|---|---:|---:|
+| Intercept (Fisher's Z) | -0.1400 | -0.4447, 0.1807 |
+| Wild-environment contrast | 0.0190 | -0.1470, 0.1918 |
+| IID effect-size variance | 0.0671 | 0.0367, 0.1192 |
+| Non-phylogenetic species variance | 0.0752 | 0.0172, 0.1380 |
+| Phylogenetic species variance | 0.0617 | 0.0038, 0.2825 |
+
+These medians are close to the matched `metafor` estimates (-0.1395, 0.0166, 0.0630, 0.0792, and 0.0521). The agreement checks implementation, not the equivalence of confidence and credible intervals.
+
+![Posterior distributions for the validated Lim BM meta-regression.](revision_checks/brms_consistency_outputs/lim_mr_adapt_delta_0.99/posterior_parameter_distributions.png){fig-alt="Posterior distributions of fixed effects and variance components for the Lim meta-regression." width="85%"}
+
+The PPC reproduces the checked mean, marginal SD, and wild-minus-captive contrast. It checks those features only and does not prove that the model is fully adequate.
+
+![Posterior-predictive density overlay for the validated Lim BM meta-regression.](revision_checks/brms_consistency_outputs/lim_mr_adapt_delta_0.99/posterior_predictive_density_overlay.png){fig-alt="Observed and posterior-predictive Fisher's Z distributions for the Lim meta-regression." width="75%"}
 
 ##### glmmTMB
 
@@ -2463,6 +2276,7 @@ metafor_eg2_1
 
 ```{r}
 #| eval: false
+#| echo: false
 
 get_variables(phylo_eg2_brms_mr)
 
@@ -2531,7 +2345,7 @@ brms_eg2 <- brms_p1 / brms_p2
 
 ```
 
-![Lim_brms](figs/tutorial/brms_eg2_phylo.png){width="80%"}
+![Posterior distributions for the validated Lim BM meta-regression.](revision_checks/brms_consistency_outputs/lim_mr_adapt_delta_0.99/posterior_parameter_distributions.png){width="85%"}
 
 ##### glmmTMB
 ```{r}
@@ -2951,11 +2765,21 @@ spain_brms <- brm(
 )
 ```
 
+```{r}
+#| echo: false
+
+spain_brms <- readRDS(here("Rdata", "tutorial_v2", "spain_spatial_only_brms.rds"))
+```
+
 With `sigma = TRUE`, `brms` models each observation with standard deviation $\sqrt{se_i^2 + \sigma^2}$: `sigma` is therefore the iid effect-size heterogeneity in addition to the known sampling SE. No separate effect-ID random effect is added. With `scale = FALSE`, the exponential GP length scale is in kilometres.
 
-The audited run used four chains and ten Stan threads per chain on Totoro. Its diagnostics were max R-hat = 1.0023, minimum bulk ESS = 1,121, minimum tail ESS = 1,708, zero divergences, and maximum observed treedepth = 7/12.
+The audited run used four chains and ten Stan threads per chain on Totoro, with 3,000 iterations, 1,500 warmup iterations, seed 20260908, `adapt_delta = 0.95`, and `max_treedepth = 12`. The validated RDS is loaded during ordinary rendering rather than refitted. Its diagnostics were max R-hat = 1.0023, minimum bulk ESS = 1,121, minimum tail ESS = 1,708, zero divergences, maximum observed treedepth = 7/12, and minimum BFMI = 0.519. These support MCMC sampling adequacy, not posterior-predictive adequacy.
+
+![Posterior distributions for the validated Spain spatial-only `brms` fit.](revision_checks/regional_cross_package_audit_outputs/brms_output/brms_parameter_distributions.png){fig-alt="Posterior distributions for the Spain pooled mean, iid variance, spatial variance, and spatial range." width="85%"}
 
 ![Density-overlay posterior predictive check for the audited Spain `brms` model](revision_checks/regional_cross_package_audit_outputs/brms_output/brms_pp_check_dens_overlay.png){width="75%"}
+
+The density overlay checks whether replicated effects reproduce the observed marginal distribution. The checked mean and SD are represented by these replications; this does not establish that all aspects of spatial dependence are adequate.
 
 | Package | Pooled mean (95% CI or CrI) | iid effect variance | Spatial variance | rho (km) | Diagnostic note |
 |---|---:|---:|---:|---:|---|
