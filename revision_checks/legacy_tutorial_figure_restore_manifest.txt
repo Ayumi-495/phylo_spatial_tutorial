@@ -1,0 +1,5 @@
+Static tutorial figures regenerated without fitting models.
+R: R version 4.6.0 (2026-04-24)
+Moura/Lim values: existing validated frequentist output printed in tutorial_v2.qmd.
+Spain values: saved regional metafor result and saved tau2/rho profile CIs.
+No brms, metafor, or glmmTMB model was fitted or modified.

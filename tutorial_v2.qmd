@@ -1686,7 +1686,7 @@ metafor_eg1_1 <- metafor_p1 / metafor_p2
 metafor_eg1_1
 ```
 
-![moura_metafor](figs/tutorial/metafor_moura2021.png){width="80%"}
+![Moura BM meta-analysis fitted with `metafor`. The pooled effect and each variance component are shown with their 95% confidence intervals; variance rows use component-specific horizontal scales.](figs/tutorial/metafor_moura2021.png){fig-alt="Moura metafor BM results showing the pooled Fisher's Z mean and four variance components with confidence intervals." width="80%"}
 
 ##### brms
 
@@ -1802,7 +1802,7 @@ tmb_p1 <- orchaRd::orchard_plot(eg1_tmb,
 tmb_p1
 ```
 
-![glmmtmb_overall](figs/tutorial/tmb_eg1_1.png){width="80%"}
+![Moura BM meta-analysis fitted with `glmmTMB`. The pooled effect has its reported 95% Wald confidence interval; variance rows are fitted point estimates on component-specific horizontal scales.](figs/tutorial/tmb_eg1_1.png){fig-alt="Moura glmmTMB BM results showing the pooled Fisher's Z mean and four fitted variance components." width="80%"}
 
 :::
 
@@ -2208,7 +2208,7 @@ In this dataset, we plot the meta-regression model output.
 #| eval: FALSE
 
 
-fit_phylo_eg2_metafor_mr <- here("Rdata", "tutorial_v2", "phylo_eg2_metafor_BM_mr.rds")
+# `fit_phylo_eg2_metafor_mr` is the model fitted in the metafor tab above.
 phylo_eg2_brms_mr <- readRDS(here("Rdata", "tutorial_v2", "phylo_eg2_brms_mr.rds"))
 
 ```
@@ -2270,7 +2270,7 @@ metafor_eg2_1
 
 ```
 
-![Lim_metafor](figs/tutorial/metafor_lim.png){width="80%"}
+![Lim BM meta-regression fitted with `metafor`. Fixed effects have 95% confidence intervals; variance rows are fitted point estimates on component-specific horizontal scales.](figs/tutorial/metafor_lim.png){fig-alt="Lim metafor BM meta-regression results showing fixed effects and three fitted variance components." width="80%"}
 
 ##### brms
 
@@ -2377,7 +2377,7 @@ tmb_p2 <- orchaRd::orchard_plot(phylo_eg2_tmb_fig,
 
 tmb_p2
 ```
-![Lim_glmmtmb](figs/tutorial/tmb_eg2_mr.png){width="80%"}
+![Lim BM meta-regression fitted with `glmmTMB`. Fixed effects have Wald 95% confidence intervals; variance rows are fitted point estimates on component-specific horizontal scales.](figs/tutorial/tmb_eg2_mr.png){fig-alt="Lim glmmTMB BM meta-regression results showing fixed effects and three fitted variance components." width="80%"}
 :::
 
 # Spatial meta-analysis
@@ -2567,11 +2567,11 @@ Both datasets rank the models unstructured-only, combined, then spatial-only. Th
 
 For a multilevel meta-analysis, calculate a representative sampling variance from the actual sampling covariance matrix $\mathbf{V}$ and fixed-effect design matrix $\mathbf{X}$:
 
-\[
+$$
 \widetilde v = \frac{k-p}{\operatorname{tr}(\mathbf{P})},\qquad
 \mathbf{P}=\mathbf{W}-\mathbf{W}\mathbf{X}(\mathbf{X}'\mathbf{W}\mathbf{X})^{-1}\mathbf{X}'\mathbf{W},\qquad
 \mathbf{W}=\mathbf{V}^{-1}.
-\]
+$$
 
 ```{r}
 #| eval: false
@@ -2607,9 +2607,9 @@ The full-data combined spatial $I^2$ is 2.926%, compared with 2.387% for `publis
 
 The Gaussian kernel provides a sensitivity analysis on the same `published_cleaned` observations:
 
-\[
+$$
 \operatorname{Cor}(d)=\exp(-d^2/\rho^2).
-\]
+$$
 
 For `SPGAU`, rho is the e-folding distance in kilometres. The model structure, response, sampling variances, and WGS84 ellipsoidal geodesic distance matrix are otherwise unchanged.
 
@@ -2713,6 +2713,10 @@ spain_metafor <- rma.mv(
 ```
 
 `REMLf = FALSE` retains REML estimation and uses the likelihood convention matched by the `glmmTMB` `equalto()` implementation; it does not change the fitted variance or range estimates.
+
+The precomputed `metafor` result below is generated from the validated spatial-only fit. The pooled-effect interval is a 95% t-based confidence interval. Saved profile-likelihood 95% confidence intervals are shown for the spatial variance and range; the iid effect-size variance is shown as its fitted point estimate because a separate profile interval was not retained for that component. The three panels have different units and horizontal scales, so their widths should not be compared directly.
+
+![Spain regional subset: spatial-only `metafor` result.](figs/tutorial/spain_metafor_spatial_only.png){fig-alt="Metafor results for the Spain regional spatial-only model: pooled effect with its t confidence interval, iid and spatial variance estimates, and exponential range with its profile confidence interval." width="85%"}
 
 #### `glmmTMB`
 

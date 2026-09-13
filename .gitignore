@@ -24,6 +24,13 @@ my.tr.tre
 *.rds
 *.ai
 /figs
+!/figs/
+!/figs/tutorial/
+!/figs/tutorial/metafor_moura2021.png
+!/figs/tutorial/tmb_eg1_1.png
+!/figs/tutorial/metafor_lim.png
+!/figs/tutorial/tmb_eg2_mr.png
+!/figs/tutorial/spain_metafor_spatial_only.png
 Rplot.pdf
 Rplot01.pdf
 /Rdata
