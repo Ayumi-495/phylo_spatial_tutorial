@@ -1,0 +1,7 @@
+component,variance,included_in_target,role
+Pooled mean estimation,0.016911663486993696,TRUE,Variance of fitted intercept
+study,0.01915845087030004,TRUE,Marginal new random-effect realization
+effect_size,0.01445013805093366,TRUE,Marginal new random-effect realization
+species_nonphylogenetic,0.05566175428074647,TRUE,Marginal new random-effect realization
+species_phylogenetic,0.05122365947506569,TRUE,Marginal new random-effect realization
+Total latent prediction variance,0.15740566616403956,TRUE,Fitted-mean variance plus four marginal random-effect variances

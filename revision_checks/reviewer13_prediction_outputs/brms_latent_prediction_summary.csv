@@ -1,0 +1,2 @@
+lower_95,lower_50,median,upper_50,upper_95,target,scale,draws,seed,future_sampling_error_included
+-0.48775264573774946,0.07485605175262183,0.3637198544770499,0.6429277722917363,1.1960199705388095,new latent true effect; new study and marginal new species realization,Fisher's Z,16000,20260912,FALSE

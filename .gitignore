@@ -22,6 +22,8 @@ data/Yefeng_2024/README.md
 my.tr.tre
 .RDataTmp
 *.rds
+!revision_checks/reviewer13_figure3_profile_outputs/
+!revision_checks/reviewer13_figure3_profile_outputs/*.rds
 *.ai
 /figs
 !/figs/

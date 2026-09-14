@@ -1,0 +1,8 @@
+item,value
+frequentist_fit,baseline_fit_objects.rds$fit_bm
+bayesian_fit,moura2021_BM_brms.rds
+legacy_thin_line_function,orchaRd::pred_interval_esmeans() via orchard_plot()
+legacy_thin_line_package,orchaRd 2.2.1
+legacy_thin_line_target,same marginal latent target for this sigma2-only BM model
+future_sampling_error,excluded because no future sampling variance is specified
+posterior_simulation_seed,20260912

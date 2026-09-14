@@ -1,0 +1,5 @@
+component_index,component,estimate,ci_lb,ci_ub,saved_fit_estimate,estimate_agrees_with_saved_fit,interval_method,source,fit_changed
+1,Study variance,0.0192,0.0108,0.0325,0.01915845087030004,TRUE,retained final-model metafor profile-likelihood 95% CI (rounded printed confint bounds),tutorial_v2.qmd lines 943-958 and 1643-1658,FALSE
+2,Effect-size variance,0.0145,0.0121,0.0172,0.01445013805093366,TRUE,retained final-model metafor profile-likelihood 95% CI (rounded printed confint bounds),tutorial_v2.qmd lines 943-958 and 1643-1658,FALSE
+3,"Species variance, non-phylogenetic",0.0557,0.0334,0.0788,0.05566175428074647,TRUE,retained final-model metafor profile-likelihood 95% CI (rounded printed confint bounds),tutorial_v2.qmd lines 943-958 and 1643-1658,FALSE
+4,"Species variance, phylogenetic",0.0512,0.0179,0.1792,0.05122365947506569,TRUE,retained final-model metafor profile-likelihood 95% CI (rounded printed confint bounds),tutorial_v2.qmd lines 943-958 and 1643-1658,FALSE
