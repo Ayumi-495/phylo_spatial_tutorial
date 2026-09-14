@@ -5,16 +5,30 @@
 
 suppressPackageStartupMessages({
   library(posterior); library(readr); library(dplyr); library(tidyr)
-  library(ggplot2); library(patchwork)
+  library(ggplot2); library(patchwork); library(metafor); library(orchaRd)
 })
 script_arg <- grep("^--file=", commandArgs(trailingOnly = FALSE), value = TRUE)
 if (!length(script_arg)) stop("Run with Rscript revision_checks/create_reviewer13_figures.R", call. = FALSE)
+figure_args <- commandArgs(trailingOnly = TRUE)
+if (length(figure_args) > 1L || (length(figure_args) == 1L && !figure_args[[1L]] %in% c("all", "main"))) {
+  stop("Usage: Rscript revision_checks/create_reviewer13_figures.R [all|main]", call. = FALSE)
+}
+write_supplementary <- !length(figure_args) || figure_args[[1L]] == "all"
 root <- normalizePath(file.path(dirname(sub("^--file=", "", script_arg[[1L]])), ".."), mustWork = TRUE)
 audit_dir <- file.path(root, "revision_checks", "reviewer13_prediction_outputs")
 profile_dir <- file.path(root, "revision_checks", "reviewer13_figure3_profile_outputs")
 fig_dir <- file.path(root, "figs", "tutorial")
 dir.create(fig_dir, recursive = TRUE, showWarnings = FALSE)
 assert <- function(x, message) if (!isTRUE(x)) stop(message, call. = FALSE)
+close_enough <- function(x, y, tolerance=1e-8) isTRUE(all.equal(unname(x), unname(y), tolerance=tolerance))
+orchard_ready_fit <- function(fit) {
+  # The immutable saved rma.mv objects have no formula attribute. orchaRd needs
+  # it for its plot-data method, so annotate an in-memory copy only; no refit
+  # or saved-model mutation occurs.
+  out <- fit
+  out$formula <- ~ 1
+  out
+}
 summaries <- function(x) {
   q <- quantile(x, c(.025, .25, .5, .75, .975), names = FALSE)
   tibble(lo95=q[1], lo50=q[2], mid=q[3], hi50=q[4], hi95=q[5])
@@ -45,15 +59,22 @@ moura_profile <- read_csv(file.path(profile_dir, "figure3_profile_likelihood_sum
 assert(nrow(moura_profile)==4L && all(moura_profile$finite_two_sided) &&
          all(is.finite(moura_profile$ci_lb)) && all(is.finite(moura_profile$ci_ub)),
        "The full-precision Moura profile-likelihood audit must contain four finite two-sided intervals.")
-p_a_mf_mean <- ggplot(tibble(
-  item=factor(c("New latent true effect\n95% PI","Population mean\n95% CI"), levels=c("New latent true effect\n95% PI","Population mean\n95% CI")),
-  estimate=mf$estimate, lower=c(mf$prediction_interval_lower,mf$confidence_interval_lower),
-  upper=c(mf$prediction_interval_upper,mf$confidence_interval_upper),
-  interval=c("Prediction interval","Confidence interval")), aes(y=item,x=estimate,colour=interval)) +
-  geom_vline(xintercept=0,linetype="dashed",colour="grey55") + geom_errorbarh(aes(xmin=lower,xmax=upper),height=.18,linewidth=1) + geom_point(size=3) +
-  scale_colour_manual(values=c("Confidence interval"="#528B8B","Prediction interval"="#A44A3F")) +
-  labs(title="A. Moura BM — metafor",x="Fisher's Z",y=NULL,colour=NULL) +
-  theme_classic(base_size=10.5) + theme(plot.title=element_text(face="bold"),legend.position="bottom")
+moura_mf_fit <- readRDS(file.path(root, "revision_checks", "ou_correctness_outputs", "baseline_fit_objects.rds"))$fit_bm
+assert(inherits(moura_mf_fit, "rma.mv") && moura_mf_fit$k == 1828L, "Unexpected final Moura BM metafor fit.")
+moura_orchard <- orchaRd::mod_results(orchard_ready_fit(moura_mf_fit), mod="1", group="study.id")
+moura_orchard_summary <- moura_orchard$mod_table[1L, ]
+assert(close_enough(moura_orchard_summary$estimate, mf$estimate) &&
+         close_enough(moura_orchard_summary$lowerCL, mf$confidence_interval_lower) &&
+         close_enough(moura_orchard_summary$upperCL, mf$confidence_interval_upper) &&
+         close_enough(moura_orchard_summary$lowerPR, mf$prediction_interval_lower) &&
+         close_enough(moura_orchard_summary$upperPR, mf$prediction_interval_upper),
+       "orchaRd Moura summary or prediction interval does not match the validated Reviewer 13 target.")
+cat(sprintf("MOURA_ORCHARD_PI_VERIFIED %.16f %.16f\n", moura_orchard_summary$lowerPR, moura_orchard_summary$upperPR))
+p_a_mf_mean <- orchaRd::orchard_plot(moura_orchard, xlab="Fisher's Z", k=TRUE, g=FALSE,
+                                      k.pos="right", k.size=3.3, legend.pos="bottom.out",
+                                      twig.size=.55, branch.size=1.2, trunk.size=.55) +
+  labs(title="A. Moura BM — metafor", subtitle="Thick: pooled-mean 95% CI; thin: Reviewer 13 latent-effect 95% PI") +
+  theme(plot.title=element_text(face="bold"), plot.subtitle=element_text(size=8.5))
 moura_order <- c("Study variance", "Effect-size variance", "Species variance, non-phylogenetic", "Species variance, phylogenetic")
 moura_profile <- moura_profile |>
   mutate(component=factor(component, levels=rev(moura_order)))
@@ -91,9 +112,19 @@ spain_rho_profile <- spain_rho_raw |>
 assert(nrow(spain_tau_profile)==1L && nrow(spain_rho_profile)==1L &&
        all(is.finite(unlist(spain_tau_profile))) && all(is.finite(unlist(spain_rho_profile))),
        "Saved Spain spatial-variance and range profiles must be finite.")
-p_b_mf_mean <- ggplot(tibble(item="Population mean\n95% CI",estimate=spain_mf$mean,lower=spain_mf$ci_lb,upper=spain_mf$ci_ub),aes(y=item,x=estimate)) +
-  geom_vline(xintercept=0,linetype="dashed",colour="grey55") + geom_errorbarh(aes(xmin=lower,xmax=upper),height=.18,linewidth=1,colour="#528B8B") + geom_point(size=3,colour="#528B8B") +
-  scale_x_continuous(limits=c(-.7,.55)) + labs(title="B. Spain regional spatial-only — metafor",x="Hedges' d",y=NULL) + theme_classic(base_size=10.5) + theme(plot.title=element_text(face="bold"))
+spain_mf_fit <- readRDS(file.path(spain_dir, "metafor_spatial_only.rds"))
+assert(inherits(spain_mf_fit, "rma.mv") && spain_mf_fit$k == 186L, "Unexpected Spain spatial-only metafor fit.")
+spain_orchard <- orchaRd::mod_results(orchard_ready_fit(spain_mf_fit), mod="1", group="study_id")
+spain_orchard_summary <- spain_orchard$mod_table[1L, ]
+assert(close_enough(spain_orchard_summary$estimate, spain_mf$mean) &&
+         close_enough(spain_orchard_summary$lowerCL, spain_mf$ci_lb) &&
+         close_enough(spain_orchard_summary$upperCL, spain_mf$ci_ub),
+       "orchaRd Spain mean or confidence interval does not match the validated spatial-only result.")
+p_b_mf_mean <- orchaRd::orchard_plot(spain_orchard, xlab="Hedges' d", k=TRUE, g=FALSE,
+                                      k.pos="right", k.size=3.3, legend.pos="bottom.out",
+                                      twig.size=0, branch.size=1.2, trunk.size=.55) +
+  labs(title="B. Spain regional spatial-only — metafor", subtitle="Pooled mean 95% CI; no spatial prediction interval") +
+  theme(plot.title=element_text(face="bold"), plot.subtitle=element_text(size=8.5))
 p_b_mf_variance_data <- tibble(
   item=factor(c("IID effect-size variance", "Spatial variance"), levels=c("Spatial variance", "IID effect-size variance")),
   value=c(spain_mf$iid_effect_variance,spain_mf$spatial_variance),
@@ -146,6 +177,8 @@ p_g_range <- ggplot(rho_profile,aes(y=model,x=estimate,colour=model)) +
   labs(title="Spatial ranges",subtitle="Point estimates only: spatial-only lower side unresolved; finite upper bound\nCombined model: both sides unresolved over searched range",x="Range rho (km)",y=NULL) +
   theme_classic(base_size=10.5) + theme(legend.position="none",plot.title=element_text(face="bold"))
 supplementary <- p_g_mean / (p_g_var | p_g_range)
-ggsave(file.path(fig_dir,"supplementary_cleaned_global_spatial_sensitivity.png"),supplementary,width=15,height=10.5,dpi=240,bg="white")
-ggsave(file.path(fig_dir,"supplementary_cleaned_global_spatial_sensitivity.pdf"),supplementary,width=15,height=10.5,device=grDevices::cairo_pdf,bg="white")
+if (write_supplementary) {
+  ggsave(file.path(fig_dir,"supplementary_cleaned_global_spatial_sensitivity.png"),supplementary,width=15,height=10.5,dpi=240,bg="white")
+  ggsave(file.path(fig_dir,"supplementary_cleaned_global_spatial_sensitivity.pdf"),supplementary,width=15,height=10.5,device=grDevices::cairo_pdf,bg="white")
+}
 cat("REVIEWER13_FIGURE3_CHECKS_PASSED\n")
