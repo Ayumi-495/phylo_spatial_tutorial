@@ -1,0 +1,5 @@
+"analysis","package","parameter","estimate","ci_lb","ci_ub","interval_method"
+"spain","metafor","intrcpt",-0.0972716726037317,-0.489461813327438,0.294918468119974,"95% confidence interval reported by metafor"
+"spain","metafor","IID effect-size variance",0.213704231804847,0.127506469700608,0.340595673215363,"95% profile-likelihood confidence interval"
+"spain","metafor","Spatial variance",0.625659560786865,0.25579940054434,1.56908845001968,"95% profile-likelihood confidence interval"
+"spain","metafor","Exponential range (km)",28.9628455028461,2.89628455028461,164.16577377617,"95% profile-likelihood confidence interval"

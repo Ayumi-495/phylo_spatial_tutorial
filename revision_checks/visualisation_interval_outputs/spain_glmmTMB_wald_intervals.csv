@@ -1,0 +1,5 @@
+"analysis","package","parameter","estimate","ci_lb","ci_ub","interval_method"
+"spain","glmmTMB","(Intercept)",-0.0972717246000634,-0.490883535401115,0.296340086200989,"95% Wald confidence interval"
+"spain","glmmTMB","IID effect-size variance",0.213704182877356,0.131435933440775,0.347465693617622,"95% Wald confidence interval on log SD/log range scale"
+"spain","glmmTMB","Spatial variance",0.62565914997679,0.267924329786263,1.46104451306068,"95% Wald confidence interval on log SD/log range scale"
+"spain","glmmTMB","Exponential range (km)",28.9628042218124,5.78167683265464,145.086633630797,"95% Wald confidence interval on log SD/log range scale"
