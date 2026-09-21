@@ -57,7 +57,7 @@ execute:
 
 # Intended audience and scope
 
-*This online tutorial accompanies our tutorial paper: A unified framework for phylogenetic and spatial meta-analysis: concepts, implementation, and practical guidance \[LINK\]*
+*This online tutorial accompanies our tutorial paper: A unified framework for phylogenetic and spatial meta-analysis: concepts, implementation, and practical guidance*.
 
 This is intended for researchers who already have a basic understanding of meta-analysis and some familiarity with statistical modelling in `R`. It is aimed at readers who are interested in phylogenetic and spatial meta-analytic modelling, given the increasing availability of large-scale datasets that include species-level traits and geographic information.
 
