@@ -1564,7 +1564,7 @@ Visualising results often makes them much easier to understand than presenting t
 Traditionally, forest plots have been used to report pooled estimates and confidence intervals. However, forest plots do not always clearly convey the contribution of individual effect sizes to the overall estimate, such as their relative precision or inverse-variance weights.
 The [`orchaRd`](https://doi.org/10.1111/2041-210X.14152) package provides a nice alternative, the orchard plot, which visualises the overall effect size along with the precision of each effect size estimate.
 
-Although orchard plots provide an effective summary of model-based estimates, they are not designed to display variance-component decomposition. We therefore construct custom visualisations in `ggplot2` to present the pooled effect size alongside the estimated variance components.
+The orchard plots below show individual effect sizes, the fitted mean (open point), its 95% confidence interval (thick line), and a 95% model-based prediction interval for a new underlying effect (thin line). The prediction interval includes the fitted random-effect heterogeneity but excludes sampling error for a future estimate. Orchard plots do not display the separate variance components, so companion interval plots show those components alongside the fixed effects.
 
 Here, we present how to make figures from `metafor`, `brms`, and `glmmTMB` using meta-analysis model outputs.
 
@@ -1574,63 +1574,22 @@ Here, we present how to make figures from `metafor`, `brms`, and `glmmTMB` using
 ```{r}
 #| eval: false
 
-metafor_p1 <- orchaRd::orchard_plot(phylo_eg1_meta_ma_BM, 
-                           group = "study.id",
-                           xlab = "Effect size",
-                           angle = 45) + 
-  scale_x_discrete(labels = c("Overall effect")) +
-  scale_color_manual(values = "#CDAD00") +
-  scale_fill_manual(values = "#FFD700") + 
+# When running the fitting code above, phylo_eg1_meta_ma_BM is the BM fit.
+# orchaRd needs a formula attribute for plotting an rma.mv object.
+moura_plot_fit <- phylo_eg1_meta_ma_BM
+moura_plot_fit$formula <- ~ 1
+moura_orchard <- orchaRd::mod_results(moura_plot_fit, mod = "1", group = "study.id")
+orchaRd::orchard_plot(moura_orchard, group = "study.id",
+                      xlab = "Effect size (Fisher's z)", k = TRUE, g = FALSE) +
+  scale_x_discrete(labels = "Overall effect") +
   theme_classic()
-
-## random effect
-ci_var <- confint(phylo_eg1_meta_ma_BM, level = 0.95) 
-# estimate  ci.lb  ci.ub 
-# sigma^2.1   0.0192 0.0108 0.0325 
-# sigma.1     0.1384 0.1038 0.1802 
-# 
-# estimate  ci.lb  ci.ub 
-# sigma^2.2   0.0145 0.0121 0.0172 
-# sigma.2     0.1202 0.1099 0.1311 
-# 
-# estimate  ci.lb  ci.ub 
-# sigma^2.3   0.0557 0.0334 0.0788 
-# sigma.3     0.2359 0.1827 0.2807 
-# 
-# estimate  ci.lb  ci.ub 
-# sigma^2.4   0.0512 0.0179 0.1792 
-# sigma.4     0.2263 0.1336 0.4233 
-
-tbl <- tibble::as_tibble(ci_var, rownames = "term")
-
-label_map <- c("Effect_id", "Study_id", "Species", "Phylo")
-tbl_var <- tbl |>
-  filter(str_detect(term, "^sigma\\^2\\.")) |>
-  mutate(
-    idx   = as.integer(str_match(term, "\\.(\\d+)$")[,2]),
-    label = case_when(
-      idx == 1 ~ "Study_id",
-      idx == 2 ~ "Effect_id",
-      idx == 3 ~ "Species",
-      idx == 4 ~ "Phylo"
-    ),
-    label = factor(label, levels = label_map) 
-  )
-
-metafor_p2 <- ggplot(tbl_var, aes(x = label, y = estimate)) +
-  geom_point(size = 3.0, color = "#528B8B") +
-  geom_errorbar(aes(ymin = ci.lb, ymax = ci.ub), width = 0.25, color = "#528B8B") +
-  coord_flip() +
-  labs(x = NULL, y = "Variance 95% CI") +
-  # scale_y_continuous(breaks = seq(0, 10.0, 1), limits = c(0, 10.0)) + 
-  theme_classic(base_size = 12)
-
-metafor_eg1_1 <- metafor_p1 / metafor_p2
-
-metafor_eg1_1
 ```
 
-![Moura BM meta-analysis fitted with `metafor`. The pooled effect and each variance component are shown with their 95% confidence intervals; variance rows use component-specific horizontal scales.](figs/tutorial/metafor_moura2021.png){fig-alt="Moura metafor BM results showing the pooled Fisher's z mean and four variance components with confidence intervals." width="80%"}
+![Moura BM `metafor` orchard plot. The open point and thick line show the pooled mean and its 95% confidence interval; the thin line is the 95% prediction interval for a new underlying effect. Each small point is an observed effect size, sized by precision.](figs/tutorial/moura_metafor_orchard.png){fig-alt="Orchard plot of 1,828 Moura effect sizes and the metafor BM pooled estimate with 95% confidence and prediction intervals." width="80%"}
+
+The companion plot shows the pooled effect and all four fitted variance components with their 95% confidence intervals. Its component intervals are profile-likelihood intervals, shown on component-specific scales.
+
+![Moura BM meta-analysis fitted with `metafor`: pooled effect and variance components.](figs/tutorial/metafor_moura2021.png){fig-alt="Moura metafor BM results showing the pooled Fisher's z mean and four variance components with confidence intervals." width="80%"}
 
 ##### brms
 
@@ -1713,7 +1672,27 @@ The saved posterior draws are summarised below. Points are posterior medians; th
 
 ##### glmmTMB
 
-The static summary below shows the fitted Moura `glmmTMB` results. A direct `glmmTMB`-to-`orchaRd` conversion is illustrated for the Lim meta-regression below.
+The fitted `glmmTMB` model can also be displayed as an orchard plot. `glmmTMB_to_rma()` converts the fitted object for `orchaRd` plotting; the supplied effect sizes, sampling variances, and group labels must be in the same row order as the model data. The 95% confidence interval is Wald-based for this conversion.
+
+```{r}
+#| eval: false
+
+moura_tmb_rma <- orchaRd::glmmTMB_to_rma(
+  phylo_eg1_tmb, yi = "yi", vi = "vi", data = dat_moura2021,
+  measure = "GEN", test = "z"
+)
+moura_tmb_orchard <- orchaRd::mod_results(
+  moura_tmb_rma, mod = "1", group = "study.id"
+)
+orchaRd::orchard_plot(moura_tmb_orchard, group = "study.id",
+                      xlab = "Effect size (Fisher's z)", k = TRUE, g = FALSE) +
+  scale_x_discrete(labels = "Overall effect") +
+  theme_classic()
+```
+
+![Moura BM `glmmTMB` orchard plot. The open point and thick line show the pooled mean and its 95% Wald confidence interval; the thin line is the 95% model-based prediction interval for a new underlying effect.](figs/tutorial/moura_glmmtmb_orchard.png){fig-alt="Orchard plot of 1,828 Moura effect sizes and the glmmTMB BM pooled estimate with 95% Wald confidence and model-based prediction intervals." width="80%"}
+
+The companion plot shows the pooled effect and each fitted variance component with 95% Wald confidence intervals.
 
 ![Moura BM meta-analysis fitted with `glmmTMB`. The pooled effect and each variance component are shown with 95% Wald confidence intervals.](figs/tutorial/tmb_eg1_1.png){fig-alt="Moura glmmTMB BM results showing the pooled Fisher's z mean and four variance components with 95% Wald confidence intervals." width="80%"}
 
@@ -2111,73 +2090,34 @@ In this dataset, we plot the meta-regression model output.
 ##### metafor
 
 ```{r}
-#| echo: FALSE
-#| eval: FALSE
-
-
-# `fit_phylo_eg2_metafor_mr` is the model fitted in the metafor tab above.
-phylo_eg2_brms_mr <- readRDS(here("Rdata", "tutorial_v2", "phylo_eg2_brms_mr.rds"))
-
-```
-
-```{r}
 #| eval: false
 
+# `fit_phylo_eg2_metafor_mr` is the BM meta-regression fitted above.
+# orchaRd needs a formula attribute for plotting an rma.mv object.
+lim_plot_fit <- fit_phylo_eg2_metafor_mr
+lim_plot_fit$formula <- ~ environment
 mr_res <- orchaRd::mod_results(
-  fit_phylo_eg2_metafor_mr,
+  lim_plot_fit,
   mod   = "environment",
   group = "id"
 )
 
-mr_res
-
-## 3. orchard plot
-metafor_mr_p1 <- orchaRd::orchard_plot(
+orchaRd::orchard_plot(
   mr_res,
   mod   = "environment",
   group = "id",
-  xlab  = "Effect size",
-  angle = 45
+  xlab  = "Effect size (Fisher's z)",
+  k = TRUE,
+  g = FALSE
 ) +
-#   scale_color_manual(values = "#CDAD00") +
-#   scale_fill_manual(values = "#FFD700") +
   theme_classic()
-
-metafor_mr_p1
-
-## for random effect
-ci_var_mr <- confint(fit_phylo_eg2_metafor_mr, level = 0.95)
-
-tbl_mr <- tibble::as_tibble(ci_var_mr, rownames = "term")
-
-label_map_mr <- c("Effect_id", "Species", "Phylo")
-
-tbl_var_mr <- tbl_mr |>
-  filter(str_detect(term, "^sigma\\^2\\.")) |>
-  mutate(
-    idx = as.integer(str_match(term, "\\.(\\d+)$")[, 2]),
-    label = case_when(
-      idx == 1 ~ "Effect_id",   # ~1 | id
-      idx == 2 ~ "Phylo",       # ~1 | phy
-      idx == 3 ~ "Species"      # ~1 | species
-    ),
-    label = factor(label, levels = label_map_mr)
-  )
-
-metafor_mr_p2 <- ggplot(tbl_var_mr, aes(x = label, y = estimate)) +
-  geom_point(size = 3.0, color = "#528B8B") +
-  geom_errorbar(aes(ymin = ci.lb, ymax = ci.ub), width = 0.25, color = "#528B8B") +
-  coord_flip() +
-  labs(x = NULL, y = "Variance (95% CI)") +
-  theme_classic(base_size = 12)
-
-metafor_eg2_1 <- metafor_mr_p1 / metafor_mr_p2
-metafor_eg2_1
-
-
 ```
 
-![Lim BM meta-regression fitted with `metafor`. Fixed effects and all variance components are shown with 95% profile-likelihood confidence intervals.](figs/tutorial/metafor_lim.png){fig-alt="Lim metafor BM meta-regression results showing fixed effects and three variance components with 95% confidence intervals." width="80%"}
+![Lim BM `metafor` orchard plot. Captive and wild effects are shown with their 95% confidence intervals (thick lines) and model-based prediction intervals for new underlying effects (thin lines). Individual effects are sized by precision.](figs/tutorial/lim_metafor_orchard.png){fig-alt="Orchard plot of captive and wild Lim meta-regression effects fitted with metafor, with 95% confidence and prediction intervals." width="80%"}
+
+The companion plot shows both fixed-effect coefficients and all three fitted variance components with 95% confidence intervals; component intervals are profile-likelihood intervals.
+
+![Lim BM meta-regression fitted with `metafor`: fixed effects and variance components.](figs/tutorial/metafor_lim.png){fig-alt="Lim metafor BM meta-regression results showing fixed effects and three variance components with 95% confidence intervals." width="80%"}
 
 ##### brms
 
