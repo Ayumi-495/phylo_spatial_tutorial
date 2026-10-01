@@ -116,7 +116,7 @@ In the following two sections, we introduce how to make the correlation matrix f
 ::: callout
 **Note on tree preparation and cleaning/pruning**
 
-The starting point is usually a list of species represented in your dataset, ideally using current accepted Latin binomial names. Sometimes, the species names in your data may not match those in the tree used to create a phylogenetic correlation matrix. Data matching and cleaning are not covered here, so ensure that naming is consistent and fully matched before creating the matrix. Helper `R` packages can resolve mismatched taxonomic names among datasets and phylogenetic trees (reviewed in [Grenié et al. 2022](https://doi.org/10.1111/2041-210X.13802)). The identifiers in the dataset and the rows and columns of the corresponding covariance or correlation matrix must be aligned exactly. Users should not rely on the modelling software to detect mismatches, because a matrix with compatible dimensions but incorrectly ordered rows or columns may still produce an apparently valid fit. We therefore recommend checking both the names and their order explicitly before model fitting.
+The starting point is usually a list of species represented in your dataset, ideally using current accepted Latin binomial names. Sometimes, the species names in your data may not match those in the tree used to create a phylogenetic correlation matrix. Data matching and cleaning are not covered here, so ensure that naming is consistent and fully matched before creating the matrix. Helper `R` packages can resolve mismatched taxonomic names among datasets and phylogenetic trees (reviewed in [Grenié et al. 2022](https://doi.org/10.1111/2041-210X.13802)). Meta-analytic models will not run if the lists of names in the dataset and correlation matrix do not match exactly.
 
 Also, when subsetting a larger existing phylogenetic tree to match your list of species, it will be necessary to remove (drop) extra species from the tree that are not in your dataset (i.e. prune the tree). In that case, you can use `TreeTools::DropTip()` / `ape::drop.tip()` (or`TreeTools::KeepTip()` / `ape::keep.tip()`). You can see how to do this in the example below)
 :::
@@ -1037,10 +1037,6 @@ For consistency across the worked examples, we use the generalised \(I^2\) defin
 <!-- Unlike dedicated meta-analytic packages such as `metafor`, it does not allow to easily account for known sampling variances of effect sizes - so when we implement a meta-analysis in `glmmTMB`, we need explicitly specify the sampling error structure of the effect sizes. -->
 `glmmTMB` is a general-purpose package for fitting mixed models rather than a dedicated meta-analysis package, so known sampling variances are specified differently from in `metafor`. Here, we supply the known sampling variance-covariance matrix through the `equalto()` covariance structure.
 
-For `equalto()`, the identifier must be a factor, and the row and column names of the supplied sampling variance-covariance matrix must match its levels exactly and in the same order. The sampling variances themselves must also be reordered by identifier before constructing the matrix; changing the names alone does not establish the correct correspondence.
-
-The five `equalto()` models in this tutorial (Moura meta-analysis and meta-regression, Lim meta-analysis and meta-regression, and the Spain spatial model) were rerun with `glmmTMB` 1.1.15.2. All had optimiser convergence code 0 and a positive-definite Hessian. The estimates agreed with the available prior fits or printed values at their recorded precision. These checks assess implementation and numerical convergence, not model adequacy. The [alignment audit](revision_checks/equalto_2026-10-01/REPORT.md) records the comparisons and their limits.
-
 In practice, this requires three steps:
 
 *1. Treating each effect size as a unique random-effect level*
@@ -1063,7 +1059,7 @@ In `glmmTMB`, the levels of the factor identify the elements of the supplied cov
 #| eval: false
 
 # the equalto() and propto() terms require a grouping variable, even when there is only one group. the dummy variable 'g' assigns all observations to single group, while the covariance structure is defined entirely by supplied matrices…
-dat_moura2021$g <- factor("all")
+dat_moura2021$g <- 1 
 
 ```
 
@@ -1075,18 +1071,8 @@ dat_moura2021$g <- factor("all")
 # The diagonal contains the known sampling variances.
 # Off-diagonal elements are zero because this worked example assumes independent sampling errors for simplicity.
 
-dat_moura2021$effect.size.id <- factor(dat_moura2021$effect.size.id)
-effect_levels <- levels(dat_moura2021$effect.size.id)
-vi_named <- setNames(dat_moura2021$vi, as.character(dat_moura2021$effect.size.id))
-stopifnot(!anyNA(dat_moura2021$effect.size.id), !anyDuplicated(names(vi_named)),
-          length(effect_levels) == nrow(dat_moura2021),
-          all(is.finite(vi_named)), all(vi_named > 0))
-VCV <- diag(vi_named[effect_levels], nrow = length(effect_levels))
-dimnames(VCV) <- list(effect_levels, effect_levels)
-stopifnot(identical(rownames(VCV), effect_levels),
-          identical(colnames(VCV), effect_levels),
-          identical(as.numeric(diag(VCV)[as.character(dat_moura2021$effect.size.id)]),
-                    as.numeric(dat_moura2021$vi)))
+VCV <- diag(dat_moura2021$vi, nrow = nrow(dat_moura2021)) 
+rownames(VCV)<- colnames(VCV)<- dat_moura2021$effect.size.id
 
 ```
 
@@ -1101,12 +1087,8 @@ And the following supplementary material for fitting meta-analysis with `glmmTMB
 ```{r}
 #| eval: false
 
-dat_moura2021$species.id.phy <- factor(dat_moura2021$species.id.phy)
-phy_levels <- levels(dat_moura2021$species.id.phy)
-stopifnot(setequal(rownames(A), phy_levels), setequal(colnames(A), phy_levels))
-A <- A[phy_levels, phy_levels, drop = FALSE]
-stopifnot(identical(rownames(A), phy_levels),
-          identical(colnames(A), phy_levels))
+# reorders the rows and columns of the phylogenetic covariance matrix so that species appear in a consistent alphabetical order, ensuring that the matrix aligns correctly with the species factor used in the model.
+A <- A[sort(rownames(A)), sort(rownames(A))]
 
 system.time(
     phylo_eg1_tmb <- glmmTMB(yi ~ 1 +
@@ -1332,27 +1314,12 @@ The PPC recovers the observed mean and temporal-pooling contrast, but the observ
 ```{r}
 #| eval: false
 
-dat_moura2021$species.id.phy <- factor(dat_moura2021$species.id.phy)
-phy_levels <- levels(dat_moura2021$species.id.phy)
-stopifnot(setequal(rownames(A), phy_levels), setequal(colnames(A), phy_levels))
-A <- A[phy_levels, phy_levels, drop = FALSE]
-stopifnot(identical(rownames(A), phy_levels),
-          identical(colnames(A), phy_levels))
+A <- A[sort(rownames(A)), sort(rownames(A))]
 
-dat_moura2021$g <- factor("all")
+dat_moura2021$g <- 1 
 
-dat_moura2021$effect.size.id <- factor(dat_moura2021$effect.size.id)
-effect_levels <- levels(dat_moura2021$effect.size.id)
-vi_named <- setNames(dat_moura2021$vi, as.character(dat_moura2021$effect.size.id))
-stopifnot(!anyNA(dat_moura2021$effect.size.id), !anyDuplicated(names(vi_named)),
-          length(effect_levels) == nrow(dat_moura2021),
-          all(is.finite(vi_named)), all(vi_named > 0))
-VCV <- diag(vi_named[effect_levels], nrow = length(effect_levels))
-dimnames(VCV) <- list(effect_levels, effect_levels)
-stopifnot(identical(rownames(VCV), effect_levels),
-          identical(colnames(VCV), effect_levels),
-          identical(as.numeric(diag(VCV)[as.character(dat_moura2021$effect.size.id)]),
-                    as.numeric(dat_moura2021$vi)))
+VCV <- diag(dat_moura2021$vi, nrow = nrow(dat_moura2021)) 
+rownames(VCV)<- colnames(VCV)<- dat_moura2021$effect.size.id
 
 dat_moura2021$effect.size.id <- as.factor(dat_moura2021$effect.size.id)
 head(dat_moura2021)
@@ -1883,27 +1850,12 @@ dat_lim2014$id <- factor(
           )
 class(dat_lim2014$id)
 
-dat_lim2014$phy <- factor(dat_lim2014$phy)
-phy_levels <- levels(dat_lim2014$phy)
-stopifnot(setequal(rownames(A), phy_levels), setequal(colnames(A), phy_levels))
-A <- A[phy_levels, phy_levels, drop = FALSE]
-stopifnot(identical(rownames(A), phy_levels),
-          identical(colnames(A), phy_levels))
+A <- A[sort(rownames(A)), sort(rownames(A))]
+vcv <- diag(dat_lim2014$vi, nrow = nrow(dat_lim2014))
 
-dat_lim2014$id <- factor(dat_lim2014$id)
-effect_levels <- levels(dat_lim2014$id)
-vi_named <- setNames(dat_lim2014$vi, as.character(dat_lim2014$id))
-stopifnot(!anyNA(dat_lim2014$id), !anyDuplicated(names(vi_named)),
-          length(effect_levels) == nrow(dat_lim2014),
-          all(is.finite(vi_named)), all(vi_named > 0))
-vcv <- diag(vi_named[effect_levels], nrow = length(effect_levels))
-dimnames(vcv) <- list(effect_levels, effect_levels)
-stopifnot(identical(rownames(vcv), effect_levels),
-          identical(colnames(vcv), effect_levels),
-          identical(as.numeric(diag(vcv)[as.character(dat_lim2014$id)]),
-                    as.numeric(dat_lim2014$vi)))
+rownames(vcv)<- colnames(vcv)<- dat_lim2014$id
 
-dat_lim2014$g <- factor("all")
+dat_lim2014$g <- 1
 
 phylo_eg2_tmb_ma <- glmmTMB(yi ~ 1 +
                            equalto(0 + id|g, vcv) +
@@ -2069,27 +2021,6 @@ The PPC reproduces the observed mean, marginal SD, and wild-minus-captive contra
 
 ```{r}
 #| eval: false
-
-dat_lim2014$id <- factor(dat_lim2014$id)
-effect_levels <- levels(dat_lim2014$id)
-vi_named <- setNames(dat_lim2014$vi, as.character(dat_lim2014$id))
-stopifnot(!anyNA(dat_lim2014$id), !anyDuplicated(names(vi_named)),
-          length(effect_levels) == nrow(dat_lim2014),
-          all(is.finite(vi_named)), all(vi_named > 0))
-vcv <- diag(vi_named[effect_levels], nrow = length(effect_levels))
-dimnames(vcv) <- list(effect_levels, effect_levels)
-stopifnot(identical(rownames(vcv), effect_levels),
-          identical(colnames(vcv), effect_levels),
-          identical(as.numeric(diag(vcv)[as.character(dat_lim2014$id)]),
-                    as.numeric(dat_lim2014$vi)))
-
-dat_lim2014$phy <- factor(dat_lim2014$phy)
-phy_levels <- levels(dat_lim2014$phy)
-stopifnot(setequal(rownames(A), phy_levels), setequal(colnames(A), phy_levels))
-A <- A[phy_levels, phy_levels, drop = FALSE]
-stopifnot(identical(rownames(A), phy_levels),
-          identical(colnames(A), phy_levels))
-dat_lim2014$g <- factor("all")
 
 phylo_eg2_tmb_mr <- glmmTMB(yi ~ 1 + environment +
                              equalto(0 + id|g, vcv) +
@@ -2653,18 +2584,10 @@ The precomputed `metafor` result is shown below. The pooled-effect interval is a
 ```{r}
 #| eval: false
 
-dat_spain$effect_id <- factor(dat_spain$effect_id)
-effect_levels <- levels(dat_spain$effect_id)
-vi_named <- setNames(dat_spain$var_Hedges, as.character(dat_spain$effect_id))
-stopifnot(!anyNA(dat_spain$effect_id), !anyDuplicated(names(vi_named)),
-          length(effect_levels) == nrow(dat_spain),
-          all(is.finite(vi_named)), all(vi_named > 0))
-VCV_spain <- diag(vi_named[effect_levels], nrow = length(effect_levels))
-dimnames(VCV_spain) <- list(effect_levels, effect_levels)
-stopifnot(identical(rownames(VCV_spain), effect_levels),
-          identical(colnames(VCV_spain), effect_levels),
-          identical(as.numeric(diag(VCV_spain)[as.character(dat_spain$effect_id)]),
-                    as.numeric(dat_spain$var_Hedges)))
+VCV_spain <- diag(dat_spain$var_Hedges)
+rownames(VCV_spain) <- colnames(VCV_spain) <- levels(dat_spain$effect_id)
+stopifnot(identical(rownames(VCV_spain), levels(dat_spain$effect_id)))
+stopifnot(identical(colnames(VCV_spain), levels(dat_spain$effect_id)))
 
 dat_spain$pos <- glmmTMB::numFactor(dat_spain$x_km, dat_spain$y_km)
 spain_glmmTMB <- glmmTMB::glmmTMB(

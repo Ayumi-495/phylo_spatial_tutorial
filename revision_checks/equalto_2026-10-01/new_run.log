@@ -1,0 +1,15 @@
+Warning message:
+package ‘glmmTMB’ was built under R version 4.6.1 
+START new moura_ma
+DONE new moura_ma
+START new moura_mr
+DONE new moura_mr
+START new lim_ma
+DONE new lim_ma
+START new lim_mr
+DONE new lim_mr
+START new spain
+DONE new spain
+Error in writeLines(unlist(lapply(names(errors), function(n) paste(n,  : 
+  can only write character objects
+Execution halted

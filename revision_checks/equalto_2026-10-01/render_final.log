@@ -1,0 +1,241 @@
+
+
+processing file: tutorial_v2.qmd
+1/179                    
+2/179 [unnamed-chunk-1]  
+3/179                    
+4/179 [unnamed-chunk-2]  
+5/179                    
+6/179 [way 1 - phylometa]
+7/179                    
+8/179 [unnamed-chunk-3]  
+9/179                    
+10/179 [unnamed-chunk-4]  
+11/179                    
+12/179 [unnamed-chunk-5]  
+13/179                    
+14/179 [unnamed-chunk-6]  
+15/179                    
+16/179 [unnamed-chunk-7]  
+17/179                    
+18/179 [unnamed-chunk-8]  
+19/179                    
+20/179 [unnamed-chunk-9]  
+21/179                    
+22/179 [unnamed-chunk-10] 
+23/179                    
+24/179 [unnamed-chunk-11] 
+25/179                    
+26/179 [unnamed-chunk-12] 
+27/179                    
+28/179 [unnamed-chunk-13] 
+29/179                    
+30/179 [unnamed-chunk-14] 
+31/179                    
+32/179 [unnamed-chunk-15] 
+33/179                    
+34/179 [unnamed-chunk-16] 
+35/179                    
+36/179 [unnamed-chunk-17] 
+37/179                    
+38/179 [unnamed-chunk-18] 
+39/179                    
+40/179 [unnamed-chunk-19] 
+41/179                    
+42/179 [unnamed-chunk-20] 
+43/179                    
+44/179 [unnamed-chunk-21] 
+45/179                    
+46/179 [unnamed-chunk-22] 
+47/179                    
+48/179 [unnamed-chunk-23] 
+49/179                    
+50/179 [unnamed-chunk-24] 
+51/179                    
+52/179 [unnamed-chunk-25] 
+53/179                    
+54/179 [unnamed-chunk-26] 
+55/179                    
+56/179 [unnamed-chunk-27] 
+57/179                    
+58/179 [unnamed-chunk-28] 
+59/179                    
+60/179 [unnamed-chunk-29] 
+61/179                    
+62/179 [unnamed-chunk-30] 
+63/179                    
+64/179 [unnamed-chunk-31] 
+65/179                    
+66/179 [unnamed-chunk-32] 
+67/179                    
+68/179 [unnamed-chunk-33] 
+69/179                    
+70/179 [unnamed-chunk-34] 
+71/179                    
+72/179 [unnamed-chunk-35] 
+73/179                    
+74/179 [unnamed-chunk-36] 
+75/179                    
+76/179 [unnamed-chunk-37] 
+77/179                    
+78/179 [unnamed-chunk-38] 
+79/179                    
+80/179 [unnamed-chunk-39] 
+81/179                    
+82/179 [unnamed-chunk-40] 
+83/179                    
+84/179 [unnamed-chunk-41] 
+85/179                    
+86/179 [unnamed-chunk-42] 
+87/179                    
+88/179 [unnamed-chunk-43] 
+89/179                    
+90/179 [unnamed-chunk-44] 
+91/179                    
+92/179 [unnamed-chunk-45] 
+93/179                    
+94/179 [unnamed-chunk-46] 
+95/179                    
+96/179 [unnamed-chunk-47] 
+97/179                    
+98/179 [unnamed-chunk-48] 
+99/179                    
+100/179 [unnamed-chunk-49] 
+101/179                    
+102/179 [unnamed-chunk-50] 
+103/179                    
+104/179 [unnamed-chunk-51] 
+105/179                    
+106/179 [unnamed-chunk-52] 
+107/179                    
+108/179 [unnamed-chunk-53] 
+109/179                    
+110/179 [unnamed-chunk-54] 
+111/179                    
+112/179 [unnamed-chunk-55] 
+113/179                    
+114/179 [unnamed-chunk-56] 
+115/179                    
+116/179 [unnamed-chunk-57] 
+117/179                    
+118/179 [unnamed-chunk-58] 
+119/179                    
+120/179 [unnamed-chunk-59] 
+121/179                    
+122/179 [unnamed-chunk-60] 
+123/179                    
+124/179 [unnamed-chunk-61] 
+125/179                    
+126/179 [unnamed-chunk-62] 
+127/179                    
+128/179 [unnamed-chunk-63] 
+129/179                    
+130/179 [unnamed-chunk-64] 
+131/179                    
+132/179 [unnamed-chunk-65] 
+133/179                    
+134/179 [unnamed-chunk-66] 
+135/179                    
+136/179 [unnamed-chunk-67] 
+137/179                    
+138/179 [unnamed-chunk-68] 
+139/179                    
+140/179 [unnamed-chunk-69] 
+141/179                    
+142/179 [unnamed-chunk-70] 
+143/179                    
+144/179 [unnamed-chunk-71] 
+145/179                    
+146/179 [unnamed-chunk-72] 
+147/179                    
+148/179 [unnamed-chunk-73] 
+149/179                    
+150/179 [unnamed-chunk-74] 
+151/179                    
+152/179 [unnamed-chunk-75] 
+153/179                    
+154/179 [unnamed-chunk-76] 
+155/179                    
+156/179 [unnamed-chunk-77] 
+157/179                    
+158/179 [unnamed-chunk-78] 
+159/179                    
+160/179 [unnamed-chunk-79] 
+161/179                    
+162/179 [unnamed-chunk-80] 
+163/179                    
+164/179 [unnamed-chunk-81] 
+165/179                    
+166/179 [unnamed-chunk-82] 
+167/179                    
+168/179 [unnamed-chunk-83] 
+169/179                    
+170/179 [unnamed-chunk-84] 
+171/179                    
+172/179 [unnamed-chunk-85] 
+173/179                    
+174/179 [unnamed-chunk-86] 
+175/179                    
+176/179 [unnamed-chunk-87] 
+177/179                    
+178/179 [unnamed-chunk-88] 
+179/179                    
+output file: tutorial_v2.knit.md
+
+pandoc 
+  to: html
+  output-file: index.html
+  standalone: true
+  embed-resources: false
+  section-divs: true
+  html-math-method: mathjax
+  wrap: none
+  default-image-extension: png
+  toc: true
+  toc-depth: 8
+  number-sections: false
+  variables: {}
+  
+metadata
+  document-css: false
+  link-citations: true
+  date-format: long
+  lang: en
+  engines:
+    - path: /Applications/quarto/share/extension-subtrees/julia-engine/_extensions/julia-engine/julia-engine.js
+  title: 'TUTORIAL: A unified framework for phylogenetic and spatial meta-analysis'
+  subtitle: concepts, implementation, and practical guidance
+  date: today
+  title-block-banner: '#778899'
+  title-block-banner-color: '#FFFAFA'
+  authors:
+    - name: Ayumi Mizuno
+      orcid: 0000-0003-0822-5637
+    - name: Coralie Williams
+      orcid: 0000-0003-1312-4953
+    - name: Malgorzata Lagisz
+      orcid: 0000-0002-3993-6127
+    - name: Alistair M. Senior
+      orcid: 0000-0001-9805-7280
+    - name: Shinichi Nakagawa
+      orcid: 0000-0002-7765-5182
+  crossref:
+    fig-title: Figure
+    tbl-title: Table
+    title-delim: —
+    fig-prefix: Fig.
+    tbl-prefix: Table.
+  editor_options:
+    chunk_output_type: console
+  toc-location: left
+  toc-float: false
+  toc-title: '**CONTENTS**'
+  fontsize: '12'
+  mainfont: Roboto
+  monofont: Roboto
+  page-layout: full
+  df_print: paged
+  theme: united
+  
+Output created: index.html
+

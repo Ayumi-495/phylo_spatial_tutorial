@@ -1,0 +1,12 @@
+START old moura_ma
+Timing stopped at: 0.018 0 0.018
+ERROR moura_ma: column/row names of the propto matrix match the terms, but are in a different order
+START old moura_mr
+Timing stopped at: 0.012 0 0.013
+ERROR moura_mr: column/row names of the propto matrix match the terms, but are in a different order
+START old lim_ma
+DONE old lim_ma
+START old lim_mr
+DONE old lim_mr
+START old spain
+DONE old spain
