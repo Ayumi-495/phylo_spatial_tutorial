@@ -101,7 +101,7 @@ options(mc.cores = num_chains)
 ::: {.callout-note}
 ## Reproducibility of model-derived examples
 
-You can read the rendered tutorial without fitted model objects. To reproduce its model-derived figures and summaries, place the corresponding precomputed RDS files in `Rdata/tutorial_v2/`; Quarto loads these objects during rendering rather than refitting models. The fitting code is shown in this tutorial. During revision, the required RDS bundle is distributed separately; the final reproducibility archive will include it with the archived repository. To refit models from scratch, use the fitting code shown below and the recorded package and software environment.
+The publication code, data and precomputed model objects are archived at [doi:10.5281/zenodo.23454135](https://doi.org/10.5281/zenodo.23454135) (repository commit `a1f2ee1`). You can read the rendered tutorial without model objects. To reproduce its model-derived figures and summaries, download `reproducibility-models-a1f2ee1.zip` from the archive and extract it into the repository root. The bundle supplies the required files in `Rdata/tutorial_v2/` and `Rdata/figure_inputs/`. Quarto loads the saved models during rendering. To refit models from scratch, use the fitting code shown below and the recorded package and software environment.
 :::
 
 # Phylogenetic meta-analysis

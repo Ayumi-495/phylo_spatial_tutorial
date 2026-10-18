@@ -50,7 +50,7 @@ combined_tau2_1.csv
 
 ## Saved model and profile objects
 
-RDS inputs belong under `Rdata/figure_inputs/`, separately from the tutorial's own `Rdata/tutorial_v2/` objects. RDS files are excluded from Git and need a separately supplied archive bundle. GitHub alone therefore does not provide every input needed by the two model-based figure scripts.
+RDS inputs belong under `Rdata/figure_inputs/`, separately from the tutorial's own `Rdata/tutorial_v2/` objects. RDS files are excluded from Git and are available as `reproducibility-models-a1f2ee1.zip` in the [Zenodo archive](https://doi.org/10.5281/zenodo.23454135). Extract the ZIP into the repository root. GitHub alone therefore does not provide every input needed by the two model-based figure scripts.
 
 The phylogenetic orchard script requires these three files under `Rdata/figure_inputs/intervals/`:
 
@@ -62,4 +62,4 @@ lim_metafor_bm_meta_regression.rds
 
 The spatial script requires `unstructured_only.rds`, `spatial_only.rds` and `combined.rds` under each of `Rdata/figure_inputs/grau_andres/` and `Rdata/figure_inputs/scholer/`. It also needs the fourteen profile objects under the corresponding `profiles/` directories, with the same basenames as the CSVs and extension `.rds`. These objects contain interval-boundary signs used in the figures.
 
-The spatial model/profile RDS files are excluded from Git and must be supplied in the reproducibility archive. Their CSV summaries do not preserve the interval-boundary signs. All four scripts have been run successfully with the stored inputs, producing 21 PNG files identical to the supplied versions. A full tutorial render has also been verified; the archive DOI remains pending.
+The spatial model/profile RDS files are included in that archive bundle. Their CSV summaries do not preserve the interval-boundary signs. All four scripts have been run successfully with the stored inputs, producing 21 PNG files identical to the supplied versions. A full tutorial render and the archived source/model bundles have also been verified.
